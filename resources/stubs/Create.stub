@@ -1,0 +1,52 @@
+@extends('layouts.app')
+
+@section('title', 'Tambah {{modelName}}')
+
+@section('content')
+    <div class="block justify-between page-header md:flex">
+        <div>
+            <h3 class="!text-defaulttextcolor dark:!text-defaulttextcolor/70 dark:text-white dark:hover:text-white text-[1.125rem] font-semibold">
+                Tambah {{modelNameSinggular}}
+            </h3>
+        </div>
+        <ol class="flex items-center whitespace-nowrap min-w-0">
+            <li class="text-[0.813rem] ps-[0.5rem]">
+                <a class="flex items-center text-primary hover:text-primary dark:text-primary truncate"
+                    href="{{ route('home') }}">
+                    Dashboards
+                    <i class="ti ti-chevrons-right flex-shrink-0 text-[#8c9097] px-[0.5rem] overflow-visible dark:text-white/50 rtl:rotate-180"></i>
+                </a>
+            </li>
+            <li class="text-[0.813rem] ps-[0.5rem]">
+                <a class="flex items-center text-primary hover:text-primary dark:text-primary truncate"
+                    href="{{ route('{{modelNameSinggular}}.index') }}">
+                    {{modelNamePlural}}
+                    <i class="ti ti-chevrons-right flex-shrink-0 text-[#8c9097] px-[0.5rem] overflow-visible dark:text-white/50 rtl:rotate-180"></i>
+                </a>
+            </li>
+            <li class="text-[0.813rem] text-defaulttextcolor font-semibold hover:text-primary dark:text-[#8c9097] dark:text-white/50"
+                aria-current="page">
+                Create
+            </li>
+        </ol>
+    </div>
+
+    <!-- Form Tambah {{modelNameSinggular}} -->
+    <div class="box">
+        <div class="box-header justify-between">
+            <div class="box-title">
+                Input Data {{modelNameSinggular}}
+            </div>
+        </div>
+        <div class="box-body">
+              <form action="{{ route('{{modelNameSinggular}}.store') }}" method="POST">
+                @csrf
+
+                <!-- Looping Dinamis untuk Field Input -->
+                {{fields}}
+
+                <button class="ti-btn ti-btn-primary-full" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+@endsection

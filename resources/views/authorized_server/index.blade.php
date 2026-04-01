@@ -1,0 +1,83 @@
+@extends('layouts.app')
+
+@section('title', 'Daftar AuthorizedServer')
+
+@section('content')
+    <div class="block justify-between page-header md:flex">
+        <div>
+            <h3 class="!text-defaulttextcolor dark:!text-defaulttextcolor/70 dark:text-white dark:hover:text-white text-[1.125rem] font-semibold">
+                AuthorizedServers</h3>
+        </div>
+        <ol class="flex items-center whitespace-nowrap min-w-0">
+            <li class="text-[0.813rem] ps-[0.5rem]">
+                <a class="flex items-center text-primary hover:text-primary dark:text-primary truncate" href="{{ route('home') }}">
+                    Dashboards
+                    <i class="ti ti-chevrons-right flex-shrink-0 text-[#8c9097] px-[0.5rem] overflow-visible dark:text-white/50 rtl:rotate-180"></i>
+                </a>
+            </li>
+            <li class="text-[0.813rem] text-defaulttextcolor font-semibold hover:text-primary dark:text-[#8c9097] dark:text-white/50 " aria-current="page">
+                AuthorizedServers
+            </li>
+        </ol>
+    </div>
+
+    <div class="grid grid-cols-12 gap-x-12">
+        <div class="xxxl:col-span-12 col-span-12">
+            <div class="box custom-box">
+                <div class="box-header justify-between">
+                    <div class="box-title">
+                        Daftar AuthorizedServer
+                    </div>
+                    <div class="prism-toggle">
+                        <a href="{{ route('authorized_server.create')}}" class="ti-btn !py-1 !px-2 ti-btn-primary !font-medium !text-[0.75rem]">Tambah AuthorizedServer<i class="fas fa-plus"></i></a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div class="table-responsive">
+                        <table class="table whitespace-nowrap table-bordered min-w-full" id="authorized_server-table">
+                            <thead>
+                                <tr class="border-b border-defaultborder">
+                                    <th>Id</th>
+<th>Ip Address</th>
+<th>Server Name</th>
+<th>Username</th>
+<th>Password</th>
+<th>Port</th>
+ <!-- Placeholder untuk header kolom -->
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script>
+        $(function() {
+            $('#authorized_server-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: '{!! route('authorized_server.data') !!}',
+                columns: [
+                    { data: 'id', name: 'id' },
+{ data: 'ip_address', name: 'ip_address' },
+{ data: 'server_name', name: 'server_name' },
+{ data: 'username', name: 'username' },
+{ data: 'password', name: 'password' },
+{ data: 'port', name: 'port' },
+ 
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+        });
+    </script>
+@endpush
