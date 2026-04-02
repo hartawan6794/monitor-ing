@@ -1,36 +1,33 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSwitcher
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        // Ambil dari Header (Android) atau Session (Web)
-        $dbName = $request->header('X-Database-Name') ?? session('active_db');
+        // 1. Tangkap SEMUA informasi koneksi dari Header Android
+        $dbName = $request->header('X-Database-Name');
+        $dbHost = $request->header('X-Server-IP');
+        $dbUser = $request->header('X-DB-Username');
+        $dbPass = $request->header('X-DB-Password');
 
-        if ($dbName) {
-            // OPSIONAL: Cek apakah database ini terdaftar di tabel available_databases
-            // Ini penting agar orang tidak bisa akses sembarang DB via header
+        // Jika request memiliki header X-Database-Name, berarti ini request dinamis
+        if ($dbName && $dbHost) {
 
-            config(['database.connections.mysql.database' => $dbName]);
+            // 2. Timpa konfigurasi default MySQL secara runtime
+            Config::set('database.connections.mysql.host', $dbHost);
+            Config::set('database.connections.mysql.database', $dbName);
+            Config::set('database.connections.mysql.username', $dbUser);
+            Config::set('database.connections.mysql.password', $dbPass);
 
-            // Purge & Reconnect
+            // 3. Purge & Reconnect agar Eloquent menggunakan konfigurasi baru ini
             DB::purge('mysql');
             DB::reconnect('mysql');
-        } else {
-            // Jika tidak ada DB terpilih, mungkin ingin lempar error atau redirect
-            // return response()->json(['message' => 'Database belum dipilih'], 400);
         }
 
         return $next($request);
