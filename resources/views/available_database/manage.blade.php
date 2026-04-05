@@ -31,6 +31,7 @@
                             <thead>
                                 <tr>
                                     <th>Nama Database</th>
+                                    <th>Deskripsi</th>
                                     <th>Expired At</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
@@ -40,6 +41,11 @@
                                 @forelse($server->availableDatabases as $db)
                                     <tr>
                                         <td class="font-semibold text-primary">{{ $db->db_name }}</td>
+                                        <td>
+                                            <span class="text-xs">
+                                                {{ $db->description }}
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="text-xs">
                                                 {{ $db->expired_at ? \Carbon\Carbon::parse($db->expired_at)->format('d M Y') : '∞ Permanent' }}
@@ -55,6 +61,12 @@
                                             @endif
                                         </td>
                                         <td>
+                                            <button type="button" class="ti-btn ti-btn-sm ti-btn-warning-full btn-edit-db"
+                                                data-id="{{ $db->id }}" data-dbname="{{ $db->db_name }}"
+                                                data-desc="{{ $db->description }}"
+                                                data-expired="{{ $db->expired_at ? \Carbon\Carbon::parse($db->expired_at)->format('Y-m-d') : '' }}">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
                                             <form action="{{ route('available_database.destroy', $db) }}" method="POST"
                                                 class="inline">
                                                 @csrf @method('DELETE')
@@ -123,13 +135,15 @@
         </div>
 
         <div class="col-span-12 lg:col-span-5">
-            <div class="box custom-box border-t-4 border-primary">
+            <div class="box custom-box border-t-4 border-primary transition-all duration-300" id="form-card">
                 <div class="box-header">
-                    <div class="box-title">Daftarkan Koneksi Baru</div>
+                    <div class="box-title" id="form-title">Daftarkan Koneksi Baru</div>
                 </div>
                 <div class="box-body">
-                    <form action="{{ route('available_database.store') }}" method="POST" id="form-add-db">
+                    <form action="{{ route('available_database.store') }}" method="POST" id="form-db">
                         @csrf
+                        <div id="method-container"></div>
+
                         <input type="hidden" name="server_id" value="{{ $server->id }}">
 
                         <div class="mb-4">
@@ -157,14 +171,20 @@
 
                         <div class="mb-4">
                             <label class="form-label font-semibold text-sm">Deskripsi</label>
-                            <textarea name="description" class="form-control" rows="2"
+                            <textarea name="description" id="description" class="form-control" rows="2"
                                 placeholder="Catatan untuk database ini..."></textarea>
                         </div>
 
-                        <button type="submit" class="ti-btn ti-btn-success-full w-full justify-center" id="btn-submit"
-                            disabled>
-                            <i class="ri-add-circle-line mr-1"></i> Simpan Koneksi Database
-                        </button>
+                        <div class="flex gap-2">
+                            <button type="submit" class="ti-btn ti-btn-success-full w-full justify-center" id="btn-submit"
+                                disabled>
+                                <i class="ri-save-line mr-1"></i> <span id="submit-text">Simpan Koneksi</span>
+                            </button>
+                            <button type="button" class="ti-btn ti-btn-light w-full justify-center hidden"
+                                id="btn-cancel-edit">
+                                Batal
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -230,6 +250,71 @@
                 }).then((result) => {
                     if (result.isConfirmed) form.submit();
                 });
+            });
+            // --- LOGIKA EDIT & FORM SWITCHER ---
+            const storeUrl = "{{ route('available_database.store') }}";
+            // Siapkan template URL Update dari Laravel
+            const baseUpdateUrl = "{{ route('available_database.update', ':id') }}";
+
+            // Saat tombol edit di tabel di-klik
+            $('.btn-edit-db').on('click', function () {
+                let id = $(this).data('id');
+                let dbname = $(this).data('dbname');
+                let desc = $(this).data('desc');
+                let expired = $(this).data('expired');
+
+                // 1. Ubah Judul & Warna Kotak
+                $('#form-title').text('Edit Koneksi: ' + dbname);
+                $('#form-card').removeClass('border-primary').addClass('border-warning');
+
+                // 2. Ubah URL Form ke Update & Sisipkan Method PUT
+                let updateUrl = baseUpdateUrl.replace(':id', id);
+                $('#form-db').attr('action', updateUrl);
+                $('#method-container').html('<input type="hidden" name="_method" value="PUT">');
+
+                // 3. Isi Data ke Form
+                // Kunci nama database agar tidak diubah, sembunyikan tombol scan
+                $('#db_name').empty().append(`<option value="${dbname}" selected>${dbname}</option>`).prop('disabled', true);
+                $('#btn-scan').hide();
+
+                // Isi tanggal flatpickr (Akses flatpickr instance)
+                if (expired) {
+                    document.querySelector("#expired_at")._flatpickr.setDate(expired);
+                } else {
+                    document.querySelector("#expired_at")._flatpickr.clear();
+                }
+
+                // Isi deskripsi
+                $('#description').val(desc);
+
+                // 4. Ubah Tombol Submit & Tampilkan Tombol Batal
+                $('#submit-text').text('Update Koneksi');
+                $('#btn-submit').removeClass('ti-btn-success-full').addClass('ti-btn-warning-full').prop('disabled', false);
+                $('#btn-cancel-edit').removeClass('hidden');
+
+                // Gulir layar otomatis ke form edit (berguna untuk layar kecil)
+                $('html, body').animate({ scrollTop: $("#form-card").offset().top - 80 }, 500);
+            });
+
+            // Saat tombol "Batal" di-klik
+            $('#btn-cancel-edit').on('click', function () {
+                // Kembalikan ke Mode 'Create/Daftarkan Baru'
+                $('#form-title').text('Daftarkan Koneksi Baru');
+                $('#form-card').removeClass('border-warning').addClass('border-primary');
+
+                $('#form-db').attr('action', storeUrl);
+                $('#method-container').empty(); // Hapus PUT method
+
+                // Reset Isi Form
+                $('#db_name').empty().append('<option value="" selected>Scan IP {{ $server->ip_address }}...</option>').prop('disabled', true);
+                $('#btn-scan').show();
+                document.querySelector("#expired_at")._flatpickr.clear();
+                $('#description').val('');
+
+                // Reset Tombol
+                $('#submit-text').text('Simpan Koneksi');
+                $('#btn-submit').removeClass('ti-btn-warning-full').addClass('ti-btn-success-full').prop('disabled', true);
+                $(this).addClass('hidden'); // Sembunyikan kembali tombol Batal
             });
         });
     </script>

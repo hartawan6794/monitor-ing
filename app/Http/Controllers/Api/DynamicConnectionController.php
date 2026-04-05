@@ -34,6 +34,7 @@ class DynamicConnectionController extends Controller
                     $query->where('password', $request->password);
                 }
             })
+            ->where('is_active', 1)
             ->first();
 
         // 3. Jika Server tidak ditemukan di database pusat
@@ -54,7 +55,7 @@ class DynamicConnectionController extends Controller
         }
 
         // 5. Susun daftar database untuk dikirim ke Android
-        $dbList = $server->availableDatabases->pluck('db_name');
+        $dbList = $server->availableDatabases->pluck('db_name', 'description');
 
         return response()->json([
             'status' => 'success',

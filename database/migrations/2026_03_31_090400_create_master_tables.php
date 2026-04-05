@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('username');
             $table->string('password');
             $table->string('port')->default('3306');
-            // $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 

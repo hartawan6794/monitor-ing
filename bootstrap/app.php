@@ -12,10 +12,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+        $middleware->api(prepend: [
+            \App\Http\Middleware\DatabaseSwitcher::class,
+        ]);
+
         $middleware->alias([
+            'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
             'database.switch' => \App\Http\Middleware\DatabaseSwitcher::class,
+            'check.role' => \App\Http\Middleware\CheckUserRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->shouldRenderJsonWhen(function ($request, $e) {
+            if ($request->is('api/*')) {
+                return true;
+            }
+
+            return $request->expectsJson();
+        });
     })->create();

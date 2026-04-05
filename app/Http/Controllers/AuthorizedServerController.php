@@ -19,7 +19,11 @@ class AuthorizedServerController extends Controller
     {
         $data = AuthorizedServer::select('*'); // Mengambil semua kolom 
         //Model::select('isi_nama_kolom, yang, diingkan') jika mau costum
+        // addcolum status when trus = active color success else false = inactive color danger
         return DataTables::of($data)
+            ->addColumn('is_active', function ($item) {
+                return $item->is_active ? '<span class="ti-btn ti-btn-sm ti-btn-success !rounded-full">Active</span>' : '<span class="ti-btn ti-btn-sm ti-btn-danger !rounded-full">Inactive</span>';
+            })
             ->addColumn('action', function ($item) {
                 $editUrl = route('authorized_server.edit', $item->id);
                 $deleteUrl = route('authorized_server.destroy', $item->id);
@@ -58,6 +62,7 @@ class AuthorizedServerController extends Controller
             ->editColumn('updated_at', function ($item) {
                 return $item->updated_at ? $item->updated_at->format('Y-m-d') : '-';
             })
+            ->rawColumns(['action', 'is_active'])
             ->make(true);
     }
 

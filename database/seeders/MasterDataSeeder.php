@@ -20,6 +20,7 @@ class MasterDataSeeder extends Seeder
             'username' => 'root',
             'password' => '',
             'port' => '3306',
+            'status' => '1',
             'created_at' => now(),
         ]);
 

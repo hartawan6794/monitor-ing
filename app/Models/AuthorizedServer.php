@@ -16,6 +16,7 @@ class AuthorizedServer extends Model
     'username',
     'password',
     'port',
+    'is_active',
   ];
 
   public function availableDatabases()

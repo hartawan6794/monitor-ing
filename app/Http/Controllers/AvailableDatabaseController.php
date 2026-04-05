@@ -22,7 +22,7 @@ class AvailableDatabaseController extends Controller
     {
         // 1. Ambil data dari model Server beserta relasi database-nya
 
-        $data = AuthorizedServer::with('availableDatabases')->select('*');
+        $data = AuthorizedServer::with('availableDatabases')->select('*')->where('is_active', 1);
 
         return DataTables::of($data)
             ->addColumn('database_list', function ($server) {
