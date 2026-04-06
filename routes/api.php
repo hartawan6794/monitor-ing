@@ -10,8 +10,8 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\InventoryAdjustmentController;
-use App\Http\Controllers\Api\DivisionController;
-use App\Http\Controllers\Api\DepartementController;
+use App\Http\Controllers\Api\MasterDataController;
+use App\Http\Controllers\Api\ReportController;
 
 
 Route::get('/user', function (Request $request) {
@@ -39,8 +39,15 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::post('/users', [UserController::class, 'store']);
 
     // Master Data Dropdown
-    Route::get('/divisions', [DivisionController::class, 'index']);
-    Route::get('/departements', [DepartementController::class, 'index']);
+    Route::get('/master/divisions', [MasterDataController::class, 'divisions']);
+    Route::get('/master/departments', [MasterDataController::class, 'departments']);
+    Route::get('/master/suppliers', [MasterDataController::class, 'suppliers']);
+    Route::get('/master/product-groups', [MasterDataController::class, 'productGroups']);
+    Route::get('/master/product-brands', [MasterDataController::class, 'productBrands']);
+
+    // Laporan Stok
+    Route::get('/report/stock', [ReportController::class, 'stockReport']);
+    Route::get('/report/history', [ReportController::class, 'stockHistory']);
 
     // Transaksi Adjustment
     Route::post('/inventory/adjust', [InventoryAdjustmentController::class, 'storeAdjustment']);

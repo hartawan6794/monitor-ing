@@ -51,10 +51,28 @@ class UserController extends Controller
                 'useredit' => ''       // Diisi string kosong untuk awal
             ]);
 
-            // 3. Kembalikan Response Sukses ke Android
+            // 2. Ambil semua ID dari tabel userconfigrules
+            $rules = \DB::table('userconfigrules')->select('id')->get();
+
+            // 3. Siapkan data untuk Batch Insert ke usersconfig
+            $configData = [];
+            foreach ($rules as $rule) {
+                $configData[] = [
+                    'userid' => $request->id, // Merujuk ke user baru
+                    'userconfigrulesid' => $rule->id,
+                    'configvalues' => 'false',      // Default value sesuai permintaan
+                ];
+            }
+
+            // 4. Lakukan Batch Insert jika data rules tidak kosong
+            if (!empty($configData)) {
+                \DB::table('usersconfig')->insert($configData);
+            }
+
+            // 5. Kembalikan Response Sukses ke Android
             return response()->json([
                 'status' => 'success',
-                'message' => "User {$request->name} berhasil didaftarkan."
+                'message' => "User {$request->name} dan konfigurasi dasar berhasil didaftarkan."
             ], 201);
 
         } catch (\Exception $e) {
