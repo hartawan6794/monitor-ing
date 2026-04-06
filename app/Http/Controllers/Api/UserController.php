@@ -24,9 +24,9 @@ class UserController extends Controller
         // 1. Validasi Input dari Android
         $validator = Validator::make($request->all(), [
             'id' => 'required|string|unique:mysql.users,id|max:16', // DB: char(16)
-            'name' => 'required|string|max:10', // DB: varchar(10)
-            'userpassword' => 'required|string|min:6|max:41', // DB: char(41)
-            'description' => 'required|string|max:200' // DB: varchar(200) - NO NULL
+            'name' => 'required|string', // DB: varchar(10)
+            'userpassword' => 'required|string|max:41', // DB: char(41)
+            'description' => 'required|string' // DB: varchar(200) - NO NULL
         ]);
 
         // Jika validasi gagal

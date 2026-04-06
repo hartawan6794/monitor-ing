@@ -2,12 +2,17 @@
 
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\InventoryMovingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DynamicConnectionController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\InventoryAdjustmentController;
+use App\Http\Controllers\Api\DivisionController;
+use App\Http\Controllers\Api\DepartementController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -28,10 +33,18 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::get('/dashboard/salesman', [DashboardController::class, 'getDailySalesBySalesman']);
     Route::get('/dashboard/salesman/yearly', [DashboardController::class, 'getYearlySalesBySalesman']);
     Route::get('/products', [ProductController::class, 'index']);
-    Route::get('/products/low-stock', [ProductController::class, 'lowStockAlert']);
+    Route::get('/products/low-stock-alert', [ProductController::class, 'lowStockAlert']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
+
+    // Master Data Dropdown
+    Route::get('/divisions', [DivisionController::class, 'index']);
+    Route::get('/departements', [DepartementController::class, 'index']);
+
+    // Transaksi Adjustment
+    Route::post('/inventory/adjust', [InventoryAdjustmentController::class, 'storeAdjustment']);
+    Route::post('/inventory/move', [InventoryMovingController::class, 'storeMoving']);
 
     // Grup Admin (Hanya untuk User dengan Role 'admin' di usersconfig)
     Route::prefix('admin/dashboard')->middleware(['check.role:admin'])->group(function () {

@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->string('ip_address', 45);
             $table->string('server_name');
             $table->string('username');
-            $table->string('password');
+            $table->string('password')->default("");
             $table->string('port')->default('3306');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
