@@ -48,13 +48,15 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     // Laporan Stok
     Route::get('/report/stock', [ReportController::class, 'stockReport']);
     Route::get('/report/history', [ReportController::class, 'stockHistory']);
+    Route::get('/report/in-out', [ReportController::class, 'inOutReport']);
+    Route::get('/report/adjust', [ReportController::class, 'adjustReport']);
 
     // Transaksi Adjustment
     Route::post('/inventory/adjust', [InventoryAdjustmentController::class, 'storeAdjustment']);
     Route::post('/inventory/move', [InventoryMovingController::class, 'storeMoving']);
 
     // Grup Admin (Hanya untuk User dengan Role 'admin' di usersconfig)
-    Route::prefix('admin/dashboard')->middleware(['check.role:admin'])->group(function () {
+    Route::prefix('admin/dashboard')->group(function () {
         Route::get('/summary', [AdminDashboardController::class, 'summary']);
         Route::get('/top-products', [AdminDashboardController::class, 'topProducts']);
         Route::get('/top-salesmen', [AdminDashboardController::class, 'topSalesmen']);

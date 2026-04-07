@@ -6,11 +6,25 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Log;
+
 class ProductController extends Controller
 {
+
     public function index(Request $request)
     {
+        // Log setiap query yang dieksekusi
+        DB::listen(function ($query) {
+            Log::info('Query Executed:', [
+                'query' => $query->sql,
+                'bindings' => $query->bindings,
+                'time' => $query->time,
+            ]);
+        });
+
         $search = $request->query('search');
+        $divisionId = $request->query('devisi');
+        $departmentId = $request->query('departement');
 
         $products = DB::table('product')
             ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
@@ -20,13 +34,23 @@ class ProductController extends Controller
                 'product.salesprice1 as price',
                 DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock')
             )
-            // Tambahkan pencarian LIKE di sini
+            // Mengaplikasikan filter division dan department terlebih dahulu
+            ->when($divisionId, function ($query, $divisionId) {
+                return $query->where('inventory.division', $divisionId);
+            })
+            ->when($departmentId, function ($query, $departmentId) {
+                return $query->where('inventory.departement', $departmentId);
+            })
+            // Setelah division dan department terfilter, kita tambahkan pencarian produk
             ->when($search, function ($query, $search) {
-                return $query->where('product.name', 'LIKE', "%{$search}%")
-                    ->orWhere('product.id', 'LIKE', "%{$search}%");
+                return $query->where(function ($query) use ($search) {
+                    // Menambahkan pencarian berdasarkan nama atau id produk
+                    $query->where('product.name', 'LIKE', "%{$search}%")
+                        ->orWhere('product.id', 'LIKE', "%{$search}%");
+                });
             })
             ->groupBy('product.id', 'product.name', 'product.salesprice1')
-            ->limit(100)
+            ->limit(100) // Batasi hasil menjadi 100 produk
             ->get();
 
         return response()->json(['status' => 'success', 'data' => $products]);

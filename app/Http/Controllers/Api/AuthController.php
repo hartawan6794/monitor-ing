@@ -8,6 +8,37 @@ use Illuminate\Http\Request;
 class AuthController extends Controller
 {
 
+    /**
+     * @OA\Post(
+     *     path="/login",
+     *     tags={"Auth"},
+     *     summary="Login pengguna",
+     *     description="Autentikasi pengguna menggunakan ID dan password.",
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id", "userpassword"},
+     *             @OA\Property(property="id", type="string", example="john"),
+     *             @OA\Property(property="userpassword", type="string", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login berhasil",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="token", type="string", example="1|abc123...")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([

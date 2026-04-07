@@ -106,4 +106,125 @@ class ReportController extends Controller
             'data' => $data
         ]);
     }
+
+
+    public function inOutReport(Request $request)
+    {
+        $fromDate = $request->query('from_date');
+        $toDate = $request->query('to_date');
+        $deptId = $request->query('departement');
+        $groupId = $request->query('group');
+
+        $query = DB::table('inventory as i')
+            ->join('product as p', 'i.productid', '=', 'p.id')
+            ->leftJoin('productgroup as pg', 'p.productgroup', '=', 'pg.id')
+            ->select(
+                'p.id as productid',
+                'p.name as productname',
+                'p.id as sku',
+                'pg.name as groupname',
+                DB::raw('SUM(i.invin) as total_in'),
+                DB::raw('SUM(i.invout) as total_out')
+            );
+
+        // Filter Rentang Tanggal (Wajib untuk performa, jika kosong kita batasi datanya)
+        if ($fromDate && $toDate) {
+            $query->whereBetween('i.transdate', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+        }
+
+        // Filter Opsional (Bisa dipakai jika kamu ingin menambahkan filter lanjutan)
+        if ($deptId)
+            $query->where('i.departement', $deptId);
+        if ($groupId)
+            $query->where('p.productgroup', $groupId);
+
+        $data = $query->groupBy('p.id', 'p.name', 'p.aliasid', 'pg.name')
+            ->havingRaw('total_in > 0 OR total_out > 0') // Hanya tampilkan yang ada pergerakan
+            ->orderBy('p.name', 'asc');
+
+        // Jika tidak ada filter tanggal, limit agar tidak nge-hang
+        if (!$fromDate && !$toDate) {
+            $query->limit(100);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $query->get()
+        ]);
+    }
+
+    public function transferReport(Request $request)
+    {
+        $fromDate = $request->query('from_date');
+        $toDate = $request->query('to_date');
+
+        // Query untuk mengambil pasangan In dan Out berdasarkan transid yang sama
+        $query = DB::table('inventory as i')
+            ->join('product as p', 'i.productid', '=', 'p.id')
+            ->select(
+                'i.transid',
+                'i.transdate',
+                'p.name as productname',
+                // Mencari departemen yang melakukan INVOUT sebagai 'Asal'
+                DB::raw("MAX(CASE WHEN i.invout > 0 THEN i.departement END) as from_dept"),
+                // Mencari departemen yang melakukan INVIN sebagai 'Tujuan'
+                DB::raw("MAX(CASE WHEN i.invin > 0 THEN i.departement END) as to_dept"),
+                DB::raw("MAX(GREATEST(i.invin, i.invout)) as qty"),
+                'i.memo'
+            )
+            // Biasanya mutasi memiliki kode khusus di transid, misal diawali 'TRF' atau 'MOV'
+            // Jika tidak ada kode khusus, kita filter yang memiliki pasangan in/out
+            ->where('i.transid', 'LIKE', 'MOV%')
+            ->groupBy('i.transid', 'i.transdate', 'p.name', 'i.memo');
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('i.transdate', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+        } else {
+            $query->limit(100);
+        }
+
+        $data = $query->orderBy('i.transdate', 'desc')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+    public function adjustReport(Request $request)
+    {
+        $fromDate = $request->query('from_date');
+        $toDate = $request->query('to_date');
+        $deptId = $request->query('departement');
+
+        $query = DB::table('inventory as i')
+            ->join('product as p', 'i.productid', '=', 'p.id')
+            ->select(
+                'i.transid',
+                'i.transdate',
+                'p.name as productname',
+                'p.aliasid as sku',
+                'i.departement',
+                'i.invin',
+                'i.invout',
+                'i.memo'
+            )
+            // Menapis berdasarkan prefix I/IM-
+            ->where('i.transid', 'LIKE', 'I/IM-%');
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('i.transdate', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+        }
+
+        if ($deptId) {
+            $query->where('i.departement', $deptId);
+        }
+
+        $data = $query->orderBy('i.transdate', 'desc')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
 }

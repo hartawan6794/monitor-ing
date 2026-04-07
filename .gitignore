@@ -21,3 +21,10 @@ yarn-error.log
 .DS_Store
 
 /backup
+
+ERROR_SWAGGER_PATHITEM.md
+error.log
+out.log
+
+test_swagger.php
+test_swagger2.php

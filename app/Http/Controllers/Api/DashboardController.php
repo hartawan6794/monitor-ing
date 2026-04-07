@@ -7,6 +7,25 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+
+    /**
+     * @OA\Get(
+     *     path="/dashboard",
+     *     tags={"Dashboard"},
+     *     summary="Ringkasan penjualan",
+     *     description="Mengambil total penjualan untuk 4 periode.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getDashboardData()
     {
         $stats = DB::table('salespayments')
@@ -30,6 +49,21 @@ class DashboardController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *     path="/dashboard/salesman",
+     *     tags={"Dashboard"},
+     *     summary="Penjualan harian per salesman",
+     *     description="Mengambil total penjualan masing-masing salesman untuk hari ini.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getDailySalesBySalesman()
     {
         $salesBySalesman = DB::table('salespayments')
@@ -46,6 +80,21 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/dashboard/salesman/yearly",
+     *     tags={"Dashboard"},
+     *     summary="Penjualan tahunan per salesman",
+     *     description="Mengambil total penjualan masing-masing salesman sepanjang tahun berjalan.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getYearlySalesBySalesman()
     {
         $salesBySalesman = DB::table('salespayments')

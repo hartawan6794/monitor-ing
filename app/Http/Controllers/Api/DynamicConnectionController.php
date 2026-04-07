@@ -7,6 +7,41 @@ use App\Models\AuthorizedServer;
 
 class DynamicConnectionController extends Controller
 {
+
+    /**
+     * @OA\Post(
+     *     path="/server/check",
+     *     tags={"Dynamic Connection"},
+     *     summary="Cek Server",
+     *     description="Memeriksa apakah server terdaftar dan memiliki database aktif.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"ip_address"},
+     *             @OA\Property(property="ip_address", type="string", example="[IP_ADDRESS]"),
+     *             @OA\Property(property="username", type="string", example="admin"),
+     *             @OA\Property(property="password", type="string", example="password")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Server valid",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="server_name", type="string", example="Server 1"),
+     *                 @OA\Property(property="ip_address", type="string", example="[IP_ADDRESS]"),
+     *                 @OA\Property(property="total_db", type="integer", example=2),
+     *                 @OA\Property(property="databases", type="object",
+     *                     @OA\Property(property="db1", type="string", example="Database 1"),
+     *                     @OA\Property(property="db2", type="string", example="Database 2")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Server tidak ditemukan atau tidak aktif")
+     * )
+     */
     public function checkServer(Request $request)
     {
         // 1. Validasi input dari Android

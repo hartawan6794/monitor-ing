@@ -1,0 +1,364 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Montor-ing API",
+        "description": "Dokumentasi API untuk aplikasi Montor-ing (Inventory & Sales Monitoring).",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api",
+            "description": "Server API Utama"
+        }
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login pengguna",
+                "description": "Autentikasi pengguna menggunakan ID dan password.",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id",
+                                    "userpassword"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "example": "john"
+                                    },
+                                    "userpassword": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "1|abc123..."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Ringkasan penjualan",
+                "description": "Mengambil total penjualan untuk 4 periode.",
+                "operationId": "fa2272983cbe8d142dcd03ed9eee1dd1",
+                "parameters": [
+                    {
+                        "name": "X-Server-IP",
+                        "in": "header",
+                        "description": "Custom header untuk mengidentifikasi permintaan",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Database-Name",
+                        "in": "header",
+                        "description": "Custom header untuk mengidentifikasi permintaan",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-DB-Username",
+                        "in": "header",
+                        "description": "Custom header untuk mengidentifikasi permintaan",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-DB-Password",
+                        "in": "header",
+                        "description": "Custom header untuk mengidentifikasi permintaan",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/salesman": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Penjualan harian per salesman",
+                "description": "Mengambil total penjualan masing-masing salesman untuk hari ini.",
+                "operationId": "1a57f1cacecb6795c50899a489a506b7",
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/salesman/yearly": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Penjualan tahunan per salesman",
+                "description": "Mengambil total penjualan masing-masing salesman sepanjang tahun berjalan.",
+                "operationId": "a52f8d40c6bc3ccd6bf42b5466c3dcc6",
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/server/check": {
+            "post": {
+                "tags": [
+                    "Dynamic Connection"
+                ],
+                "summary": "Cek Server",
+                "description": "Memeriksa apakah server terdaftar dan memiliki database aktif.",
+                "operationId": "ff6afa4e360de20aaf3313be1f599d1e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ip_address"
+                                ],
+                                "properties": {
+                                    "ip_address": {
+                                        "type": "string",
+                                        "example": "[IP_ADDRESS]"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Server valid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "server_name": {
+                                                    "type": "string",
+                                                    "example": "Server 1"
+                                                },
+                                                "ip_address": {
+                                                    "type": "string",
+                                                    "example": "[IP_ADDRESS]"
+                                                },
+                                                "total_db": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "databases": {
+                                                    "properties": {
+                                                        "db1": {
+                                                            "type": "string",
+                                                            "example": "Database 1"
+                                                        },
+                                                        "db2": {
+                                                            "type": "string",
+                                                            "example": "Database 2"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Server tidak ditemukan atau tidak aktif"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "X-Server-IP": {
+                "name": "X-Server-IP",
+                "in": "header",
+                "description": "Alamat server untuk koneksi database",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "X-Database-Name": {
+                "name": "X-Database-Name",
+                "in": "header",
+                "description": "Nama database yang digunakan",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "X-DB-Username": {
+                "name": "X-DB-Username",
+                "in": "header",
+                "description": "Username untuk koneksi database",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "X-DB-Password": {
+                "name": "X-DB-Password",
+                "in": "header",
+                "description": "Password untuk koneksi database",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                }
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Masukkan token dari endpoint /login. Format: Bearer {token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard"
+        },
+        {
+            "name": "Dynamic Connection",
+            "description": "Dynamic Connection"
+        }
+    ]
+}

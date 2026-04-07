@@ -28,9 +28,9 @@ class AdminDashboardController extends Controller
             'status' => 'success',
             'data' => [
                 'today' => $this->calculateMetrics($today, $now),
-                'week'  => $this->calculateMetrics($startOfWeek, $now),
+                'week' => $this->calculateMetrics($startOfWeek, $now),
                 'month' => $this->calculateMetrics($startOfMonth, $now),
-                'year'  => $this->calculateMetrics($startOfYear, $now),
+                'year' => $this->calculateMetrics($startOfYear, $now),
             ]
         ]);
     }
@@ -52,38 +52,35 @@ class AdminDashboardController extends Controller
 
         // Laba Kotor = Omzet - HPP
         $laba = $omzet - $cogs;
-        
+
         // Margin = (Laba / Omzet) * 100%
         $margin = $omzet > 0 ? round(($laba / $omzet) * 100, 1) : 0;
 
         return [
             'omzet' => $omzet,
-            'laba'  => $laba,
-            'margin'=> $margin
+            'laba' => $laba,
+            'margin' => $margin
         ];
     }
 
-    /**
-     * 2. GET TOP PRODUCTS (Berdasarkan Qty Terjual)
-     * Menerima query param: ?period=today|month|year
-     */
     public function topProducts(Request $request)
     {
         $dates = $this->getDateRange($request->query('period', 'today'));
 
         $products = DB::table('salesdetail')
             ->join('product', 'salesdetail.productid', '=', 'product.id')
-            ->select('product.name', DB::raw('SUM(salesdetail.salesqty) as total_qty'))
+            ->select('product.id', 'product.name', DB::raw('SUM(salesdetail.salesqty) as total_qty'))
             ->whereBetween('salesdetail.transdate', $dates)
             ->groupBy('product.id', 'product.name')
             ->orderByDesc('total_qty')
             ->limit(5)
             ->get()
             ->map(function ($item, $index) {
-                // Format langsung sesuai kebutuhan UI (RankingItem)
                 return [
-                    'rank'     => $index + 1,
-                    'title'    => $item->name,
+                    'rank' => $index + 1,
+                    'id' => $item->id, // Tambahan untuk referensi
+                    'title' => $item->name,
+                    'qty' => $item->total_qty, // Angka asli
                     'subtitle' => number_format($item->total_qty, 0, ',', '.') . ' Terjual'
                 ];
             });
@@ -110,8 +107,8 @@ class AdminDashboardController extends Controller
             ->get()
             ->map(function ($item, $index) {
                 return [
-                    'rank'     => $index + 1,
-                    'title'    => $item->name,
+                    'rank' => $index + 1,
+                    'title' => $item->name,
                     'subtitle' => 'Omzet: Rp ' . number_format($item->omzet, 0, ',', '.')
                 ];
             });
@@ -144,7 +141,7 @@ class AdminDashboardController extends Controller
     {
         $now = Carbon::now();
         switch ($period) {
-            case 'week' :
+            case 'week':
                 return [Carbon::now()->startOfWeek(), $now];
             case 'month':
                 return [Carbon::now()->startOfMonth(), $now];
