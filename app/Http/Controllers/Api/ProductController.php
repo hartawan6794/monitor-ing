@@ -13,15 +13,6 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        // Log setiap query yang dieksekusi
-        DB::listen(function ($query) {
-            Log::info('Query Executed:', [
-                'query' => $query->sql,
-                'bindings' => $query->bindings,
-                'time' => $query->time,
-            ]);
-        });
-
         $search = $request->query('search');
         $divisionId = $request->query('devisi');
         $departmentId = $request->query('departement');

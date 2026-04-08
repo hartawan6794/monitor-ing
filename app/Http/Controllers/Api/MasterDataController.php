@@ -77,11 +77,25 @@ class MasterDataController extends Controller
     public function productBrands()
     {
         // Mengambil id dan nama brand dari tabel productbrand
-        $brands = DB::table('productbrand')->select('id', 'name')->get();
+        try {
+            $brands = DB::table('productbrand')->select('id', 'name')->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $brands
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => $brands
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function accounts()
+    {
+        try {
+            $data = DB::table('account')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 }

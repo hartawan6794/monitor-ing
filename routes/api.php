@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\InventoryMovingController;
 use Illuminate\Http\Request;
@@ -29,9 +28,7 @@ Route::middleware(['force.json', 'database.switch'])->group(function () {
 
 // Route Terproteksi (Login Diperlukan)
 Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'getDashboardData']);
-    Route::get('/dashboard/salesman', [DashboardController::class, 'getDailySalesBySalesman']);
-    Route::get('/dashboard/salesman/yearly', [DashboardController::class, 'getYearlySalesBySalesman']);
+
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/low-stock-alert', [ProductController::class, 'lowStockAlert']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
@@ -44,6 +41,7 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::get('/master/suppliers', [MasterDataController::class, 'suppliers']);
     Route::get('/master/product-groups', [MasterDataController::class, 'productGroups']);
     Route::get('/master/product-brands', [MasterDataController::class, 'productBrands']);
+    Route::get('/master/accounts', [MasterDataController::class, 'accounts']);
 
     // Laporan Stok
     Route::get('/report/stock', [ReportController::class, 'stockReport']);
@@ -56,11 +54,14 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::post('/inventory/move', [InventoryMovingController::class, 'storeMoving']);
 
     // Grup Admin (Hanya untuk User dengan Role 'admin' di usersconfig)
-    Route::prefix('admin/dashboard')->group(function () {
-        Route::get('/summary', [AdminDashboardController::class, 'summary']);
-        Route::get('/top-products', [AdminDashboardController::class, 'topProducts']);
-        Route::get('/top-salesmen', [AdminDashboardController::class, 'topSalesmen']);
-        Route::get('/chart', [AdminDashboardController::class, 'revenueChart']);
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/', [DashboardController::class, 'getDashboardData']);
+        Route::get('/salesman', [DashboardController::class, 'getDailySalesBySalesman']);
+        Route::get('/salesman/yearly', [DashboardController::class, 'getYearlySalesBySalesman']);
+        Route::get('/summary', [DashboardController::class, 'summary']);
+        Route::get('/top-products', [DashboardController::class, 'topProducts']);
+        Route::get('/top-salesmen', [DashboardController::class, 'topSalesmen']);
+        Route::get('/chart', [DashboardController::class, 'revenueChart']);
     });
 });
 

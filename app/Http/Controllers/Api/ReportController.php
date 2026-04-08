@@ -13,6 +13,7 @@ class ReportController extends Controller
         // Parameter Filter dari Android
         $productId = $request->query('productid');
         $divisionId = $request->query('division');
+        $departementId = $request->query('departement');
         $supplierId = $request->query('supplier');
         $groupId = $request->query('group');
         $brandId = $request->query('brand');
@@ -50,12 +51,14 @@ class ReportController extends Controller
             $query->where('p.productgroup', $groupId);
         if ($brandId)
             $query->where('p.brand', $brandId);
+        if ($departementId)
+            $query->where('i.departement', $departementId);
 
 
         $data = $query->groupBy('p.id', 'p.name', 'p.aliasid', 'pg.name', 'i.division', 'i.departement')
             ->having('total_stock', '!=', 0); // Tampilkan yang stoknya tidak 0 (bisa minus atau plus)
 
-        $hasFilters = $productId || $divisionId || $supplierId || $groupId || $brandId;
+        $hasFilters = $productId || $divisionId || $supplierId || $groupId || $brandId || $departementId;
 
         // Jika tidak ada filter sama sekali, batasi hasil ke 100 data saja
         if (!$hasFilters) {
