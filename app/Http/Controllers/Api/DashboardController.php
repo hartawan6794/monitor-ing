@@ -268,4 +268,132 @@ class DashboardController extends Controller
                 return [Carbon::today(), $now];
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/dashboard/salesman-view",
+     *     tags={"Dashboard"},
+     *     summary="Dashboard Salesman",
+     *     description="Mengambil data total penjualan, return penjualan, penjualan tunai, penerimaan piutang, biaya operasional, kas di tangan dan penjualan & order 7 hari terakhir.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function salesDashboard()
+    {
+        $today = Carbon::today();
+        $startDate7 = Carbon::today()->subDays(6);
+
+        // 1. Total Penjualan Hari Ini
+        $total_penjualan = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 0)
+            ->sum('salesdetail.netamount');
+
+        // 2. Return Penjualan Hari Ini (Dari jurnal Akun Retur Penjualan 401.002, 402.002, 403.002)
+        // $return_penjualan = DB::table('journaltrans')
+        //     ->whereIn('accountid', ['401.002', '402.002', '403.002'])
+        //     ->whereDate('jtdate', $today)
+        //     ->sum(DB::raw('debit - credit'));
+
+        $return_penjualan = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 1)
+            ->sum('salesdetail.netamount');
+
+        // 3. Penjualan Tunai Hari Ini (Join dengan salespayments paymenttype = 1)
+        // Kita menggunakan whereExists agar tidak terjadi duplikasi penjumlahan jika ada multiple payment di satu faktur
+        $penjualan_tunai = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 0)
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('salespayments')
+                      ->whereColumn('salespayments.salesidref', 'sales.salesid')
+                      ->where('salespayments.paymenttype', 1);
+            })
+            ->sum('salesdetail.netamount');
+
+        // 4. Penerimaan Piutang Hari Ini (Tabel receivablepayment)
+        $penerimaan_piutang = DB::table('receivablepayment')
+            ->whereDate('transdate', $today)
+            ->sum('amount');
+
+        // 5. Biaya Operasional Hari Ini (Dari jurnal spesifik akun 603)
+        $biaya_operasional = DB::table('journaltrans')
+            ->join('journal', 'journaltrans.jtid', '=', 'journal.jtid')
+            ->join('account', 'journaltrans.accountid', '=', 'account.id')
+            ->whereDate('journal.jtdate', $today)
+            ->where('account.accountgroup', '603')
+            ->sum(DB::raw('journaltrans.debit - journaltrans.credit')); // Sesuai dengan pembukuan biaya (debit)
+
+        // 6. Kas Kecil (Saldo Kas Kecil hari ini)
+        // Saldo = akumulasi transaksi (debit - credit) dari awal sampai dengan hari ini
+        $kas_di_tangan = DB::table('journaltrans')
+            ->join('journal', 'journaltrans.jtid', '=', 'journal.jtid')
+            ->whereDate('journal.jtdate', '<=', $today) // Gunakan akumulasi waktu untuk Saldo/Balance
+            ->where('journaltrans.accountid', '101.002')
+            ->where('journal.approved', 1)
+            ->sum(DB::raw('journaltrans.debit - journaltrans.credit'));
+
+        // 7. Penjualan 7 hari terakhir
+        $chart_penjualan = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
+            ->where('sales.kind', 0)
+            ->whereBetween('sales.salesdate', [$startDate7, $today])
+            ->groupBy('sales.salesdate')
+            ->orderBy('sales.salesdate', 'asc')
+            ->get();
+
+        // Order 7 hari terakhir
+        $chart_order = DB::table('salesorderdetail')
+            ->join('salesorder', 'salesorderdetail.salesid', '=', 'salesorder.salesid')
+            ->select('salesorder.salesdate as tanggal', DB::raw('SUM(salesorderdetail.netamount) as total'))
+            ->whereBetween('salesorder.salesdate', [$startDate7, $today])
+            ->groupBy('salesorder.salesdate')
+            ->orderBy('salesorder.salesdate', 'asc')
+            ->get();
+
+        // Android FE GSON mengharapkan List<Double> (array primitif angka tunggal per indeks)
+        // Kita perlu menyusunnya menjadi 7 angka pas sesuai urutan 7 hari ke belakang (misal H-6 s/d H-0)
+        $penjualan_array = [];
+        $order_array = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i)->toDateString();
+            $penjualan_array[$date] = 0;
+            $order_array[$date] = 0;
+        }
+
+        foreach ($chart_penjualan as $item) {
+            $penjualan_array[$item->tanggal] = (float) $item->total;
+        }
+        foreach ($chart_order as $item) {
+            $order_array[$item->tanggal] = (float) $item->total;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'total_penjualan' => (float) $total_penjualan,
+                'return_penjualan' => (float) $return_penjualan,
+                'penjualan_tunai' => (float) $penjualan_tunai,
+                'penerimaan_piutang' => (float) $penerimaan_piutang,
+                'biaya_operasional' => (float) $biaya_operasional,
+                'kas_di_tangan' => (float) $kas_di_tangan,
+                'chart_7_hari' => [
+                    'penjualan' => array_values($penjualan_array),
+                    'order' => array_values($order_array)
+                ]
+            ]
+        ]);
+    }
 }
