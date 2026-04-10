@@ -100,40 +100,16 @@
                 "operationId": "fa2272983cbe8d142dcd03ed9eee1dd1",
                 "parameters": [
                     {
-                        "name": "X-Server-IP",
-                        "in": "header",
-                        "description": "Custom header untuk mengidentifikasi permintaan",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/parameters/X-Server-IP"
                     },
                     {
-                        "name": "X-Database-Name",
-                        "in": "header",
-                        "description": "Custom header untuk mengidentifikasi permintaan",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/parameters/X-Database-Name"
                     },
                     {
-                        "name": "X-DB-Username",
-                        "in": "header",
-                        "description": "Custom header untuk mengidentifikasi permintaan",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/parameters/X-DB-Username"
                     },
                     {
-                        "name": "X-DB-Password",
-                        "in": "header",
-                        "description": "Custom header untuk mengidentifikasi permintaan",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -172,6 +148,20 @@
                 "summary": "Penjualan harian per salesman",
                 "description": "Mengambil total penjualan masing-masing salesman untuk hari ini.",
                 "operationId": "1a57f1cacecb6795c50899a489a506b7",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Sukses"
@@ -195,6 +185,94 @@
                 "summary": "Penjualan tahunan per salesman",
                 "description": "Mengambil total penjualan masing-masing salesman sepanjang tahun berjalan.",
                 "operationId": "a52f8d40c6bc3ccd6bf42b5466c3dcc6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/summary": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Ringkasan penjualan (Omzet, Laba, Margin)",
+                "description": "Menghitung omzet, laba kotor, dan margin untuk 4 periode: hari ini, minggu ini, bulan ini, dan tahun ini.",
+                "operationId": "892e76df1345997e0682213c6fbbb52d",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/salesman-view": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dashboard Salesman",
+                "description": "Mengambil data total penjualan, return penjualan, penjualan tunai, penerimaan piutang, biaya operasional, kas di tangan dan penjualan & order 7 hari terakhir.",
+                "operationId": "89176552893d2c50c7af623c184bfa88",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Sukses"

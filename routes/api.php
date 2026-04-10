@@ -59,6 +59,7 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     // Grup Admin (Hanya untuk User dengan Role 'admin' di usersconfig)
     Route::prefix('dashboard')->group(function () {
         Route::get('/', [DashboardController::class, 'getDashboardData']);
+        Route::get('/sales-view', [DashboardController::class, 'salesDashboard']);
         Route::get('/salesman', [DashboardController::class, 'getDailySalesBySalesman']);
         Route::get('/salesman/yearly', [DashboardController::class, 'getYearlySalesBySalesman']);
         Route::get('/summary', [DashboardController::class, 'summary']);
