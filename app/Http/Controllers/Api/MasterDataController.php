@@ -98,4 +98,18 @@ class MasterDataController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
+
+    public function userConfigRules()
+    {
+        try {
+            $sections = DB::table('userconfigrules')
+                ->distinct()
+                ->pluck('section');
+
+            return response()->json(['status' => 'success', 'data' => $sections]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }

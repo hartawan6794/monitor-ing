@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -80,6 +81,85 @@ class UserController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan pada server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Fungsi untuk mendapatkan data berdasarkan userid dan section
+    public function getUserConfig(Request $request)
+    {
+        $userid = $request->query('userid'); // Mendapatkan parameter 'userid' dari request
+        $section = $request->query('section'); // Mendapatkan parameter 'section' dari request
+
+        // Validasi input
+        if (!$userid || !$section) {
+            return response()->json(['error' => 'Userid and section are required'], 400);
+        }
+
+        // Query untuk mengambil data yang sesuai dengan parameter
+        $result = DB::table('usersconfig as uc')
+            ->join('userconfigrules as ucf', 'ucf.id', '=', 'uc.userconfigrulesid')
+            ->select('ucf.id', 'ucf.description', 'uc.configvalues')
+            ->where('ucf.section', '=', $section)
+            ->where('uc.userid', '=', $userid)
+            ->where('ucf.valuetype', '=', '0')
+            ->get();
+
+        // Jika tidak ada data ditemukan
+        if ($result->isEmpty()) {
+            return response()->json(['message' => 'No data found'], 404);
+        }
+
+        // Mengembalikan data dalam format JSON
+        return response()->json(['status' => 'success', 'data' => $result]);
+    }
+
+    public function updateBulkConfig(Request $request)
+    {
+        // 1. Validasi Input dari Android
+        $request->validate([
+            'user_id' => 'required|string',
+            'configs' => 'required|array',
+            'configs.*.id' => 'required|string', // Ini adalah userconfigrulesid
+            'configs.*.value' => 'required|string', // Ini adalah configvalues
+        ]);
+
+        $userId = $request->user_id;
+        $configs = $request->configs;
+
+        // 2. Mulai Transaksi Database
+        DB::beginTransaction();
+
+        try {
+            foreach ($configs as $config) {
+                // 3. Gunakan updateOrInsert (Upsert)
+                // Cocokkan kombinasi userid dan aturan ID-nya
+                DB::table('usersconfig')->updateOrInsert(
+                    [
+                        'userid' => $userId,
+                        'userconfigrulesid' => $config['id'],
+                    ],
+                    [
+                        // Jika sudah ada, update nilainya. Jika belum, insert baru.
+                        'configvalues' => $config['value']
+                    ]
+                );
+            }
+
+            // 4. Jika semua berhasil, simpan permanen ke database
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => count($configs) . ' pengaturan berhasil diperbarui.'
+            ], 200);
+
+        } catch (Exception $e) {
+            // 5. Batalkan jika ada error
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyimpan pengaturan: ' . $e->getMessage()
             ], 500);
         }
     }

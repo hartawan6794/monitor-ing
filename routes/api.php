@@ -34,6 +34,8 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/config', [UserController::class, 'getUserConfig']);
+    Route::post('/users/config', [UserController::class, 'updateBulkConfig']);
 
     // Master Data Dropdown
     Route::get('/master/divisions', [MasterDataController::class, 'divisions']);
@@ -42,6 +44,7 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
     Route::get('/master/product-groups', [MasterDataController::class, 'productGroups']);
     Route::get('/master/product-brands', [MasterDataController::class, 'productBrands']);
     Route::get('/master/accounts', [MasterDataController::class, 'accounts']);
+    Route::get('/master/user-config-rules', [MasterDataController::class, 'userConfigRules']);
 
     // Laporan Stok
     Route::get('/report/stock', [ReportController::class, 'stockReport']);
