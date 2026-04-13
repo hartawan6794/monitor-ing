@@ -27,5 +27,3 @@
 
 <!-- Swiper Css -->
 <link rel="stylesheet" href="{{ asset('dist/assets/libs/swiper/swiper-bundle.min.css') }}">
-
-{{-- @vite('resources/css/app.css') --}}

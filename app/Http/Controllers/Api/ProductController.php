@@ -22,7 +22,9 @@ class ProductController extends Controller
             ->select(
                 'product.id as sku',
                 'product.name',
-                'product.salesprice1 as price',
+                'product.salesprice1 as price1',
+                'product.salesprice2 as price2',
+                'product.salesprice3 as price3',
                 DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock')
             )
             // Mengaplikasikan filter division dan department terlebih dahulu
@@ -40,7 +42,7 @@ class ProductController extends Controller
                         ->orWhere('product.id', 'LIKE', "%{$search}%");
                 });
             })
-            ->groupBy('product.id', 'product.name', 'product.salesprice1')
+            ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3')
             ->limit(100) // Batasi hasil menjadi 100 produk
             ->get();
 

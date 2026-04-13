@@ -2,6 +2,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- CSRF Token -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<!-- API Token (Sanctum, untuk dashboard JS) -->
+@if(isset($apiToken))
+<meta name="api-token" content="{{ $apiToken }}">
+<script>
+    // Simpan token ke sessionStorage agar bisa dipakai oleh komponen JS lain
+    (function() {
+        var t = document.querySelector('meta[name="api-token"]');
+        if (t && t.content) sessionStorage.setItem('api_token', t.content);
+    })();
+</script>
+@endif
 
 <title>{{ config('app.name', 'E-Office') }} - @yield('title')</title>
 <meta name="description" content="">
@@ -12,8 +23,6 @@
 
 <!-- Main JS -->
 <script src="{{ asset('dist/assets/js/main.js') }}"></script>
-
-{{-- @vite('resources/css/app.css') --}}
 
 <!-- Style Css -->
 <link rel="stylesheet" href="{{ asset('dist/assets/css/style.css') }}">

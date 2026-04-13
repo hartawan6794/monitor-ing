@@ -1,16 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-// use App\Http\Controllers;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthorizedServerController;
 use App\Http\Controllers\AvailableDatabaseController;
+use App\Http\Controllers\ConnectionWebController;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('home');
+})->name('landing');
 
 Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
 Route::resource('user', UserController::class);
@@ -32,3 +32,6 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 
 // Tambahkan di dalam grup route yang menggunakan auth middleware
 Route::get('/get-databases-by-server/{serverId}', [App\Http\Controllers\AvailableDatabaseController::class, 'fetchDatabasesFromServer'])->name('server.databases');
+
+// ── Koneksi portable (via web session, tidak butuh API token) ──
+Route::post('/connections/test', [ConnectionWebController::class, 'test'])->name('connections.test')->middleware('auth');

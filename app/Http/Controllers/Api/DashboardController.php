@@ -185,19 +185,23 @@ class DashboardController extends Controller
 
         $products = DB::table('salesdetail')
             ->join('product', 'salesdetail.productid', '=', 'product.id')
-            ->select('product.id', 'product.name', DB::raw('SUM(salesdetail.salesqty) as total_qty'))
+            ->select('product.id', 'product.name', DB::raw('SUM(salesdetail.salesqty) as total_qty'), DB::raw('SUM(salesdetail.netamount) as total_net'))
             ->whereBetween('salesdetail.transdate', $dates)
             ->groupBy('product.id', 'product.name')
-            ->orderByDesc('total_qty')
+            ->orderByDesc('total_net')
             ->limit(5)
             ->get()
             ->map(function ($item, $index) {
                 return [
                     'rank' => $index + 1,
-                    'id' => $item->id, // Tambahan untuk referensi
+                    'id' => $item->id,
                     'title' => $item->name,
-                    'qty' => $item->total_qty, // Angka asli
-                    'subtitle' => number_format($item->total_qty, 0, ',', '.') . ' Terjual'
+                    'qty' => $item->total_qty,
+                    'subtitle' => number_format($item->total_qty, 0, ',', '.') . ' Terjual',
+                    // Fields for Web Dashboard
+                    'product_name' => $item->name,
+                    'total_qty' => $item->total_qty,
+                    'total_net' => $item->total_net
                 ];
             });
 
@@ -215,7 +219,7 @@ class DashboardController extends Controller
         $salesmen = DB::table('salespayments')
             ->join('sales', 'salespayments.salesidref', '=', 'sales.salesid')
             ->join('salesman', 'sales.salesmanid', '=', 'salesman.id')
-            ->select('salesman.name', DB::raw('SUM(salespayments.debit) as omzet'))
+            ->select('salesman.name', DB::raw('SUM(salespayments.debit) as omzet'), DB::raw('COUNT(DISTINCT sales.salesid) as total_invoice'))
             ->whereBetween('salespayments.transdate', $dates)
             ->groupBy('salesman.id', 'salesman.name')
             ->orderByDesc('omzet')
@@ -225,7 +229,11 @@ class DashboardController extends Controller
                 return [
                     'rank' => $index + 1,
                     'title' => $item->name,
-                    'subtitle' => 'Omzet: Rp ' . number_format($item->omzet, 0, ',', '.')
+                    'subtitle' => 'Omzet: Rp ' . number_format($item->omzet, 0, ',', '.'),
+                    // Fields for web dashboard
+                    'salesman_name' => $item->name,
+                    'total_sales' => $item->omzet,
+                    'total_invoice' => $item->total_invoice
                 ];
             });
 
@@ -296,12 +304,6 @@ class DashboardController extends Controller
             ->where('sales.kind', 0)
             ->sum('salesdetail.netamount');
 
-        // 2. Return Penjualan Hari Ini (Dari jurnal Akun Retur Penjualan 401.002, 402.002, 403.002)
-        // $return_penjualan = DB::table('journaltrans')
-        //     ->whereIn('accountid', ['401.002', '402.002', '403.002'])
-        //     ->whereDate('jtdate', $today)
-        //     ->sum(DB::raw('debit - credit'));
-
         $return_penjualan = DB::table('salesdetail')
             ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
             ->whereDate('sales.salesdate', $today)
@@ -316,9 +318,9 @@ class DashboardController extends Controller
             ->where('sales.kind', 0)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
-                      ->from('salespayments')
-                      ->whereColumn('salespayments.salesidref', 'sales.salesid')
-                      ->where('salespayments.paymenttype', 1);
+                    ->from('salespayments')
+                    ->whereColumn('salespayments.salesidref', 'sales.salesid')
+                    ->where('salespayments.paymenttype', 1);
             })
             ->sum('salesdetail.netamount');
 
@@ -393,6 +395,59 @@ class DashboardController extends Controller
                     'penjualan' => array_values($penjualan_array),
                     'order' => array_values($order_array)
                 ]
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/dashboard/chart-monthly",
+     *     tags={"Dashboard"},
+     *     summary="Grafik Penjualan Bulanan (Bulanan dalam 1 tahun) untuk Dashboard Web",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(response=200, description="Sukses")
+     * )
+     */
+    public function monthlyChart()
+    {
+        $currentYear = Carbon::now()->year;
+
+        // Ambil penjualan bulanan (kind = 0)
+        $sales = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereYear('sales.salesdate', $currentYear)
+            ->where('sales.kind', 0)
+            ->selectRaw('MONTH(sales.salesdate) as month, SUM(salesdetail.netamount) as total')
+            ->groupByRaw('MONTH(sales.salesdate)')
+            ->pluck('total', 'month')->toArray();
+
+        // Ambil retur bulanan (kind = 1)
+        $returns = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereYear('sales.salesdate', $currentYear)
+            ->where('sales.kind', 1)
+            ->selectRaw('MONTH(sales.salesdate) as month, SUM(salesdetail.netamount) as total')
+            ->groupByRaw('MONTH(sales.salesdate)')
+            ->pluck('total', 'month')->toArray();
+
+        // Format ke dalam array 12 bulan
+        $salesArray = [];
+        $returnsArray = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $salesArray[] = isset($sales[$i]) ? (float) $sales[$i] : 0;
+            $returnsArray[] = isset($returns[$i]) ? (float) $returns[$i] : 0;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                'penjualan' => $salesArray,
+                'retur' => $returnsArray
             ]
         ]);
     }
