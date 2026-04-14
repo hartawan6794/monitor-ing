@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Log;
 
 class SalesController extends Controller
 {
@@ -317,6 +318,33 @@ class SalesController extends Controller
      *     summary="Membuat Sales Order Baru sekaligus Pemotongan Stok",
      *     description="Simpan transaksi SO baru dan langsung memotong tabel stok (Inventory).",
      *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"salesdate", "salestype", "customerid", "division", "usercreate", "items"},
+     *             @OA\Property(property="salesdate", type="string", format="date", example="2023-10-27"),
+     *             @OA\Property(property="salestype", type="integer", example=0, description="0=Penjualan, 1=Retur"),
+     *             @OA\Property(property="customerid", type="string", example="CUST001"),
+     *             @OA\Property(property="salesmanid", type="string", example="SALES001", description="Opsional"),
+     *             @OA\Property(property="division", type="string", example="01"),
+     *             @OA\Property(property="usercreate", type="string", example="admin"),
+     *             @OA\Property(property="items", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="productid", type="string", example="PROD001"),
+     *                     @OA\Property(property="unit", type="string", example="PCS"),
+     *                     @OA\Property(property="salesqty", type="number", format="float", example=2),
+     *                     @OA\Property(property="price", type="number", format="float", example=100000),
+     *                     @OA\Property(property="disc_percent", type="number", format="float", example=10),
+     *                     @OA\Property(property="tax", type="number", format="float", example=11000),
+     *                     @OA\Property(property="memo", type="string", example="Order dari Budi")
+     *                 )
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=201, description="Berhasil"),
      *     @OA\Response(response=400, description="Bad Request"),
      *     @OA\Response(response=500, description="Server Error")
@@ -328,7 +356,6 @@ class SalesController extends Controller
             'salesdate' => 'required|date',
             'salestype' => 'required|integer',
             'customerid' => 'required|string',
-            // 'salesmanid'  => 'required|string',
             'division' => 'required|string',
             'usercreate' => 'required|string',
             'details' => 'required|array|min:1',
@@ -336,7 +363,7 @@ class SalesController extends Controller
             'details.*.salesqty' => 'required|numeric',
             'details.*.unit' => 'required|string',
             'details.*.price' => 'required|numeric',
-            // 'details.*.departement' => 'required|string',
+            'details.*.departement' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -357,7 +384,7 @@ class SalesController extends Controller
                 throw new \Exception("Divisi tidak ditemukan!");
             }
 
-            $salesmanid = "001";
+            $salesmanid = DB::table('customer')->where('id', $request->customerid)->first()->defsalesmanid ?? "001";
 
             // 1. Format ID Sales Order
             $rawFormatSO = $div->frmsalesorderid;
@@ -366,21 +393,20 @@ class SalesController extends Controller
             $soId = $prefixSO . str_pad($nextNumberSO, 6, "0", STR_PAD_LEFT);
 
             // 2. Format ID Inventory (Sesuai instruksi khusus)
-            $rawFormatInv = $div->frminventoryid;
-            $prefixInv = str_replace('%0:6.6d', '', $rawFormatInv);
-            $nextNumberInv = $div->inventoryidno + 1;
-            $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
+            // $rawFormatInv = $div->frminventoryid;
+            // $prefixInv = str_replace('%0:6.6d', '', $rawFormatInv);
+            // $nextNumberInv = $div->inventoryidno + 1;
+            // $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
 
             // Update nomor urut di tabel divisi
             DB::table('division')
                 ->where('id', $request->division)
                 ->update([
                     'salesorderidno' => $nextNumberSO,
-                    'inventoryidno' => $nextNumberInv
                 ]);
 
             $currentTime = date('H:i:s');
-            $currentDateTime = $request->salesdate . ' ' . $currentTime;
+            // $currentDateTime = $request->salesdate . ' ' . $currentTime;
 
             // B. INSERT KE TABEL HEADER: salesorder
             DB::table('salesorder')->insert([
@@ -454,32 +480,32 @@ class SalesController extends Controller
                     'netamount' => $gross,
                     'cogs' => $cogs,
                     'memo' => '-',
-                    'departement' => "001101",
-                    'servicedoerid' => $salesmanid,
+                    'departement' => $detail['departement'],
+                    'servicedoerid' => "001",
                     'usercreate' => $request->usercreate,
                     'useredit' => $request->usercreate,
                 ]);
 
-                // 2. Insert tabel Inventory untuk memotong stok barang (- qty)
-                DB::table('inventory')->insert([
-                    'transid' => $invId,
-                    'transdate' => $currentDateTime,
-                    'departement' => "001101",
-                    'division' => $request->division,
-                    'supplier' => '001001',
-                    'productid' => $detail['productid'],
-                    'snproduct' => '',
-                    'invin' => 0,
-                    'invout' => $qty,
-                    'invvalue' => $cogs,
-                    'reference' => $soId,
-                    'datereference' => $dateRef,
-                    'transtype' => 3,
-                    'memo' => 'Stock Out for SO: ' . $soId,
-                    'usercreate' => $request->usercreate,
-                    'useredit' => '',
-                    'isempty' => 0
-                ]);
+                // // 2. Insert tabel Inventory untuk memotong stok barang (- qty)
+                // DB::table('inventory')->insert([
+                //     'transid' => $invId,
+                //     'transdate' => $currentDateTime,
+                //     'departement' => "001101",
+                //     'division' => $request->division,
+                //     'supplier' => '001001',
+                //     'productid' => $detail['productid'],
+                //     'snproduct' => '',
+                //     'invin' => 0,
+                //     'invout' => $qty,
+                //     'invvalue' => $cogs,
+                //     'reference' => $soId,
+                //     'datereference' => $dateRef,
+                //     'transtype' => 3,
+                //     'memo' => 'Stock Out for SO: ' . $soId,
+                //     'usercreate' => $request->usercreate,
+                //     'useredit' => '',
+                //     'isempty' => 0
+                // ]);
             }
 
             // E. COMMIT SELURUH TRANSAKSI
@@ -489,7 +515,7 @@ class SalesController extends Controller
                 'status' => 'success',
                 'message' => 'Order Penjualan berhasil disimpan dan stok terpotong.',
                 'salesid' => $soId,
-                'inventory_transid' => $invId
+                // 'inventory_transid' => $invId
             ], 201);
 
         } catch (\Exception $e) {

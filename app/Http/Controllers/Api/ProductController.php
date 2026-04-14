@@ -16,16 +16,24 @@ class ProductController extends Controller
         $search = $request->query('search');
         $divisionId = $request->query('devisi');
         $departmentId = $request->query('departement');
+        $limit = $request->query('limit');
 
         $products = DB::table('product')
             ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
+            ->leftJoin('departement', 'inventory.departement', '=', 'departement.id')
+            ->leftJoin('division', 'inventory.division', '=', 'division.id')
             ->select(
                 'product.id as sku',
                 'product.name',
                 'product.salesprice1 as price1',
                 'product.salesprice2 as price2',
                 'product.salesprice3 as price3',
-                DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock')
+                DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock'),
+                'departement.id as departement_id',
+                'departement.name as departement_name',
+                'division.id as division_id',
+                'division.description as division_name',
+                'product.defunit as unit'
             )
             // Mengaplikasikan filter division dan department terlebih dahulu
             ->when($divisionId, function ($query, $divisionId) {
@@ -42,16 +50,51 @@ class ProductController extends Controller
                         ->orWhere('product.id', 'LIKE', "%{$search}%");
                 });
             })
-            ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3')
-            ->limit(100) // Batasi hasil menjadi 100 produk
+            ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3', 'departement.id', 'departement.name', 'division.id', 'division.description', 'product.defunit')
+            ->when($limit, function ($query, $limit) {
+                return $query->limit($limit);
+            })
             ->get();
 
         return response()->json(['status' => 'success', 'data' => $products]);
     }
+
     /**
-     * GET API: Alert Stok Menipis (Stok <= 5)
-     * URL: /api/low-stock-alert?limit=5 (Untuk Dashboard)
-     * URL: /api/low-stock-alert (Untuk Lihat Semua)
+     * @OA\Get(
+     *     path="/products/low-stock-alert",
+     *     summary="Alert Stok Menipis (Stok <= 5)",
+     *     tags={"Product"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Limit jumlah data",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Data produk dengan stok menipis berhasil diambil.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Data produk dengan stok menipis berhasil diambil."),
+     *             @OA\Property(property="count_returned", type="integer", example=5),
+     *             @OA\Property(property="total_data", type="integer", example=10),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="sku", type="string", example="PROD001"),
+     *                     @OA\Property(property="name", type="string", example="Produk 1"),
+     *                     @OA\Property(property="price", type="number", example=10000),
+     *                     @OA\Property(property="stock", type="integer", example=3)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function lowStockAlert(Request $request)
     {
@@ -101,6 +144,71 @@ class ProductController extends Controller
         }
     }
 
+    /**
+     * @OA\Put(
+     *     path="/products/{id}",
+     *     summary="Update Produk",
+     *     tags={"Product"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="X-Server-IP",
+     *         in="header",
+     *         required=true,
+     *         description="IP Server",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Database-Name",
+     *         in="header",
+     *         required=true,
+     *         description="Nama Database",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-DB-Username",
+     *         in="header",
+     *         required=true,
+     *         description="Username Database",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-DB-Password",
+     *         in="header",
+     *         required=true,
+     *         description="Password Database",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID Produk",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         required=true,
+     *         description="Nama Produk",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="price",
+     *         in="query",
+     *         required=true,
+     *         description="Harga Produk",
+     *         @OA\Schema(type="number")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Produk berhasil diupdate.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Produk berhasil diupdate.")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         // Validasi input

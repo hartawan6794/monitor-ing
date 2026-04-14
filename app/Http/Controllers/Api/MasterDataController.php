@@ -347,22 +347,52 @@ class MasterDataController extends Controller
 
             // WAJIB: Gunakan limit agar response cepat sampai ke HP user
             $data = $query->select(
-                    'id', 
-                    'name', 
-                    'address', 
-                    'telephone', 
-                    'creditlimit',
-                    // Subquery untuk menghitung Piutang berjalan (Total Penjualan Kredit - Total Pembayaran Piutang)
-                    DB::raw("(
+                'id',
+                'name',
+                'address',
+                'telephone',
+                'creditlimit',
+                // Subquery untuk menghitung Piutang berjalan (Total Penjualan Kredit - Total Pembayaran Piutang)
+                DB::raw("(
                         (SELECT COALESCE(SUM(sd.netamount), 0) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.salestype = 2) 
                         - 
                         (SELECT COALESCE(SUM(rp.amount), 0) FROM receivablepayment rp WHERE rp.customerid = customer.id)
                     ) as piutang")
-                )
+            )
                 ->orderBy('name', 'asc')
                 ->limit(20)
                 ->get();
 
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/master/company",
+     *     tags={"Master"},
+     *     summary="Daftar perusahaan",
+     *     description="Mengambil data perusahaan",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getCompany()
+    {
+        try {
+            //jadikan array
+            $data = DB::table('company')->select('name', 'address', 'city')->first();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);

@@ -258,7 +258,7 @@
                 ],
                 "summary": "Dashboard Salesman",
                 "description": "Mengambil data total penjualan, return penjualan, penjualan tunai, penerimaan piutang, biaya operasional, kas di tangan dan penjualan & order 7 hari terakhir.",
-                "operationId": "89176552893d2c50c7af623c184bfa88",
+                "operationId": "22d6ce3aaed8393b5b82b4dcc075b148",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/X-Server-IP"
@@ -279,6 +279,39 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/chart-monthly": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Grafik Penjualan Bulanan (Bulanan dalam 1 tahun) untuk Dashboard Web",
+                "operationId": "de1865eda050dfbb14e2bdcfd7086e21",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
                     }
                 },
                 "security": [
@@ -375,6 +408,1019 @@
                     }
                 }
             }
+        },
+        "/master/divisions": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar divisi",
+                "description": "Mengambil data devisi",
+                "operationId": "748e77e2dd48ac2957da97697e9ff4ca",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/departments": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar departemen",
+                "description": "Mengambil data departemen",
+                "operationId": "b66eca7505bf1addc18450d0da1e6600",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "division_id",
+                        "in": "query",
+                        "description": "ID divisi",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/suppliers": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar supplier",
+                "description": "Mengambil data supplier",
+                "operationId": "81d72ce5d556a98593d1b8bacc768c0f",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/product-groups": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar group produk",
+                "description": "Mengambil data group produk",
+                "operationId": "bf53f8d66a73181b6f09a099dd8a9a57",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/product-brands": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar brand produk",
+                "description": "Mengambil data brand produk",
+                "operationId": "859da4d9f0a7d1ed571214c936937c14",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/accounts": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar akun",
+                "description": "Mengambil data akun",
+                "operationId": "54a43c885142576d16c1b14ba52c9dee",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/user-config-rules": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar user config rules",
+                "description": "Mengambil data user config rules",
+                "operationId": "3ed44cb701f218cecf92d0950b824994",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/customer-groups": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar group pelanggan",
+                "description": "Mengambil data group pelanggan",
+                "operationId": "d2856e558b6d5ed0ad0b5d61ab574e92",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Pencarian Nama Group Pelanggan",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/customers": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar pelanggan",
+                "description": "Mengambil data pelanggan",
+                "operationId": "153908b2076b53dbf9d2ad7048bd567a",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "customergroup_id",
+                        "in": "query",
+                        "description": "ID Group Pelanggan",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Pencarian Nama Pelanggan",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/company": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar perusahaan",
+                "description": "Mengambil data perusahaan",
+                "operationId": "194cdc1d3b1d6949dc3f62b197badb60",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products/low-stock-alert": {
+            "get": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Alert Stok Menipis (Stok <= 5)",
+                "operationId": "1fd97685a231ff33c08fa1a039acc9c7",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit jumlah data",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data produk dengan stok menipis berhasil diambil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data produk dengan stok menipis berhasil diambil."
+                                        },
+                                        "count_returned": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total_data": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "example": "PROD001"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Produk 1"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "stock": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products/{id}": {
+            "put": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Update Produk",
+                "operationId": "2ce632b9d1c0c445557821d09add7ec2",
+                "parameters": [
+                    {
+                        "name": "X-Server-IP",
+                        "in": "header",
+                        "description": "IP Server",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Database-Name",
+                        "in": "header",
+                        "description": "Nama Database",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-DB-Username",
+                        "in": "header",
+                        "description": "Username Database",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-DB-Password",
+                        "in": "header",
+                        "description": "Password Database",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Produk",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "description": "Nama Produk",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price",
+                        "in": "query",
+                        "description": "Harga Produk",
+                        "required": true,
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Produk berhasil diupdate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Produk berhasil diupdate."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/sales/history": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Riwayat Penjualan (Header Faktur)",
+                "description": "Mengambil daftar faktur penjualan dengan filter opsional. Total per faktur dihitung dari salesdetail.netamount.",
+                "operationId": "170020a27ec308a33bc5b62a4359f6ee",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Tanggal mulai (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Tanggal akhir (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "description": "Filter ID Customer",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "salesman_id",
+                        "in": "query",
+                        "description": "Filter ID Salesman",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kind",
+                        "in": "query",
+                        "description": "Jenis: 0=Penjualan, 1=Retur",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "payment_type",
+                        "in": "query",
+                        "description": "Tipe Pembayaran (dari paymenttype.id)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah data per halaman (default: 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/sales/{salesid}/detail": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Detail Item per Faktur",
+                "description": "Mengambil semua baris item (salesdetail) dari satu faktur berdasarkan salesid.",
+                "operationId": "7b8cc2810644a8f239cb5c0a845e7bd6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    },
+                    {
+                        "name": "salesid",
+                        "in": "path",
+                        "description": "ID Faktur (sales.salesid)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "404": {
+                        "description": "Faktur tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/sales/order": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Membuat Sales Order Baru sekaligus Pemotongan Stok",
+                "description": "Simpan transaksi SO baru dan langsung memotong tabel stok (Inventory).",
+                "operationId": "14e169154b05db03f1cba3cd98f2617f",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Server-IP"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Username"
+                    },
+                    {
+                        "$ref": "#/components/parameters/X-DB-Password"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "salesdate",
+                                    "salestype",
+                                    "customerid",
+                                    "division",
+                                    "usercreate",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "salesdate": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2023-10-27"
+                                    },
+                                    "salestype": {
+                                        "description": "0=Penjualan, 1=Retur",
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "customerid": {
+                                        "type": "string",
+                                        "example": "CUST001"
+                                    },
+                                    "salesmanid": {
+                                        "description": "Opsional",
+                                        "type": "string",
+                                        "example": "SALES001"
+                                    },
+                                    "division": {
+                                        "type": "string",
+                                        "example": "01"
+                                    },
+                                    "usercreate": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "productid": {
+                                                    "type": "string",
+                                                    "example": "PROD001"
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "PCS"
+                                                },
+                                                "salesqty": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 100000
+                                                },
+                                                "disc_percent": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 10
+                                                },
+                                                "tax": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 11000
+                                                },
+                                                "memo": {
+                                                    "type": "string",
+                                                    "example": "Order dari Budi"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -437,6 +1483,18 @@
         {
             "name": "Dynamic Connection",
             "description": "Dynamic Connection"
+        },
+        {
+            "name": "Master",
+            "description": "Master"
+        },
+        {
+            "name": "Product",
+            "description": "Product"
+        },
+        {
+            "name": "Sales",
+            "description": "Sales"
         }
     ]
 }

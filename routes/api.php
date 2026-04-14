@@ -74,6 +74,7 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
         Route::get('/user-config-rules', [MasterDataController::class, 'userConfigRules']);
         Route::get('/customer-groups', [MasterDataController::class, 'customerGroups']);
         Route::get('/customers', [MasterDataController::class, 'customers']);
+        Route::get('/company', [MasterDataController::class, 'getCompany']);
     });
 
 
