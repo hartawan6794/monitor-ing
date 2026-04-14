@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class SalesController extends Controller
 {
@@ -37,13 +38,13 @@ class SalesController extends Controller
     {
         // --- 1. Validasi Parameter ---
         $request->validate([
-            'date_from'    => 'nullable|date_format:Y-m-d',
-            'date_to'      => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
-            'customer_id'  => 'nullable|string',
-            'salesman_id'  => 'nullable|string',
-            'kind'         => 'nullable|in:0,1',
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+            'customer_id' => 'nullable|string',
+            'salesman_id' => 'nullable|string',
+            'kind' => 'nullable|in:0,1',
             'payment_type' => 'nullable|integer',
-            'per_page'     => 'nullable|integer|min:1|max:200',
+            'per_page' => 'nullable|integer|min:1|max:200',
         ]);
 
         // --- 2. Default Range: hari ini jika tidak diisi ---
@@ -115,7 +116,7 @@ class SalesController extends Controller
         }
 
         // --- 5. Paginasi ---
-        $perPage   = $request->input('per_page', 15);
+        $perPage = $request->input('per_page', 15);
         $paginated = $query->paginate($perPage);
 
         // --- 6. Format Output ---
@@ -124,43 +125,43 @@ class SalesController extends Controller
 
         $items = collect($paginated->items())->map(function ($row) use ($kindLabel, $typeLabel) {
             return [
-                'salesid'       => $row->salesid,
-                'salesidref'    => $row->salesidref ?: null,
-                'salesdate'     => $row->salesdate,
-                'salestime'     => $row->salestime,
-                'kind'          => $row->kind,
-                'kind_label'    => $kindLabel[$row->kind] ?? '-',
-                'salestype'     => $row->salestype,
+                'salesid' => $row->salesid,
+                'salesidref' => $row->salesidref ?: null,
+                'salesdate' => $row->salesdate,
+                'salestime' => $row->salestime,
+                'kind' => $row->kind,
+                'kind_label' => $kindLabel[$row->kind] ?? '-',
+                'salestype' => $row->salestype,
                 'salestype_label' => $typeLabel[$row->salestype] ?? '-',
-                'payment_type'  => $row->payment_type,
-                'customer'      => [
-                    'id'   => $row->customer_id,
+                'payment_type' => $row->payment_type,
+                'customer' => [
+                    'id' => $row->customer_id,
                     'name' => $row->customer_name,
                 ],
-                'salesman'      => [
-                    'id'   => $row->salesman_id,
+                'salesman' => [
+                    'id' => $row->salesman_id,
                     'name' => $row->salesman_name,
                 ],
-                'net_amount'    => (float) $row->net_amount,
+                'net_amount' => (float) $row->net_amount,
             ];
         });
 
         return response()->json([
-            'status'         => 'success',
+            'status' => 'success',
             'filter_applied' => [
-                'date_from'    => $dateFrom->toDateString(),
-                'date_to'      => $dateTo->toDateString(),
-                'customer_id'  => $request->customer_id,
-                'salesman_id'  => $request->salesman_id,
-                'kind'         => $request->kind !== null ? (int) $request->kind : null,
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+                'customer_id' => $request->customer_id,
+                'salesman_id' => $request->salesman_id,
+                'kind' => $request->kind !== null ? (int) $request->kind : null,
                 'payment_type' => $request->payment_type !== null ? (int) $request->payment_type : null,
             ],
-            'data'           => $items,
-            'pagination'     => [
+            'data' => $items,
+            'pagination' => [
                 'current_page' => $paginated->currentPage(),
-                'per_page'     => $paginated->perPage(),
-                'total'        => $paginated->total(),
-                'last_page'    => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
             ],
         ]);
     }
@@ -206,7 +207,7 @@ class SalesController extends Controller
 
         if (!$header) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Faktur tidak ditemukan.',
             ], 404);
         }
@@ -256,56 +257,247 @@ class SalesController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data'   => [
+            'data' => [
                 'header' => [
-                    'salesid'         => $header->salesid,
-                    'salesidref'      => $header->salesidref ?: null,
-                    'salesdate'       => $header->salesdate,
-                    'salestime'       => $header->salestime,
-                    'kind'            => $header->kind,
-                    'kind_label'      => $kindLabel[$header->kind] ?? '-',
-                    'salestype'       => $header->salestype,
+                    'salesid' => $header->salesid,
+                    'salesidref' => $header->salesidref ?: null,
+                    'salesdate' => $header->salesdate,
+                    'salestime' => $header->salestime,
+                    'kind' => $header->kind,
+                    'kind_label' => $kindLabel[$header->kind] ?? '-',
+                    'salestype' => $header->salestype,
                     'salestype_label' => $typeLabel[$header->salestype] ?? '-',
-                    'memo'            => $header->memo,
-                    'customer'        => [
-                        'id'   => $header->customer_id,
+                    'memo' => $header->memo,
+                    'customer' => [
+                        'id' => $header->customer_id,
                         'name' => $header->customer_name,
                     ],
-                    'salesman'        => [
-                        'id'   => $header->salesman_id,
+                    'salesman' => [
+                        'id' => $header->salesman_id,
                         'name' => $header->salesman_name,
                     ],
-                    'grand_total'     => (float) $grandTotal,
+                    'grand_total' => (float) $grandTotal,
                 ],
-                'items'    => $details->map(function ($item) {
+                'items' => $details->map(function ($item) {
                     return [
-                        'transid'      => $item->transid,
-                        'product_id'   => $item->productid,
+                        'transid' => $item->transid,
+                        'product_id' => $item->productid,
                         'product_name' => $item->product_name,
-                        'unit'         => $item->unit,
-                        'qty'          => (float) $item->salesqty,
-                        'return_qty'   => (float) $item->returnqty,
-                        'price'        => (float) $item->price,
+                        'unit' => $item->unit,
+                        'qty' => (float) $item->salesqty,
+                        'return_qty' => (float) $item->returnqty,
+                        'price' => (float) $item->price,
                         'gross_amount' => (float) $item->grossamount,
-                        'disc_value'   => (float) $item->valuedisc,
+                        'disc_value' => (float) $item->valuedisc,
                         'disc_percent' => $item->percentdisc,
-                        'net_amount'   => (float) $item->netamount,
-                        'cogs'         => (float) $item->cogs,
-                        'tax'          => (float) $item->salestax,
-                        'memo'         => $item->memo,
+                        'net_amount' => (float) $item->netamount,
+                        'cogs' => (float) $item->cogs,
+                        'tax' => (float) $item->salestax,
+                        'memo' => $item->memo,
                     ];
                 }),
                 'payments' => $payments->map(function ($p) {
                     return [
-                        'transid'           => $p->transid,
-                        'transdate'         => $p->transdate,
-                        'amount'            => (float) $p->debit,
-                        'payment_type_id'   => $p->payment_type_id,
+                        'transid' => $p->transid,
+                        'transdate' => $p->transdate,
+                        'amount' => (float) $p->debit,
+                        'payment_type_id' => $p->payment_type_id,
                         'payment_type_name' => $p->payment_type_name,
-                        'ref'               => $p->refpayment,
+                        'ref' => $p->refpayment,
                     ];
                 }),
             ],
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/sales/order",
+     *     tags={"Sales"},
+     *     summary="Membuat Sales Order Baru sekaligus Pemotongan Stok",
+     *     description="Simpan transaksi SO baru dan langsung memotong tabel stok (Inventory).",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(response=201, description="Berhasil"),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=500, description="Server Error")
+     * )
+     */
+    public function storeSalesOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'salesdate' => 'required|date',
+            'salestype' => 'required|integer',
+            'customerid' => 'required|string',
+            // 'salesmanid'  => 'required|string',
+            'division' => 'required|string',
+            'usercreate' => 'required|string',
+            'details' => 'required|array|min:1',
+            'details.*.productid' => 'required|string',
+            'details.*.salesqty' => 'required|numeric',
+            'details.*.unit' => 'required|string',
+            'details.*.price' => 'required|numeric',
+            // 'details.*.departement' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap atau tidak valid.',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // A. Increment Auto ID untuk Sales Order ATAU Inventory
+            $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
+
+            if (!$div) {
+                throw new \Exception("Divisi tidak ditemukan!");
+            }
+
+            $salesmanid = "001";
+
+            // 1. Format ID Sales Order
+            $rawFormatSO = $div->frmsalesorderid;
+            $prefixSO = str_replace('%0:6.6d', '', $rawFormatSO);
+            $nextNumberSO = $div->salesorderidno + 1;
+            $soId = $prefixSO . str_pad($nextNumberSO, 6, "0", STR_PAD_LEFT);
+
+            // 2. Format ID Inventory (Sesuai instruksi khusus)
+            $rawFormatInv = $div->frminventoryid;
+            $prefixInv = str_replace('%0:6.6d', '', $rawFormatInv);
+            $nextNumberInv = $div->inventoryidno + 1;
+            $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
+
+            // Update nomor urut di tabel divisi
+            DB::table('division')
+                ->where('id', $request->division)
+                ->update([
+                    'salesorderidno' => $nextNumberSO,
+                    'inventoryidno' => $nextNumberInv
+                ]);
+
+            $currentTime = date('H:i:s');
+            $currentDateTime = $request->salesdate . ' ' . $currentTime;
+
+            // B. INSERT KE TABEL HEADER: salesorder
+            DB::table('salesorder')->insert([
+                'salesid' => $soId,
+                'salesidref' => $soId,
+                'salesdate' => $request->salesdate,
+                'salestime' => $currentTime,
+                'salestype' => $request->salestype,
+                'kind' => 0, // 0 = standard sale order
+                'earlydiscdays' => 0,
+                'earlydiscvalue' => 0,
+                'duedays' => 0,
+                'customerid' => $request->customerid,
+                'currtrans' => 'IDR',
+                'ratedefault' => 9000,
+                'rateused' => 9000,
+                'salesmanid' => $salesmanid,
+                'salespercentdisc' => 0,
+                'salesvaluedisc' => 0,
+                'memo' => $request->memo ?? '-',
+                'memoedit' => '-',
+                'division' => $request->division,
+                'printed' => 0,
+                'shipment' => 0,
+                'accepted' => 0,
+                'dateaccepted' => null,
+                'usercreate' => $request->usercreate,
+                'useredit' => $request->usercreate,
+                'paidinfull' => 0,
+                'paidinfulldate' => null,
+                'paidinfullref' => '',
+                'taxprint' => 0,
+                'taxprintid' => '',
+                'orderid' => null,
+                'billto' => $request->customerid,
+                'shipto' => null
+            ]);
+
+            // C. Ambil Harga Pokok (cogs) dari product
+            $productsData = DB::table('product')
+                ->whereIn('id', collect($request->details)->pluck('productid'))
+                ->get()
+                ->keyBy('id');
+
+            // D. LOOPING INSERT DETAIL & INVENTORY PENGURANGAN (Out)
+            $dateRef = date('Ymd', strtotime($request->salesdate)) . mt_rand(10000000, 99999999);
+
+            foreach ($request->details as $detail) {
+                $qty = (float) $detail['salesqty'];
+                $price = (float) $detail['price'];
+                $gross = $qty * $price;
+
+                $productDb = $productsData[$detail['productid']] ?? null;
+                $cogs = $productDb ? (float) $productDb->costprice : 0;
+
+                // 1. Insert Sales Order Detail
+                DB::table('salesorderdetail')->insert([
+                    'transdate' => $request->salesdate,
+                    'salesid' => $soId,
+                    'salesidref' => $soId,
+                    'productid' => $detail['productid'],
+                    'snproduct' => '',
+                    'salesqty' => $qty,
+                    'unit' => $detail['unit'],
+                    'price' => $price,
+                    'grossamount' => $gross,
+                    'taxid' => 0,
+                    'salestax' => 0,
+                    'percentdisc' => '0',
+                    'valuedisc' => 0,
+                    'netamount' => $gross,
+                    'cogs' => $cogs,
+                    'memo' => '-',
+                    'departement' => "001101",
+                    'servicedoerid' => $salesmanid,
+                    'usercreate' => $request->usercreate,
+                    'useredit' => $request->usercreate,
+                ]);
+
+                // 2. Insert tabel Inventory untuk memotong stok barang (- qty)
+                DB::table('inventory')->insert([
+                    'transid' => $invId,
+                    'transdate' => $currentDateTime,
+                    'departement' => "001101",
+                    'division' => $request->division,
+                    'supplier' => '001001',
+                    'productid' => $detail['productid'],
+                    'snproduct' => '',
+                    'invin' => 0,
+                    'invout' => $qty,
+                    'invvalue' => $cogs,
+                    'reference' => $soId,
+                    'datereference' => $dateRef,
+                    'transtype' => 3,
+                    'memo' => 'Stock Out for SO: ' . $soId,
+                    'usercreate' => $request->usercreate,
+                    'useredit' => '',
+                    'isempty' => 0
+                ]);
+            }
+
+            // E. COMMIT SELURUH TRANSAKSI
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order Penjualan berhasil disimpan dan stok terpotong.',
+                'salesid' => $soId,
+                'inventory_transid' => $invId
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
