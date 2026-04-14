@@ -346,7 +346,19 @@ class MasterDataController extends Controller
             }
 
             // WAJIB: Gunakan limit agar response cepat sampai ke HP user
-            $data = $query->select('id', 'name', 'address', 'telephone')
+            $data = $query->select(
+                    'id', 
+                    'name', 
+                    'address', 
+                    'telephone', 
+                    'creditlimit',
+                    // Subquery untuk menghitung Piutang berjalan (Total Penjualan Kredit - Total Pembayaran Piutang)
+                    DB::raw("(
+                        (SELECT COALESCE(SUM(sd.netamount), 0) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.salestype = 2) 
+                        - 
+                        (SELECT COALESCE(SUM(rp.amount), 0) FROM receivablepayment rp WHERE rp.customerid = customer.id)
+                    ) as piutang")
+                )
                 ->orderBy('name', 'asc')
                 ->limit(20)
                 ->get();
