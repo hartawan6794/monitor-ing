@@ -7,10 +7,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthorizedServerController;
 use App\Http\Controllers\AvailableDatabaseController;
 use App\Http\Controllers\ConnectionWebController;
+use App\Http\Controllers\PricingPlanController;
 
-Route::get('/', function () {
-    return view('home');
-})->name('landing');
+Route::get('/', [App\Http\Controllers\LandingPageController::class, 'index'])->name('landing');
 
 Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
 Route::resource('user', UserController::class);
@@ -23,6 +22,9 @@ Route::resource('available_database', AvailableDatabaseController::class);
 Route::get('/available-database/manage/{serverId}', [AvailableDatabaseController::class, 'manage'])->name('available_database.manage');
 Route::post('/available-database/sync/{serverId}', [AvailableDatabaseController::class, 'sync'])->name('available_database.sync');
 Route::post('/available-database/restore/{id}', [AvailableDatabaseController::class, 'restore'])->name('available_database.restore');
+
+Route::get('pricing_plan/data', [PricingPlanController::class, 'getData'])->name('pricing_plan.data');
+Route::resource('pricing_plan', PricingPlanController::class);
 
 Auth::routes();
 

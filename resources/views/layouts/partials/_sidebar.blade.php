@@ -125,6 +125,13 @@
                 </ul>
             </li>
 
+            <li class="slide {{ request()->routeIs('pricing_plan.*') ? 'active' : '' }}">
+                <a href="{{ route('pricing_plan.index') }}" class="side-menu__item">
+                    <i class="bx bx-dollar-circle side-menu__icon"></i>
+                    <span class="side-menu__label">Harga & Paket</span>
+                </a>
+            </li>
+
         </ul>
         <div class="slide-right" id="slide-right"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24"
                 height="24" viewBox="0 0 24 24">

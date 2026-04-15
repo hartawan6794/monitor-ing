@@ -865,116 +865,25 @@
                 <p class="section-desc" style="margin:0 auto;">Tersedia berbagai pilihan paket yang dapat disesuaikan dengan skala bisnis Anda.</p>
             </div>
             <div class="pricing-grid">
-                <!-- Basic -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <div class="pricing-name">Basic</div>
-                        <div class="pricing-price">Free Tier<span>/forever</span></div>
+                @foreach($pricing_plans as $plan)
+                    <div class="pricing-card {{ $plan->is_featured ? 'featured' : '' }}">
+                        <div class="pricing-header">
+                            <div class="pricing-name" style="{{ $plan->is_featured ? 'color:var(--primary);' : '' }}">{{ $plan->name }}</div>
+                            <div class="pricing-price">{{ $plan->price }}<span>{{ $plan->price_subtext }}</span></div>
+                        </div>
+                        <ul class="pricing-features">
+                            @foreach($plan->features as $feature)
+                                <li style="{{ $feature->is_highlighted ? 'color:var(--text); font-weight:600;' : '' }}">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    {{ $feature->name }}
+                                </li>
+                            @endforeach
+                        </ul>
+                        <a href="{{ $plan->button_link ?? route('login') }}" class="btn-{{ $plan->is_featured ? 'primary' : 'secondary' }} btn-pricing">{{ $plan->button_text ?? 'Mulai Sekarang' }}</a>
                     </div>
-                    <ul class="pricing-features">
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Penjualan & Order
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Riwayat Transaksi
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Retur Penjualan
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Laporan Harian Penjualan
-                        </li>
-                    </ul>
-                    <a href="{{ route('login') }}" class="btn-secondary btn-pricing">Mulai Sekarang</a>
-                </div>
-
-                <!-- Pro -->
-                <div class="pricing-card featured">
-                    <div class="pricing-header">
-                        <div class="pricing-name" style="color:var(--primary);">Pro</div>
-                        <div class="pricing-price">Professional<span>/contact</span></div>
-                    </div>
-                    <ul class="pricing-features">
-                        <li style="color:var(--text); font-weight:600;">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Semua fitur Basic
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Stok Opname (Adjustment)
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Database Customer Terintegrasi
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Penerimaan Piutang
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Dashboard Analisis Konsumen
-                        </li>
-                    </ul>
-                    <a href="{{ route('login') }}" class="btn-primary btn-pricing">Mulai Uji Coba</a>
-                </div>
-
-                <!-- Ent -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <div class="pricing-name">Enterprise</div>
-                        <div class="pricing-price">Custom Pack<span>/consult</span></div>
-                    </div>
-                    <ul class="pricing-features">
-                        <li style="color:var(--text); font-weight:600;">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Semua fitur Pro
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Buku Besar (Ledger)
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Pencatatan Biaya & Operasional
-                        </li>
-                        <li>
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Sistem Otorisasi Owner
-                        </li>
-                    </ul>
-                    <a href="{{ route('login') }}" class="btn-secondary btn-pricing">Hubungi Kami</a>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>

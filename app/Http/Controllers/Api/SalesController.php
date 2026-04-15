@@ -312,8 +312,137 @@ class SalesController extends Controller
     }
 
     /**
-     * @OA\Post(
-     *     path="/sales/order",
+     * @OA\Get(
+     *     path="/sales/orders",
+     *     tags={"Sales"},
+     *     summary="Daftar Sales Order",
+     *     description="Mengambil daftar Sales Order dengan filter opsional berdasarkan customer dan kind.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
+     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Parameter(name="date_from", in="query", required=false, description="Tanggal mulai (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="date_to", in="query", required=false, description="Tanggal akhir (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="customer_id", in="query", required=false, description="Filter berdasarkan ID Customer", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="kind", in="query", required=false, description="Jenis order: 0=Standard, 1=Retur", @OA\Schema(type="integer", enum={0,1})),
+     *     @OA\Parameter(name="per_page", in="query", required=false, description="Jumlah data per halaman (default: 15)", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=422, description="Validasi gagal"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getSalesOrders(Request $request)
+    {
+        // --- 1. Validasi Parameter ---
+        $request->validate([
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+            'customer_id' => 'nullable|string',
+            'kind' => 'nullable|in:0,1',
+            'per_page' => 'nullable|integer|min:1|max:200',
+        ]);
+
+        // --- 2. Default Range: hari ini jika tidak diisi ---
+        $dateFrom = $request->filled('date_from')
+            ? Carbon::parse($request->date_from)->startOfDay()
+            : Carbon::today()->startOfDay();
+
+        $dateTo = $request->filled('date_to')
+            ? Carbon::parse($request->date_to)->endOfDay()
+            : Carbon::today()->endOfDay();
+
+        // --- 3. Build Query ---
+        $query = DB::table('salesorder')
+            ->join('customer', 'salesorder.customerid', '=', 'customer.id')
+            ->join('salesman', 'salesorder.salesmanid', '=', 'salesman.id')
+            ->select(
+                'salesorder.salesid',
+                'salesorder.salesidref',
+                'salesorder.salesdate',
+                'salesorder.salestime',
+                'salesorder.kind',
+                'salesorder.salestype',
+                'salesorder.accepted',
+                'salesorder.dateaccepted',
+                'salesorder.memo',
+                'customer.id as customer_id',
+                'customer.name as customer_name',
+                'salesman.id as salesman_id',
+                'salesman.name as salesman_name',
+                // Total nilai SO dari salesorderdetail
+                DB::raw('(
+                    SELECT COALESCE(SUM(sod.netamount), 0)
+                    FROM salesorderdetail sod
+                    WHERE sod.salesid = salesorder.salesid
+                ) as net_amount')
+            )
+            ->whereBetween('salesorder.salesdate', [$dateFrom, $dateTo])
+            ->orderBy('salesorder.salesdate', 'desc')
+            ->orderBy('salesorder.salesid', 'desc');
+
+        // --- 4. Filter Opsional ---
+        if ($request->filled('customer_id')) {
+            $query->where('salesorder.customerid', $request->customer_id);
+        }
+
+        if ($request->filled('kind')) {
+            $query->where('salesorder.kind', (int) $request->kind);
+        }
+
+        // --- 5. Paginasi ---
+        $perPage = $request->input('per_page', 15);
+        $paginated = $query->paginate($perPage);
+
+        // --- 6. Format Output ---
+        // kind label 0 sudah digunakan 1 masih dalam order bagaimana bahasanya
+        $kindLabel = [0 => 'Order', 1 => 'Sales'];
+        $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
+
+        $items = collect($paginated->items())->map(function ($row) use ($kindLabel, $typeLabel) {
+            return [
+                'salesid' => $row->salesid,
+                'salesidref' => $row->salesidref ?: null,
+                'salesdate' => $row->salesdate,
+                'salestime' => $row->salestime,
+                'kind' => $row->kind,
+                'kind_label' => $kindLabel[$row->kind] ?? '-',
+                'salestype' => $row->salestype,
+                'salestype_label' => $typeLabel[$row->salestype] ?? '-',
+                'accepted' => (bool) $row->accepted,
+                'dateaccepted' => $row->dateaccepted,
+                'memo' => $row->memo,
+                'customer' => [
+                    'id' => $row->customer_id,
+                    'name' => $row->customer_name,
+                ],
+                'salesman' => [
+                    'id' => $row->salesman_id,
+                    'name' => $row->salesman_name,
+                ],
+                'net_amount' => (float) $row->net_amount,
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'filter_applied' => [
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+                'customer_id' => $request->customer_id,
+                'kind' => $request->kind !== null ? (int) $request->kind : null,
+            ],
+            'data' => $items,
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
      *     tags={"Sales"},
      *     summary="Membuat Sales Order Baru sekaligus Pemotongan Stok",
      *     description="Simpan transaksi SO baru dan langsung memotong tabel stok (Inventory).",
@@ -366,6 +495,8 @@ class SalesController extends Controller
             'details.*.departement' => 'required|string',
         ]);
 
+        Log::info("Request Sales Order: " . json_encode($request->all()));
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -373,6 +504,7 @@ class SalesController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
+
 
         DB::beginTransaction();
 
@@ -384,7 +516,7 @@ class SalesController extends Controller
                 throw new \Exception("Divisi tidak ditemukan!");
             }
 
-            $salesmanid = DB::table('customer')->where('id', $request->customerid)->first()->defsalesmanid ?? "001";
+            $salesmanid = DB::table('customer')->pluck("defsalesmanid")->where('id', $request->customerid)->first() ?? "001";
 
             // 1. Format ID Sales Order
             $rawFormatSO = $div->frmsalesorderid;
