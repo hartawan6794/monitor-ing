@@ -95,9 +95,11 @@ Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(func
 
     Route::prefix('sales')->group(function () {
         Route::get('/orders', [SalesController::class, 'getSalesOrders']);
+        Route::get('/orders/{salesid}/detail', [SalesController::class, 'salesOrderDetail'])->where('salesid', '.*');
         Route::get('/history', [SalesController::class, 'salesHistory']);
         Route::get('/{salesid}/detail', [SalesController::class, 'salesDetail'])->where('salesid', '.*');
         Route::post('/order', [SalesController::class, 'storeSalesOrder']);
+        Route::post('/store', [SalesController::class, 'storeSale']);
     });
 });
 
