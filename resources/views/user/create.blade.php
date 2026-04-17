@@ -48,22 +48,25 @@
             <form action="{{ route('user.store') }}" method="POST">
                 @csrf
                 <div class="mb-4">
-                    <label for="form-text" class="form-label !text-[.875rem] text-black">Masukan nama</label>
-                    <input type="text" class="form-control" id="form-text" name="name" placeholder="Enter your name">
+                    <label for="name" class="form-label !text-[.875rem] text-black">Nama Lengkap</label>
+                    <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" placeholder="Masukkan nama lengkap" value="{{ old('name') }}">
                     @error('name')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-4">
-                    <label for="form-email" class="form-label !text-[.875rem] text-black">Masukan Email</label>
-                    <input type="email" class="form-control" id="form-email" name="email"
-                        placeholder="Enter your email">
+                    <label for="username" class="form-label !text-[.875rem] text-black">Username</label>
+                    <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" placeholder="Masukkan username unik" value="{{ old('username') }}">
+                    @error('username')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="form-label !text-[.875rem] text-black">Alamat Email</label>
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email"
+                        placeholder="Masukkan alamat email" value="{{ old('email') }}">
                     @error('email')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 

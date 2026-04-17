@@ -21,21 +21,29 @@ class UserController extends Controller
 
     public function getData()
     {
-        $users = User::select(['id', 'name', 'email', 'created_at']);
+        $users = User::withCount('availableDatabases')->select(['id', 'name', 'username', 'email', 'created_at']);
         return DataTables::of($users)
+            ->addColumn('total_databases', function ($user) {
+                if ($user->available_databases_count > 0) {
+                    return '<span class="badge bg-primary/10 text-primary">' . $user->available_databases_count . ' Databases</span>';
+                }
+                return '<span class="badge bg-light text-muted">0 Databases</span>';
+            })
             ->addColumn('action', function ($user) {
                 $editUrl = route('user.edit', $user->id);  // Route untuk edit
                 $deleteUrl = route('user.destroy', $user->id);  // Route untuk hapus
 
                 return '
-                <a href="' . $editUrl . '" class="ti-btn ti-btn-sm ti-btn-info !rounded-full"><i class="ri-edit-line"></i></a>
-                <form action="' . $deleteUrl . '" method="POST" style="display:inline;" id="delete-form-' . $user->id . '">
-                    ' . csrf_field() . '
-                    ' . method_field('DELETE') . '
-                    <button type="button" class="ti-btn ti-btn-sm ti-btn-danger !rounded-full" onclick="confirmDelete(' . $user->id . ')">
-                        <i class="ri-delete-bin-line"></i>
-                    </button>
-                </form>
+                <div class="flex gap-2">
+                    <a href="' . $editUrl . '" class="ti-btn ti-btn-sm ti-btn-info !rounded-full"><i class="ri-edit-line"></i></a>
+                    <form action="' . $deleteUrl . '" method="POST" style="display:inline;" id="delete-form-' . $user->id . '">
+                        ' . csrf_field() . '
+                        ' . method_field('DELETE') . '
+                        <button type="button" class="ti-btn ti-btn-sm ti-btn-danger !rounded-full" onclick="confirmDelete(' . $user->id . ')">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </form>
+                </div>
             
                 <script>
                     function confirmDelete(userId) {
@@ -59,6 +67,7 @@ class UserController extends Controller
             ->editColumn('created_at', function ($user) {
                 return $user->created_at->format('Y-m-d');
             })
+            ->rawColumns(['total_databases', 'action'])
             ->make(true);
     }
 
@@ -77,10 +86,11 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         $validated = $request->validated();
+        $validated['password'] = Hash::make($validated['password']);
 
         // Simpan data user
         User::create($validated);
-        Alert::success('Data Jabatan Berhasil Disimpan');
+        Alert::success('Data User Berhasil Disimpan');
 
         // Redirect dengan Toast Success
         return redirect()->route('user.index');
@@ -107,10 +117,10 @@ class UserController extends Controller
      * Update the specified resource in storage.
      */ public function update(UserRequest $request, User $user)
     {
-        // Validasi sudah dilakukan oleh StoreUserRequest
+        // Validasi sudah dilakukan oleh UserRequest
 
-        // Update data user, hanya update password jika diisi
         $user->name = $request->name;
+        $user->username = $request->username;
         $user->email = $request->email;
 
         if ($request->filled('password')) {

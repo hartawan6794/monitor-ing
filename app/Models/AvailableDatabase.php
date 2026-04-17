@@ -10,14 +10,24 @@ class AvailableDatabase extends Model
 {
   use HasFactory;
   use SoftDeletes;
+
+  protected $connection = 'central';
+
   protected $table = 'available_databases';
 
   protected $fillable = [
+    'user_id',
     'server_id',
     'db_name',
     'description',
+    'package_type',
     'expired_at'
   ];
+
+  public function user()
+  {
+    return $this->belongsTo(User::class, 'user_id', 'id');
+  }
 
   public function server()
   {

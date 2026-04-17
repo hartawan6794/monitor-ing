@@ -19,10 +19,7 @@ class SalesController extends Controller
      *     summary="Riwayat Penjualan (Header Faktur)",
      *     description="Mengambil daftar faktur penjualan dengan filter opsional. Total per faktur dihitung dari salesdetail.netamount.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(name="date_from", in="query", required=false, description="Tanggal mulai (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="date_to", in="query", required=false, description="Tanggal akhir (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="customer_id", in="query", required=false, description="Filter ID Customer", @OA\Schema(type="string")),
@@ -174,10 +171,7 @@ class SalesController extends Controller
      *     summary="Detail Item per Faktur",
      *     description="Mengambil semua baris item (salesdetail) dari satu faktur berdasarkan salesid.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(name="salesid", in="path", required=true, description="ID Faktur (sales.salesid)", @OA\Schema(type="string")),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=404, description="Faktur tidak ditemukan"),
@@ -318,10 +312,7 @@ class SalesController extends Controller
      *     summary="Daftar Sales Order",
      *     description="Mengambil daftar Sales Order dengan filter opsional berdasarkan customer dan kind.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(name="date_from", in="query", required=false, description="Tanggal mulai (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="date_to", in="query", required=false, description="Tanggal akhir (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="customer_id", in="query", required=false, description="Filter berdasarkan ID Customer", @OA\Schema(type="string")),
@@ -449,10 +440,7 @@ class SalesController extends Controller
      *     summary="Detail Item per Sales Order",
      *     description="Mengambil semua baris item dari satu Sales Order berdasarkan salesid.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(name="salesid", in="path", required=true, description="ID Sales Order", @OA\Schema(type="string")),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=404, description="Sales Order tidak ditemukan")
@@ -580,10 +568,7 @@ class SalesController extends Controller
      *     summary="Membuat Sales Order Baru sekaligus Pemotongan Stok",
      *     description="Simpan transaksi SO baru dan langsung memotong tabel stok (Inventory).",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -649,7 +634,10 @@ class SalesController extends Controller
                 throw new \Exception("Divisi tidak ditemukan!");
             }
 
-            $salesmanid = DB::table('customer')->where('id', $request->customerid)->pluck("defsalesmanid")->first() ?? "001";
+            // $salesmanid = DB::table('customer')->where('id', $request->customerid)->pluck("defsalesmanid")->first() ?? "001";
+
+            $salesmanid = DB::table('customer')->where('id', $request->customerid)->value('defsalesmanid') ?: "001";
+
 
             // 1. Format ID Sales Order
             $rawFormatSO = $div->frmsalesorderid;
@@ -657,11 +645,6 @@ class SalesController extends Controller
             $nextNumberSO = $div->salesorderidno + 1;
             $soId = $prefixSO . str_pad($nextNumberSO, 6, "0", STR_PAD_LEFT);
 
-            // 2. Format ID Inventory (Sesuai instruksi khusus)
-            // $rawFormatInv = $div->frminventoryid;
-            // $prefixInv = str_replace('%0:6.6d', '', $rawFormatInv);
-            // $nextNumberInv = $div->inventoryidno + 1;
-            // $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
 
             // Update nomor urut di tabel divisi
             DB::table('division')
@@ -751,26 +734,6 @@ class SalesController extends Controller
                     'useredit' => $request->usercreate,
                 ]);
 
-                // // 2. Insert tabel Inventory untuk memotong stok barang (- qty)
-                // DB::table('inventory')->insert([
-                //     'transid' => $invId,
-                //     'transdate' => $currentDateTime,
-                //     'departement' => "001101",
-                //     'division' => $request->division,
-                //     'supplier' => '001001',
-                //     'productid' => $detail['productid'],
-                //     'snproduct' => '',
-                //     'invin' => 0,
-                //     'invout' => $qty,
-                //     'invvalue' => $cogs,
-                //     'reference' => $soId,
-                //     'datereference' => $dateRef,
-                //     'transtype' => 3,
-                //     'memo' => 'Stock Out for SO: ' . $soId,
-                //     'usercreate' => $request->usercreate,
-                //     'useredit' => '',
-                //     'isempty' => 0
-                // ]);
             }
 
             // E. COMMIT SELURUH TRANSAKSI
@@ -799,10 +762,7 @@ class SalesController extends Controller
      *     summary="Membuat Transaksi Penjualan (Faktur)",
      *     description="Simpan faktur penjualan (Tunai/Tempo), potong stok, buat jurnal akuntansi, dan catat pembayaran jika tunai.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -840,6 +800,8 @@ class SalesController extends Controller
             'customerid' => 'required|string',
             'division' => 'required|string',
             'usercreate' => 'required|string',
+            'salespercentdisc' => 'nullable|numeric',
+            'salesvaluedisc' => 'nullable|numeric',
             'salesmanid' => 'nullable|string',
             'salesorder_id_ref' => 'nullable|string',
             'details' => 'required|array|min:1',
@@ -862,7 +824,6 @@ class SalesController extends Controller
         }
 
         DB::beginTransaction();
-
 
         try {
             $div = DB::table('division')->where('id', "0011")->lockForUpdate()->first();
@@ -906,8 +867,6 @@ class SalesController extends Controller
                     'inventoryidno' => $nextNumberInv,
                 ]);
 
-
-
             $currentTime = date('H:i:s');
             $currentDateTime = $request->salesdate . ' ' . $currentTime;
             $isCash = ($request->salestype == 0);
@@ -930,8 +889,8 @@ class SalesController extends Controller
                 'ratedefault' => 9000,
                 'rateused' => 9000,
                 'salesmanid' => $salesmanid,
-                'salespercentdisc' => 0,
-                'salesvaluedisc' => 0,
+                'salespercentdisc' => $request->salespercentdisc ?? 0,
+                'salesvaluedisc' => $request->salesvaluedisc ?? 0,
                 'memo' => $request->memo ?? '-',
                 'memoedit' => '-',
                 'division' => "0011",
@@ -1072,11 +1031,10 @@ class SalesController extends Controller
                     'rateused' => 9000,
                     'usercreate' => $request->usercreate,
                     'useredit' => $request->usercreate,
+                    //salest
                     'kind' => 0
                 ]);
             }
-
-
 
             DB::commit();
 

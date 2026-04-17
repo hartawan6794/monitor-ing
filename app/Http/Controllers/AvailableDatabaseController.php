@@ -104,8 +104,29 @@ class AvailableDatabaseController extends Controller
 
     public function manage($serverId)
     {
-        $server = AuthorizedServer::with('availableDatabases')->findOrFail($serverId);
-        return view('available_database.manage', compact('server'));
+        $server = AuthorizedServer::with('availableDatabases.user')->findOrFail($serverId);
+        $users = \App\Models\User::all();
+        return view('available_database.manage', compact('server', 'users'));
+    }
+
+    public function update(AvailableDatabaseRequest $request, AvailableDatabase $available_database)
+    {
+        $validated = $request->validated();
+
+        // Prevent changing db_name if it already exists on this server (excluding self)
+        $existingDb = AvailableDatabase::where('server_id', $validated['server_id'])
+            ->where('db_name', $validated['db_name'])
+            ->where('id', '!=', $available_database->id)
+            ->first();
+
+        if ($existingDb) {
+            Alert::error('Error', 'Database Sudah Ada');
+            return redirect()->route('available_database.manage', $validated['server_id']);
+        }
+
+        $available_database->update($validated);
+        Alert::success('Berhasil', 'Koneksi Database Berhasil Diperbarui');
+        return redirect()->route('available_database.manage', $validated['server_id']);
     }
 
 

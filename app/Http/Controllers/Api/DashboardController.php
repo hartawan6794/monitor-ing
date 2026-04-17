@@ -16,10 +16,7 @@ class DashboardController extends Controller
      *     summary="Ringkasan penjualan",
      *     description="Mengambil total penjualan untuk 4 periode.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -57,10 +54,7 @@ class DashboardController extends Controller
      *     summary="Penjualan harian per salesman",
      *     description="Mengambil total penjualan masing-masing salesman untuk hari ini.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -88,10 +82,7 @@ class DashboardController extends Controller
      *     summary="Penjualan tahunan per salesman",
      *     description="Mengambil total penjualan masing-masing salesman sepanjang tahun berjalan.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -120,10 +111,7 @@ class DashboardController extends Controller
      *     summary="Ringkasan penjualan (Omzet, Laba, Margin)",
      *     description="Menghitung omzet, laba kotor, dan margin untuk 4 periode: hari ini, minggu ini, bulan ini, dan tahun ini.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -284,10 +272,7 @@ class DashboardController extends Controller
      *     summary="Dashboard Salesman",
      *     description="Mengambil data total penjualan, return penjualan, penjualan tunai, penerimaan piutang, biaya operasional, kas di tangan dan penjualan & order 7 hari terakhir.",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(response=200, description="Sukses"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -405,10 +390,7 @@ class DashboardController extends Controller
      *     tags={"Dashboard"},
      *     summary="Grafik Penjualan Bulanan (Bulanan dalam 1 tahun) untuk Dashboard Web",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(response=200, description="Sukses")
      * )
      */

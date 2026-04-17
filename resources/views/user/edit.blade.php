@@ -3,7 +3,7 @@
 @section('title', 'Daftar User')
 
 {{-- @push('styles')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @endpush --}}
 
 @section('content')
@@ -48,36 +48,50 @@
             <form action="{{ route('user.update', $user->id) }}" method="POST">
                 @csrf
                 @method('PUT')
-            
+
                 <div class="mb-4">
-                    <label for="form-text" class="form-label !text-[.875rem] text-black">Enter name</label>
-                    <input type="text" class="form-control" id="form-text" name="name" value="{{ old('name', $user->name) }}">
+                    <label for="name" class="form-label !text-[.875rem] text-black">Nama Lengkap</label>
+                    <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name"
+                        value="{{ old('name', $user->name) }}" placeholder="Masukkan nama lengkap">
                     @error('name')
-                        <div class="text-red-500 text-sm">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-            
+
                 <div class="mb-4">
-                    <label for="form-email" class="form-label !text-[.875rem] text-black">Enter email</label>
-                    <input type="email" class="form-control" id="form-email" name="email" value="{{ old('email', $user->email) }}">
+                    <label for="username" class="form-label !text-[.875rem] text-black">Username</label>
+                    <input type="text" class="form-control @error('username') is-invalid @enderror" id="username"
+                        name="username" value="{{ old('username', $user->username) }}" placeholder="Masukkan username unik">
+                    @error('username')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-4">
+                    <label for="email" class="form-label !text-[.875rem] text-black">Alamat Email</label>
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email"
+                        value="{{ old('email', $user->email) }}" placeholder="Masukkan alamat email">
                     @error('email')
-                        <div class="text-red-500 text-sm">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-            
+
                 <div class="mb-4">
-                    <label for="form-password" class="form-label text-[.875rem] text-black">Enter New Password (optional)</label>
+                    <label for="form-password" class="form-label text-[.875rem] text-black">Enter New Password
+                        (optional)</label>
                     <input type="password" class="form-control" id="form-password" name="password">
                     @error('password')
                         <div class="text-red-500 text-sm">{{ $message }}</div>
                     @enderror
                 </div>
-            
+
                 <div class="mb-4">
-                    <label for="form-password-confirmation" class="form-label text-[.875rem] text-black">Confirm Password</label>
-                    <input type="password" class="form-control" id="form-password-confirmation" name="password_confirmation">
+                    <label for="form-password-confirmation" class="form-label text-[.875rem] text-black">Confirm
+                        Password</label>
+                    <input type="password" class="form-control" id="form-password-confirmation"
+                        name="password_confirmation">
                 </div>
-            
+
                 <button class="ti-btn ti-btn-primary-full" type="submit">Update</button>
             </form>
         </div>

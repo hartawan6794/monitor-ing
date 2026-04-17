@@ -151,52 +151,142 @@
             min-width: 0;
         }
 
-        .mon-metric-label {
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.375rem;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
+        /* ── SECTION TITLES ── */
+        .mon-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            margin-top: 1.5rem;
         }
 
-        .mon-metric-value {
-            font-size: 1.625rem;
+        .mon-section-header i {
+            font-size: 1.25rem;
+            color: var(--indigo);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+        }
+
+        .mon-section-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        /* ── PERIOD CARDS (Hari Ini - Tahun Ini) ── */
+        .mon-period-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1280px) {
+            .mon-period-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .mon-period-grid { grid-template-columns: 1fr; }
+        }
+
+        .mon-period-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .mon-period-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        .mon-period-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mon-period-omzet {
+            font-size: 1.75rem;
             font-weight: 800;
             color: var(--text);
-            letter-spacing: -0.02em;
-            line-height: 1;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.75rem;
         }
 
-        .mon-metric-sub {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 0.375rem;
-        }
-
-        .mon-metric-badge {
-            display: inline-flex;
+        .mon-period-stats {
+            display: flex;
             align-items: center;
-            gap: 0.25rem;
-            font-size: 0.6875rem;
+            gap: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .mon-period-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .mon-period-stat-label {
+            font-size: 0.625rem;
             font-weight: 600;
-            padding: 0.2rem 0.5rem;
-            border-radius: 100px;
-        }
-
-        .mon-metric-badge.up {
-            background: rgba(52, 211, 153, 0.12);
-            color: #059669;
-        }
-
-        .mon-metric-badge.down {
-            background: rgba(244, 63, 94, 0.12);
-            color: var(--rose);
-        }
-
-        .mon-metric-badge.neu {
-            background: rgba(100, 116, 139, 0.1);
             color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .mon-period-stat-value {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .mon-period-stat-value.margin {
+            color: var(--emerald);
+            background: rgba(52, 211, 153, 0.1);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        /* ── DETAILED METRICS GRID (Sales View) ── */
+        .mon-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mon-simple-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .mon-simple-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
         }
 
         /* ── CHARTS GRID ── */
@@ -475,65 +565,118 @@
                 <strong>menu header</strong> untuk mulai melihat data penjualan.</p>
         </div>
 
-        {{-- ── KEY METRICS ── --}}
-        <div class="mon-metrics">
-
-            <div class="mon-metric-card indigo">
-                <div class="mon-metric-icon indigo"><i class="bx bx-trending-up"></i></div>
-                <div class="mon-metric-body">
-                    <div class="mon-metric-label">Penjualan Hari Ini</div>
-                    <div class="mon-metric-value" id="metricSales">—</div>
-                    <div class="mon-metric-sub">
-                        <span class="mon-metric-badge neu" id="metricSalesBadge">data belum dimuat</span>
+        {{-- ── RINGKASAN PERFORMA PERIODE ── --}}
+        <div class="mon-section-header">
+            <i class="bx bx-stats"></i>
+            <h2>Ringkasan Performa Periode</h2>
+        </div>
+        <div class="mon-period-grid">
+            <!-- Hari Ini -->
+            <div class="mon-period-card">
+                <div class="mon-period-label" style="color:var(--indigo);"><i class="bx bx-calendar-star"></i> Hari Ini</div>
+                <div class="mon-period-omzet" id="sumTodayOmzet">—</div>
+                <div class="mon-period-stats">
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Laba Kotor</span>
+                        <span class="mon-period-stat-value" id="sumTodayLaba">—</span>
+                    </div>
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Margin</span>
+                        <span class="mon-period-stat-value margin" id="sumTodayMargin">—</span>
                     </div>
                 </div>
             </div>
 
-            <div class="mon-metric-card emerald">
-                <div class="mon-metric-icon emerald"><i class="bx bx-money"></i></div>
+            <!-- Minggu Ini -->
+            <div class="mon-period-card">
+                <div class="mon-period-label" style="color:var(--cyan);"><i class="bx bx-calendar-week"></i> Minggu Ini</div>
+                <div class="mon-period-omzet" id="sumWeekOmzet">—</div>
+                <div class="mon-period-stats">
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Laba Kotor</span>
+                        <span class="mon-period-stat-value" id="sumWeekLaba">—</span>
+                    </div>
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Margin</span>
+                        <span class="mon-period-stat-value margin" id="sumWeekMargin">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulan Ini -->
+            <div class="mon-period-card">
+                <div class="mon-period-label" style="color:var(--emerald);"><i class="bx bx-calendar"></i> Bulan Ini</div>
+                <div class="mon-period-omzet" id="sumMonthOmzet">—</div>
+                <div class="mon-period-stats">
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Laba Kotor</span>
+                        <span class="mon-period-stat-value" id="sumMonthLaba">—</span>
+                    </div>
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Margin</span>
+                        <span class="mon-period-stat-value margin" id="sumMonthMargin">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tahun Ini -->
+            <div class="mon-period-card">
+                <div class="mon-period-label" style="color:var(--purple);"><i class="bx bx-calendar-alt"></i> Tahun Ini</div>
+                <div class="mon-period-omzet" id="sumYearOmzet">—</div>
+                <div class="mon-period-stats">
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Laba Kotor</span>
+                        <span class="mon-period-stat-value" id="sumYearLaba">—</span>
+                    </div>
+                    <div class="mon-period-stat-item">
+                        <span class="mon-period-stat-label">Margin</span>
+                        <span class="mon-period-stat-value margin" id="sumYearMargin">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── DETAIL OPERASIONAL (SALES VIEW) ── --}}
+        <div class="mon-section-header">
+            <i class="bx bx-cart-alt"></i>
+            <h2>Detail Operasional (Sales View)</h2>
+        </div>
+        <div class="mon-metrics">
+            <div class="mon-simple-card">
+                <div class="mon-simple-icon" style="background:rgba(52,211,153,0.1);color:#059669;"><i class="bx bx-money"></i></div>
                 <div class="mon-metric-body">
                     <div class="mon-metric-label">Penjualan Tunai</div>
-                    <div class="mon-metric-value" id="metricCash">—</div>
-                    <div class="mon-metric-sub">Total kas masuk hari ini</div>
+                    <div class="mon-metric-value" id="viewSalesCash">—</div>
                 </div>
             </div>
-
-            <div class="mon-metric-card amber">
-                <div class="mon-metric-icon amber"><i class="bx bx-receipt"></i></div>
+            <div class="mon-simple-card">
+                <div class="mon-simple-icon" style="background:rgba(251,191,36,0.1);color:#d97706;"><i class="bx bx-receipt"></i></div>
                 <div class="mon-metric-body">
-                    <div class="mon-metric-label">Penerimaan Piutang</div>
-                    <div class="mon-metric-value" id="metricAR">—</div>
-                    <div class="mon-metric-sub">Bayar piutang hari ini</div>
+                    <div class="mon-metric-label">Terima Piutang</div>
+                    <div class="mon-metric-value" id="viewAR">—</div>
                 </div>
             </div>
-
-            <div class="mon-metric-card rose">
-                <div class="mon-metric-icon rose"><i class="bx bx-undo"></i></div>
+            <div class="mon-simple-card">
+                <div class="mon-simple-icon" style="background:rgba(244,63,94,0.1);color:var(--rose);"><i class="bx bx-undo"></i></div>
                 <div class="mon-metric-body">
-                    <div class="mon-metric-label">Retur Penjualan</div>
-                    <div class="mon-metric-value" id="metricReturn">—</div>
-                    <div class="mon-metric-sub">Nilai retur hari ini</div>
+                    <div class="mon-metric-label">Retur Jual</div>
+                    <div class="mon-metric-value" id="viewReturn">—</div>
                 </div>
             </div>
-
-            <div class="mon-metric-card cyan">
-                <div class="mon-metric-icon cyan"><i class="bx bx-store-alt"></i></div>
+            <div class="mon-simple-card">
+                <div class="mon-simple-icon" style="background:rgba(34,211,238,0.1);color:#0891b2;"><i class="bx bx-store-alt"></i></div>
                 <div class="mon-metric-body">
-                    <div class="mon-metric-label">Biaya Operasional</div>
-                    <div class="mon-metric-value" id="metricOpex">—</div>
-                    <div class="mon-metric-sub">Pengeluaran hari ini</div>
+                    <div class="mon-metric-label">Biaya Ops</div>
+                    <div class="mon-metric-value" id="viewOpex">—</div>
                 </div>
             </div>
-
-            <div class="mon-metric-card purple">
-                <div class="mon-metric-icon purple"><i class="bx bx-wallet"></i></div>
+            <div class="mon-simple-card">
+                <div class="mon-simple-icon" style="background:rgba(168,85,247,0.1);color:var(--purple);"><i class="bx bx-wallet"></i></div>
                 <div class="mon-metric-body">
                     <div class="mon-metric-label">Kas di Tangan</div>
-                    <div class="mon-metric-value" id="metricCashOnHand">—</div>
-                    <div class="mon-metric-sub">Saldo kas hari ini</div>
+                    <div class="mon-metric-value" id="viewCashOnHand">—</div>
                 </div>
             </div>
-
         </div>
 
         {{-- ── QUICK LINKS ── --}}
@@ -844,47 +987,62 @@
             };
 
             function fetchDashboard(conn) {
-                // Coba ambil token: dari sessionStorage (sudah diset oleh meta tag PHP) atau localStorage
                 const token = sessionStorage.getItem('api_token')
                     || localStorage.getItem('api_token')
                     || (document.querySelector('meta[name="api-token"]')?.content ?? null);
 
                 if (!token) {
-                    // Token belum tersedia — mungkin halaman belum selesai load meta tag
-                    // Coba sekali lagi setelah 500ms
                     setTimeout(() => fetchDashboard(conn), 500);
                     return;
                 }
 
-                // Pastikan token juga tersimpan di sessionStorage untuk request berikutnya
                 sessionStorage.setItem('api_token', token);
-
                 const headers = buildApiHeaders(conn, token);
                 applyConnectedState(conn);
 
-
-                // Summary
+                // 1. Fetch Summary Periode (Hari, Minggu, Bulan, Tahun)
                 fetch('/api/dashboard/summary', { headers })
                     .then(r => r.json())
                     .then(data => {
                         if (data.status === 'success') {
                             const d = data.data;
-                            document.getElementById('metricSales').textContent = fmtRpShort(d.today.omzet || 0);
-                            document.getElementById('metricCash').textContent = fmtRpShort(d.today.margin || 0); // asumsi margin
-                            document.getElementById('metricAR').textContent = fmtRpShort(d.today.laba || 0); // asumsi laba
+                            // Hari Ini
+                            document.getElementById('sumTodayOmzet').textContent = fmtRpShort(d.today.omzet || 0);
+                            document.getElementById('sumTodayLaba').textContent = fmtRp(d.today.laba || 0);
+                            document.getElementById('sumTodayMargin').textContent = (d.today.margin || 0) + '%';
+                            
+                            // Minggu Ini
+                            document.getElementById('sumWeekOmzet').textContent = fmtRpShort(d.week.omzet || 0);
+                            document.getElementById('sumWeekLaba').textContent = fmtRp(d.week.laba || 0);
+                            document.getElementById('sumWeekMargin').textContent = (d.week.margin || 0) + '%';
+                            
+                            // Bulan Ini
+                            document.getElementById('sumMonthOmzet').textContent = fmtRpShort(d.month.omzet || 0);
+                            document.getElementById('sumMonthLaba').textContent = fmtRp(d.month.laba || 0);
+                            document.getElementById('sumMonthMargin').textContent = (d.month.margin || 0) + '%';
 
-                            // Untuk metrik yang sebelumnya di ambil (jika summary sudah dirubah, harap disesuaikan)
-                            // Sementara karena '/summary' me-return today, week, month, year dengan omzet, laba, margin
-                            // Kita bisa ambil detail dari endpoint sebelumnya (misalnya data summary lain jika tersedia)
-                            // Namun kita akan tampilkan placeholder
-                            const dbSummary = data.data.today;
-                            if (dbSummary) {
-                                document.getElementById('metricSales').textContent = fmtRpShort(dbSummary.omzet || 0);
-                            }
+                            // Tahun Ini
+                            document.getElementById('sumYearOmzet').textContent = fmtRpShort(d.year.omzet || 0);
+                            document.getElementById('sumYearLaba').textContent = fmtRp(d.year.laba || 0);
+                            document.getElementById('sumYearMargin').textContent = (d.year.margin || 0) + '%';
                         }
                     }).catch(() => { });
 
-                // Fetch Top Salesman & Top Products based on currently selected filter
+                // 2. Fetch Detailed Sales View (Tunai, Piutang, dll)
+                fetch('/api/dashboard/sales-view', { headers })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const d = data.data;
+                            document.getElementById('viewSalesCash').textContent = fmtRpShort(d.penjualan_tunai || 0);
+                            document.getElementById('viewAR').textContent = fmtRpShort(d.penerimaan_piutang || 0);
+                            document.getElementById('viewReturn').textContent = fmtRpShort(d.return_penjualan || 0);
+                            document.getElementById('viewOpex').textContent = fmtRpShort(d.biaya_operasional || 0);
+                            document.getElementById('viewCashOnHand').textContent = fmtRpShort(d.kas_di_tangan || 0);
+                        }
+                    }).catch(() => { });
+
+                // 3. Components lain
                 fetchTopSalesman(conn);
                 fetchTopProducts(conn);
 

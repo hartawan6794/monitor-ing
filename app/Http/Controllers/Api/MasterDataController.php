@@ -18,10 +18,7 @@ class MasterDataController extends Controller
      *     summary="Daftar divisi",
      *     description="Mengambil data devisi",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -54,10 +51,7 @@ class MasterDataController extends Controller
      *     summary="Daftar departemen",
      *     description="Mengambil data departemen",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(
      *         name="division_id",
      *         in="query",
@@ -95,10 +89,7 @@ class MasterDataController extends Controller
      *     summary="Daftar supplier",
      *     description="Mengambil data supplier",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -123,10 +114,7 @@ class MasterDataController extends Controller
      *     summary="Daftar group produk",
      *     description="Mengambil data group produk",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -151,10 +139,7 @@ class MasterDataController extends Controller
      *     summary="Daftar brand produk",
      *     description="Mengambil data brand produk",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -184,10 +169,7 @@ class MasterDataController extends Controller
      *     summary="Daftar akun",
      *     description="Mengambil data akun",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -212,10 +194,7 @@ class MasterDataController extends Controller
      *     summary="Daftar user config rules",
      *     description="Mengambil data user config rules",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
@@ -243,10 +222,7 @@ class MasterDataController extends Controller
      *     summary="Daftar group pelanggan",
      *     description="Mengambil data group pelanggan",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(
      *         name="query",
      *         in="query",
@@ -301,10 +277,7 @@ class MasterDataController extends Controller
      *     summary="Daftar pelanggan",
      *     description="Mengambil data pelanggan",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(
      *         name="customergroup_id",
      *         in="query",
@@ -377,10 +350,7 @@ class MasterDataController extends Controller
      *     summary="Daftar perusahaan",
      *     description="Mengambil data perusahaan",
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Response(
      *         response=200,description="Sukses",
      *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))

@@ -7,60 +7,92 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class DatabaseSwitcher
 {
     public function handle(Request $request, Closure $next)
     {
-        // TEST: Paling awal, sebelum apapun
-        Log::info('[SWITCHER START] Middleware called', ['url' => $request->path()]);
+        $dbName = $request->header('X-Database-Name');
+        $accessKey = $request->header('X-Database-Key');
+        $token = $request->bearerToken();
 
         try {
-            $dbName = $request->header('X-Database-Name');
-            $dbHost = $request->header('X-Server-IP');
-            $dbUser = $request->header('X-DB-Username');
-            $dbPass = $request->header('X-DB-Password');
+            // ────────────────────────────────────────────
+            // MODE 1: Pre-Auth (via access_key)
+            // ────────────────────────────────────────────
+            if ($accessKey) {
+                // Cache hasil lookup access_key selama 5 menit (umur tiket)
+                $keyRecord = Cache::remember("db_access_key_{$accessKey}", 300, function() use ($accessKey) {
+                    return \App\Models\DatabaseAccessKey::with('availableDatabase.server')
+                        ->where('access_key', $accessKey)
+                        ->first();
+                });
 
-            Log::info('[SWITCHER HEADERS]', compact('dbName', 'dbHost', 'dbUser'));
-
-            if ($dbName && $dbHost) {
-                Config::set('database.connections.mysql.host', $dbHost);
-                Config::set('database.connections.mysql.database', $dbName);
-                Config::set('database.connections.mysql.username', $dbUser ?? config('database.connections.mysql.username'));
-                Config::set('database.connections.mysql.password', $dbPass ?? config('database.connections.mysql.password'));
-
-                DB::purge('mysql');
-                DB::reconnect('mysql');
-
-                $activeDb = DB::connection('mysql')->getDatabaseName();
-                Log::info('[SWITCHER] Switched to DB: ' . $activeDb);
-
-                // Verifikasi user dari token
-                $token = $request->bearerToken();
-                if ($token) {
-                    $accessToken = \App\Models\Sanctum\PersonalAccessToken::findToken($token);
-                    if ($accessToken) {
-                        $userId = $accessToken->tokenable_id;
-                        $userExists = DB::connection('mysql')->table('users')->where('id', $userId)->exists();
-                        Log::info('[SWITCHER] User check:', [
-                            'db' => $activeDb,
-                            'user_id' => $userId,
-                            'found' => $userExists ? 'YES' : 'NO'
-                        ]);
-                    } else {
-                        Log::warning('[SWITCHER] Token not found in central DB');
-                    }
+                if (!$keyRecord || !$keyRecord->isValid()) {
+                    return response()->json(['status' => 'error', 'message' => 'Access key invalid atau expired.'], 401);
                 }
-            } else {
-                Log::info('[SWITCHER] No DB headers, skipping switch');
+
+                $db = $keyRecord->availableDatabase;
+                $server = $db->server;
+                $this->switchConnection($server->ip_address, $server->port, $db->db_name, $server->username, $server->password);
+            }
+
+            // ────────────────────────────────────────────
+            // MODE 2: Post-Auth (via Token + dbName)
+            // ────────────────────────────────────────────
+            elseif ($dbName && $token) {
+                // OPTIMASI: Cache konfigurasi server selama 1 jam (3600 detik)
+                // Ini mengurangi beban Master DB secara signifikan!
+                $cacheKey = "server_config_{$dbName}";
+                $availableDb = Cache::remember($cacheKey, 3600, function() use ($dbName) {
+                    return \App\Models\AvailableDatabase::with('server')
+                        ->where('db_name', $dbName)
+                        ->first();
+                });
+
+                if (!$availableDb || !$availableDb->server) {
+                    return response()->json(['status' => 'error', 'message' => 'Database tidak terdaftar.'], 403);
+                }
+
+                $server = $availableDb->server;
+                $this->switchConnection($server->ip_address, $server->port, $dbName, $server->username, $server->password);
+
+                // Cek Token di Master DB (Central)
+                $accessToken = \App\Models\Sanctum\PersonalAccessToken::findToken($token);
+
+                if (!$accessToken) {
+                    return response()->json(['status' => 'error', 'message' => 'Sesi berakhir.'], 401);
+                }
+
+                // Force Auth
+                $user = $accessToken->tokenable;
+                if ($user) {
+                    Auth::guard('api')->setUser($user);
+                }
             }
         } catch (\Throwable $e) {
-            Log::error('[SWITCHER ERROR] ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
+            Log::error('[SWITCHER ERROR] ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Gagal menghubungkan database.'], 500);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Helper: Konfigurasi dan reconnect koneksi MySQL.
+     */
+    private function switchConnection(string $host, string $port, string $dbName, string $username, string $password): void
+    {
+        // Hanya switch jika konfigurasi berbeda (opsional, tapi lebih aman dump config)
+        Config::set('database.connections.mysql.host', $host);
+        Config::set('database.connections.mysql.port', $port ?: '3306');
+        Config::set('database.connections.mysql.database', $dbName);
+        Config::set('database.connections.mysql.username', $username);
+        Config::set('database.connections.mysql.password', $password);
+
+        DB::purge('mysql');
+        DB::reconnect('mysql');
     }
 }

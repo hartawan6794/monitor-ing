@@ -10,7 +10,9 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
+
+    protected $connection = 'central';
 
     /**
      * The attributes that are mass assignable.
@@ -19,10 +21,16 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'photo'
     ];
+
+    public function availableDatabases()
+    {
+        return $this->hasMany(AvailableDatabase::class, 'user_id', 'id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -31,6 +31,8 @@
                             <thead>
                                 <tr>
                                     <th>Nama Database</th>
+                                    <th>Pemilik (User)</th>
+                                    <th>Paket</th>
                                     <th>Deskripsi</th>
                                     <th>Expired At</th>
                                     <th>Status</th>
@@ -41,6 +43,13 @@
                                 @forelse($server->availableDatabases as $db)
                                     <tr>
                                         <td class="font-semibold text-primary">{{ $db->db_name }}</td>
+                                        <td>
+                                            <span class="text-sm font-medium">{{ $db->user ? $db->user->name : '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge bg-secondary/10 text-secondary">{{ strtoupper($db->package_type ?? 'BASIC') }}</span>
+                                        </td>
                                         <td>
                                             <span class="text-xs">
                                                 {{ $db->description }}
@@ -63,6 +72,7 @@
                                         <td>
                                             <button type="button" class="ti-btn ti-btn-sm ti-btn-warning-full btn-edit-db"
                                                 data-id="{{ $db->id }}" data-dbname="{{ $db->db_name }}"
+                                                data-userid="{{ $db->user_id }}" data-package="{{ $db->package_type }}"
                                                 data-desc="{{ $db->description }}"
                                                 data-expired="{{ $db->expired_at ? \Carbon\Carbon::parse($db->expired_at)->format('Y-m-d') : '' }}">
                                                 <i class="ri-edit-line"></i>
@@ -149,13 +159,47 @@
                         <div class="mb-4">
                             <label class="form-label font-semibold text-sm">Pilih Database di Server</label>
                             <div class="input-group">
-                                <select class="form-control !rounded-s-md" id="db_name" name="db_name" required disabled>
+                                <select class="form-control !rounded-s-md @error('db_name') is-invalid @enderror"
+                                    id="db_name" name="db_name" required disabled>
                                     <option value="" selected>Scan IP {{ $server->ip_address }}...</option>
                                 </select>
                                 <button type="button" id="btn-scan" class="ti-btn ti-btn-primary-full !rounded-e-md !mb-0">
                                     <i class="ri-refresh-line"></i> Scan
                                 </button>
+                                @error('db_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
+                            {{-- Hidden input to send db_name when the select is disabled during edit --}}
+                            <input type="hidden" name="db_name" id="hidden_db_name" disabled>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label font-semibold text-sm">Pilih User Pemilik</label>
+                            <select class="form-control @error('user_id') is-invalid @enderror" id="user_id" name="user_id"
+                                required>
+                                <option value="" disabled selected>-- Pilih User --</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->username ?? $user->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('user_id')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label font-semibold text-sm">Tipe Paket</label>
+                            <select class="form-control @error('package_type') is-invalid @enderror" id="package_type"
+                                name="package_type" required>
+                                <option value="basic" selected>Basic</option>
+                                <option value="premium">Premium</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                            @error('package_type')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-4">
@@ -260,6 +304,8 @@
             $('.btn-edit-db').on('click', function () {
                 let id = $(this).data('id');
                 let dbname = $(this).data('dbname');
+                let userid = $(this).data('userid');
+                let packageType = $(this).data('package');
                 let desc = $(this).data('desc');
                 let expired = $(this).data('expired');
 
@@ -275,6 +321,7 @@
                 // 3. Isi Data ke Form
                 // Kunci nama database agar tidak diubah, sembunyikan tombol scan
                 $('#db_name').empty().append(`<option value="${dbname}" selected>${dbname}</option>`).prop('disabled', true);
+                $('#hidden_db_name').val(dbname).prop('disabled', false);
                 $('#btn-scan').hide();
 
                 // Isi tanggal flatpickr (Akses flatpickr instance)
@@ -284,7 +331,9 @@
                     document.querySelector("#expired_at")._flatpickr.clear();
                 }
 
-                // Isi deskripsi
+                // Isi user, package dan deskripsi
+                $('#user_id').val(userid);
+                $('#package_type').val(packageType);
                 $('#description').val(desc);
 
                 // 4. Ubah Tombol Submit & Tampilkan Tombol Batal
@@ -307,8 +356,11 @@
 
                 // Reset Isi Form
                 $('#db_name').empty().append('<option value="" selected>Scan IP {{ $server->ip_address }}...</option>').prop('disabled', true);
+                $('#hidden_db_name').val('').prop('disabled', true);
                 $('#btn-scan').show();
                 document.querySelector("#expired_at")._flatpickr.clear();
+                $('#user_id').val('');
+                $('#package_type').val('basic');
                 $('#description').val('');
 
                 // Reset Tombol

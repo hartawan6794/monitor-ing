@@ -12,15 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-
-        $middleware->api(prepend: [
-            \App\Http\Middleware\DatabaseSwitcher::class,
-        ]);
-
         $middleware->alias([
             'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
             'database.switch' => \App\Http\Middleware\DatabaseSwitcher::class,
             'check.role' => \App\Http\Middleware\CheckUserRole::class,
+        ]);
+
+        $middleware->priority([
+            \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\DatabaseSwitcher::class,
+            \Illuminate\Auth\Middleware\Authenticate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

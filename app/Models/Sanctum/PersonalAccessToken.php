@@ -7,8 +7,8 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 class PersonalAccessToken extends SanctumPersonalAccessToken
 {
     /**
-     * Konfirmasi bahwa model ini selalu menggunakan koneksi 'central'
-     * (Database Master) untuk menyimpan dan mencari token.
+     * Memaksa model ini untuk SELALU menggunakan database Master (Central).
+     * Dengan begini, token tetap bisa ditemukan meskipun koneksi default sedang di-switch.
      */
     protected $connection = 'central';
 }

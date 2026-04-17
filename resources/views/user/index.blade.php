@@ -48,7 +48,9 @@
                                 <tr class="border-b border-defaultborder">
                                     <th>ID</th>
                                     <th>Name</th>
+                                    <th>Username</th>
                                     <th>Email</th>
+                                    <th>Databases</th>
                                     <th>Created At</th>
                                     <th>Action</th>
                                 </tr>
@@ -77,8 +79,18 @@
                         name: 'name'
                     },
                     {
+                        data: 'username',
+                        name: 'username'
+                    },
+                    {
                         data: 'email',
                         name: 'email'
+                    },
+                    {
+                        data: 'total_databases',
+                        name: 'total_databases',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'created_at',

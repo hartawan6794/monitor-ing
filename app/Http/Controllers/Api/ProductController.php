@@ -65,10 +65,7 @@ class ProductController extends Controller
      *     summary="Alert Stok Menipis (Stok <= 5)",
      *     tags={"Product"},
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
@@ -151,31 +148,10 @@ class ProductController extends Controller
      *     tags={"Product"},
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
-     *         name="X-Server-IP",
-     *         in="header",
-     *         required=true,
-     *         description="IP Server",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
      *         name="X-Database-Name",
      *         in="header",
      *         required=true,
      *         description="Nama Database",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="X-DB-Username",
-     *         in="header",
-     *         required=true,
-     *         description="Username Database",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="X-DB-Password",
-     *         in="header",
-     *         required=true,
-     *         description="Password Database",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(

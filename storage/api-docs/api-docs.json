@@ -22,16 +22,10 @@
                 "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
                     },
                     {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
+                        "$ref": "#/components/parameters/X-Database-Key"
                     }
                 ],
                 "requestBody": {
@@ -100,16 +94,7 @@
                 "operationId": "fa2272983cbe8d142dcd03ed9eee1dd1",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -150,16 +135,7 @@
                 "operationId": "1a57f1cacecb6795c50899a489a506b7",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -187,16 +163,7 @@
                 "operationId": "a52f8d40c6bc3ccd6bf42b5466c3dcc6",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -224,16 +191,7 @@
                 "operationId": "892e76df1345997e0682213c6fbbb52d",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -261,16 +219,7 @@
                 "operationId": "22d6ce3aaed8393b5b82b4dcc075b148",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -297,16 +246,7 @@
                 "operationId": "de1865eda050dfbb14e2bdcfd7086e21",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -335,13 +275,10 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "ip_address"
+                                    "username",
+                                    "password"
                                 ],
                                 "properties": {
-                                    "ip_address": {
-                                        "type": "string",
-                                        "example": "[IP_ADDRESS]"
-                                    },
                                     "username": {
                                         "type": "string",
                                         "example": "admin"
@@ -419,16 +356,7 @@
                 "operationId": "748e77e2dd48ac2957da97697e9ff4ca",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -469,16 +397,7 @@
                 "operationId": "b66eca7505bf1addc18450d0da1e6600",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "division_id",
@@ -528,16 +447,7 @@
                 "operationId": "81d72ce5d556a98593d1b8bacc768c0f",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -578,16 +488,7 @@
                 "operationId": "bf53f8d66a73181b6f09a099dd8a9a57",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -628,16 +529,7 @@
                 "operationId": "859da4d9f0a7d1ed571214c936937c14",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -678,16 +570,7 @@
                 "operationId": "54a43c885142576d16c1b14ba52c9dee",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -728,16 +611,7 @@
                 "operationId": "3ed44cb701f218cecf92d0950b824994",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -778,16 +652,7 @@
                 "operationId": "d2856e558b6d5ed0ad0b5d61ab574e92",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "query",
@@ -837,16 +702,7 @@
                 "operationId": "153908b2076b53dbf9d2ad7048bd567a",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "customergroup_id",
@@ -905,16 +761,7 @@
                 "operationId": "194cdc1d3b1d6949dc3f62b197badb60",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "responses": {
@@ -954,16 +801,7 @@
                 "operationId": "1fd97685a231ff33c08fa1a039acc9c7",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "limit",
@@ -1045,36 +883,9 @@
                 "operationId": "2ce632b9d1c0c445557821d09add7ec2",
                 "parameters": [
                     {
-                        "name": "X-Server-IP",
-                        "in": "header",
-                        "description": "IP Server",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "name": "X-Database-Name",
                         "in": "header",
                         "description": "Nama Database",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-DB-Username",
-                        "in": "header",
-                        "description": "Username Database",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-DB-Password",
-                        "in": "header",
-                        "description": "Password Database",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -1147,16 +958,7 @@
                 "operationId": "170020a27ec308a33bc5b62a4359f6ee",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "date_from",
@@ -1256,16 +1058,7 @@
                 "operationId": "7b8cc2810644a8f239cb5c0a845e7bd6",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     },
                     {
                         "name": "salesid",
@@ -1295,6 +1088,125 @@
                 ]
             }
         },
+        "/sales/orders": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Daftar Sales Order",
+                "description": "Mengambil daftar Sales Order dengan filter opsional berdasarkan customer dan kind.",
+                "operationId": "6bef5d54ad2849b4de23cabcf2005bc9",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Tanggal mulai (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Tanggal akhir (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "description": "Filter berdasarkan ID Customer",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kind",
+                        "in": "query",
+                        "description": "Jenis order: 0=Standard, 1=Retur",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah data per halaman (default: 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/sales/orders/{salesid}/detail": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Detail Item per Sales Order",
+                "description": "Mengambil semua baris item dari satu Sales Order berdasarkan salesid.",
+                "operationId": "cb65b24a88527b170f310317589e7af3",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "salesid",
+                        "in": "path",
+                        "description": "ID Sales Order",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "404": {
+                        "description": "Sales Order tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/sales/order": {
             "post": {
                 "tags": [
@@ -1305,16 +1217,7 @@
                 "operationId": "14e169154b05db03f1cba3cd98f2617f",
                 "parameters": [
                     {
-                        "$ref": "#/components/parameters/X-Server-IP"
-                    },
-                    {
                         "$ref": "#/components/parameters/X-Database-Name"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Username"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-DB-Password"
                     }
                 ],
                 "requestBody": {
@@ -1421,19 +1324,131 @@
                     }
                 ]
             }
+        },
+        "/sales/store": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Membuat Transaksi Penjualan (Faktur)",
+                "description": "Simpan faktur penjualan (Tunai/Tempo), potong stok, buat jurnal akuntansi, dan catat pembayaran jika tunai.",
+                "operationId": "8205c00b0ecbd3d10b7961362c2ea1f7",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "salesdate",
+                                    "salestype",
+                                    "customerid",
+                                    "division",
+                                    "usercreate",
+                                    "details"
+                                ],
+                                "properties": {
+                                    "salesdate": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-14"
+                                    },
+                                    "salestype": {
+                                        "description": "0=Tunai, 2=Tempo",
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "customerid": {
+                                        "type": "string",
+                                        "example": "001001"
+                                    },
+                                    "salesmanid": {
+                                        "description": "Opsional",
+                                        "type": "string",
+                                        "example": "001"
+                                    },
+                                    "division": {
+                                        "type": "string",
+                                        "example": "0011"
+                                    },
+                                    "usercreate": {
+                                        "type": "string",
+                                        "example": "security"
+                                    },
+                                    "memo": {
+                                        "type": "string",
+                                        "example": "Penjualan khusus"
+                                    },
+                                    "salesorder_id_ref": {
+                                        "description": "Opsional referensi SO",
+                                        "type": "string",
+                                        "example": "I/SO-006519"
+                                    },
+                                    "details": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "productid": {
+                                                    "type": "string",
+                                                    "example": "STP"
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "PCS"
+                                                },
+                                                "salesqty": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15000
+                                                },
+                                                "departement": {
+                                                    "type": "string",
+                                                    "example": "001101"
+                                                },
+                                                "supplier": {
+                                                    "type": "string",
+                                                    "example": "001001"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
         "parameters": {
-            "X-Server-IP": {
-                "name": "X-Server-IP",
-                "in": "header",
-                "description": "Alamat server untuk koneksi database",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
             "X-Database-Name": {
                 "name": "X-Database-Name",
                 "in": "header",
@@ -1443,19 +1458,10 @@
                     "type": "string"
                 }
             },
-            "X-DB-Username": {
-                "name": "X-DB-Username",
+            "X-Database-Key": {
+                "name": "X-Database-Key",
                 "in": "header",
-                "description": "Username untuk koneksi database",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "X-DB-Password": {
-                "name": "X-DB-Password",
-                "in": "header",
-                "description": "Password untuk koneksi database",
+                "description": "Access key untuk database yang digunakan",
                 "required": true,
                 "schema": {
                     "type": "string"

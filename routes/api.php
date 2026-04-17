@@ -35,7 +35,7 @@ Route::middleware(['force.json', 'database.switch'])->group(function () {
 });
 
 // Route Terproteksi (Login Diperlukan)
-Route::middleware(['force.json', 'database.switch', 'auth:sanctum'])->group(function () {
+Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, 'auth:sanctum'])->group(function () {
 
     // Grup Admin (Hanya untuk User dengan Role 'admin' di usersconfig)
     Route::prefix('dashboard')->group(function () {

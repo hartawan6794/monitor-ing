@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class AuthorizedServer extends Model
 {
-  use HasFactory;
+    use HasFactory;
+
+    protected $connection = 'central';
   protected $table = 'authorized_servers';
 
   protected $fillable = [

@@ -25,6 +25,12 @@ class UserRequest extends FormRequest
     {
         $rules = [
             'name' => 'required|string|max:255',
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'username')->ignore($this->user),
+            ],
             'email' => [
                 'required',
                 'email',

@@ -14,10 +14,8 @@ class AuthController extends Controller
      *     tags={"Auth"},
      *     summary="Login pengguna",
      *     description="Autentikasi pengguna menggunakan ID dan password.",
-     *     @OA\Parameter(ref="#/components/parameters/X-Server-IP"),
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Username"),
-     *     @OA\Parameter(ref="#/components/parameters/X-DB-Password"),
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Key"),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(

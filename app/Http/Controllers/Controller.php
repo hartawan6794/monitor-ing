@@ -12,13 +12,6 @@ use Illuminate\Routing\Controller as BaseController;
  *     version="1.0.0",
  *     description="Dokumentasi API untuk aplikasi Montor-ing (Inventory & Sales Monitoring)."
  * )
- * @OA\Parameter(
- *         name="X-Server-IP",
- *         in="header",
- *         description="Alamat server untuk koneksi database",
- *         required=true,
- *         @OA\Schema(type="string")
- *     ),
  *     @OA\Parameter(
  *         name="X-Database-Name",
  *         in="header",
@@ -27,16 +20,9 @@ use Illuminate\Routing\Controller as BaseController;
  *         @OA\Schema(type="string")
  *     ),
  *     @OA\Parameter(
- *         name="X-DB-Username",
+ *         name="X-Database-Key",
  *         in="header",
- *         description="Username untuk koneksi database",
- *         required=true,
- *         @OA\Schema(type="string")
- *     ),
- *     @OA\Parameter(
- *         name="X-DB-Password",
- *         in="header",
- *         description="Password untuk koneksi database",
+ *         description="Access key untuk database yang digunakan",
  *         required=true,
  *         @OA\Schema(type="string")
  *     )

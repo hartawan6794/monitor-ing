@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AuthorizedServer;
+use Log;
 
 class DynamicConnectionController extends Controller
 {
@@ -17,8 +18,7 @@ class DynamicConnectionController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"ip_address"},
-     *             @OA\Property(property="ip_address", type="string", example="[IP_ADDRESS]"),
+     *             required={"username", "password"},
      *             @OA\Property(property="username", type="string", example="admin"),
      *             @OA\Property(property="password", type="string", example="password")
      *         )
@@ -46,58 +46,70 @@ class DynamicConnectionController extends Controller
     {
         // 1. Validasi input dari Android
         $request->validate([
-            'ip_address' => 'required|ip',
-            // Jika ingin Android mengirim kredensial, aktifkan ini:
-            'username' => 'nullable|string',
-            'password' => 'nullable|string',
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
+        // 2. Cari User berdasarkan username
+        $user = \App\Models\User::where('username', $request->username)->first();
 
+        if (!$user || !\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Username atau password salah.',
+            ], 401);
+        }
 
-        // 2. Cari IP di tabel AuthorizedServer (hanya yang aktif)
-        $server = AuthorizedServer::with([
-            'availableDatabases' => function ($query) {
-                // Filter hanya database yang belum expired
+        // 3. Cari database yang dimiliki user dan belum expired
+        $availableDatabases = \App\Models\AvailableDatabase::with('server')
+            ->where('user_id', $user->id)
+            ->where(function ($query) {
                 $query->whereNull('expired_at')
                     ->orWhere('expired_at', '>', now());
-            }
-        ])
-            ->where('ip_address', $request->ip_address)
-            // Jika ingin Android mengirim kredensial, aktifkan ini:
-            ->where('username', $request->username)
-            ->where(function ($query) use ($request) {
-                if ($request->password != null || $request->password != '') {
-                    $query->where('password', $request->password);
-                }
             })
-            ->where('is_active', 1)
-            ->first();
+            ->get();
 
-        // 3. Jika Server tidak ditemukan di database pusat
-        if (!$server) {
+        // 4. Jika User tidak memiliki database yang aktif
+        if ($availableDatabases->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Server tidak terdaftar di sistem pusat atau sedang tidak aktif.',
-                'data' => $request->all()
+                'message' => 'Tidak ada paket database yang aktif untuk user ini.'
             ], 404);
         }
 
-        // 4. Jika Server ada, tapi belum ada database yang didaftarkan
-        if ($server->availableDatabases->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Tidak ada database yang tersedia/aktif untuk server ini.'
-            ], 404);
-        }
+        // 5. Hapus key lama milik user ini yang sudah expired (cleanup)
+        \App\Models\DatabaseAccessKey::where('user_id', $user->id)
+            ->where('expires_at', '<', now())
+            ->delete();
 
-        // 5. Susun daftar database untuk dikirim ke Android
-        $dbList = $server->availableDatabases->pluck('db_name', 'description');
+        // 6. Buat Access Key baru per database (single-use, berlaku 5 menit)
+        $dbList = $availableDatabases->map(function ($db) use ($user) {
+            // Hapus key lama untuk kombinasi user+db ini jika ada
+            \App\Models\DatabaseAccessKey::where('user_id', $user->id)
+                ->where('available_database_id', $db->id)
+                ->delete();
+
+            // Buat key baru
+            $accessKey = bin2hex(random_bytes(32)); // 64 karakter hex
+            \App\Models\DatabaseAccessKey::create([
+                'user_id' => $user->id,
+                'available_database_id' => $db->id,
+                'access_key' => $accessKey,
+                'expires_at' => now()->addMinutes(5),
+            ]);
+
+            return [
+                'db_name' => $db->db_name,
+                'description' => $db->description,
+                'package' => $db->package_type,
+                'access_key' => $accessKey, // 🔑 Kirim ke Android untuk dipakai saat /login
+            ];
+        });
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Server valid.',
+            'message' => 'Sukses mengambil data.',
             'data' => [
-                'server_name' => $server->server_name,
-                'ip_address' => $server->ip_address,
+                'user' => $user->name,
                 'total_db' => $dbList->count(),
                 'databases' => $dbList
             ]
