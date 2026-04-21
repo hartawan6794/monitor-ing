@@ -324,12 +324,15 @@ class MasterDataController extends Controller
                 'name',
                 'address',
                 'telephone',
+                'pricelevel',
                 'creditlimit',
                 // Subquery untuk menghitung Piutang berjalan (Total Penjualan Kredit - Total Pembayaran Piutang)
                 DB::raw("(
                         (SELECT COALESCE(SUM(sd.netamount), 0) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.salestype = 2) 
                         - 
-                        (SELECT COALESCE(SUM(rp.amount), 0) FROM receivablepayment rp WHERE rp.customerid = customer.id)
+                        (SELECT COALESCE(SUM(s.salesvaluedisc), 0) FROM sales s WHERE s.customerid = customer.id AND s.salestype = 2)
+                        - 
+                        (SELECT COALESCE(SUM(sp.debit), 0) FROM sales s JOIN salespayments sp ON s.salesid = sp.salesidref WHERE s.customerid = customer.id AND s.salestype = 2)
                     ) as piutang")
             )
                 ->orderBy('name', 'asc')
@@ -363,6 +366,56 @@ class MasterDataController extends Controller
         try {
             //jadikan array
             $data = DB::table('company')->select('name', 'address', 'city')->first();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/master/payment-types",
+     *     tags={"Master"},
+     *     summary="Daftar tipe pembayaran",
+     *     description="Mengambil data tipe pembayaran",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getPaymentType()
+    {
+        try {
+            $data = DB::table('paymenttype')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/master/salesman",
+     *     tags={"Master"},
+     *     summary="Daftar salesman",
+     *     description="Mengambil data salesman",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getSalesman()
+    {
+        try {
+            $data = DB::table('salesman')->select('id', 'name')->get();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);

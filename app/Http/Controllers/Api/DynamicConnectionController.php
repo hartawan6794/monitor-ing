@@ -100,7 +100,7 @@ class DynamicConnectionController extends Controller
             return [
                 'db_name' => $db->db_name,
                 'description' => $db->description,
-                'package' => $db->package_type,
+                'package_type' => $db->package_type,
                 'access_key' => $accessKey, // 🔑 Kirim ke Android untuk dipakai saat /login
             ];
         });

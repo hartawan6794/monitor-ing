@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\InventoryAdjustmentController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ConnectionController;
+use App\Http\Controllers\Api\CustomerController;
 
 
 Route::get('/user', function (Request $request) {
@@ -56,6 +57,11 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::put('/{id}', [ProductController::class, 'update']);
     });
 
+    Route::prefix('customers')->group(function () {
+        Route::get('/', [CustomerController::class, 'index']);
+        Route::post('/', [CustomerController::class, 'store']);
+    });
+
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::post('/', [UserController::class, 'store']);
@@ -74,7 +80,10 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/user-config-rules', [MasterDataController::class, 'userConfigRules']);
         Route::get('/customer-groups', [MasterDataController::class, 'customerGroups']);
         Route::get('/customers', [MasterDataController::class, 'customers']);
+        Route::post('/customers', [CustomerController::class, 'store']);
         Route::get('/company', [MasterDataController::class, 'getCompany']);
+        Route::get('/payment-types', [MasterDataController::class, 'getPaymentType']);
+        Route::get('/salesman', [MasterDataController::class, 'getSalesman']);
     });
 
 
@@ -100,6 +109,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/{salesid}/detail', [SalesController::class, 'salesDetail'])->where('salesid', '.*');
         Route::post('/order', [SalesController::class, 'storeSalesOrder']);
         Route::post('/store', [SalesController::class, 'storeSale']);
+        Route::post('/return', [SalesController::class, 'storeSalesReturn']);
     });
 });
 

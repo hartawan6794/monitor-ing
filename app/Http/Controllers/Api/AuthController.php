@@ -62,6 +62,34 @@ class AuthController extends Controller
         // Buat Token Sanctum
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Ambil konfigurasi (hak akses) user dari tabel usersconfig
+        $userConfigs = \Illuminate\Support\Facades\DB::table('usersconfig')
+            ->where('userid', $user->id)
+            ->whereIn('configvalues', ['True', 'true', '1'])
+            ->pluck('userconfigrulesid')
+            ->toArray();
+
+        // 1. Tentukan Role Utama (Pseudo-Role) untuk Navigasi Android
+        $role = 'kasir'; // Default fallback
+        if ($user->id === 'admin') {
+            $role = 'admin';
+        } elseif (in_array('051001', $userConfigs)) {
+            $role = 'sales';
+        } elseif (in_array('053025', $userConfigs)) {
+            // Jika punya akses "Menu Transaksi Penjualan"
+            $role = 'kasir';
+        } elseif (in_array('020001', $userConfigs)) {
+            // Contoh: Jika punya akses menu tertentu untuk gudang
+            $role = 'gudang';
+        }
+
+        // 2. Mapping Toggles (Features) untuk Visibilitas UI di Android
+        $features = [
+            'can_sales' => in_array('053025', $userConfigs),
+            'can_sales_order' => in_array('053025', $userConfigs),
+            'is_manager' => in_array('999999', $userConfigs) // Id rule fiktif untuk contoh
+        ];
+
         return response()->json([
             'status' => 'success',
             'message' => 'Login Berhasil',
@@ -69,6 +97,8 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'name' => $user->name,
                 'username' => $user->id,
+                'role' => $role,
+                'features' => $features,
                 'token' => $token
             ]
         ]);

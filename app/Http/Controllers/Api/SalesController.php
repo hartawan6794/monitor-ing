@@ -23,6 +23,9 @@ class SalesController extends Controller
      *     @OA\Parameter(name="date_from", in="query", required=false, description="Tanggal mulai (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="date_to", in="query", required=false, description="Tanggal akhir (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="customer_id", in="query", required=false, description="Filter ID Customer", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="customer_name", in="query", required=false, description="Filter Nama Customer (Like)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="salesid", in="query", required=false, description="Filter ID Faktur", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="salesidref", in="query", required=false, description="Filter Referensi Faktur", @OA\Schema(type="string")),
      *     @OA\Parameter(name="salesman_id", in="query", required=false, description="Filter ID Salesman", @OA\Schema(type="string")),
      *     @OA\Parameter(name="kind", in="query", required=false, description="Jenis: 0=Penjualan, 1=Retur", @OA\Schema(type="integer", enum={0,1})),
      *     @OA\Parameter(name="payment_type", in="query", required=false, description="Tipe Pembayaran (dari paymenttype.id)", @OA\Schema(type="integer")),
@@ -39,6 +42,9 @@ class SalesController extends Controller
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
             'customer_id' => 'nullable|string',
+            'customer_name' => 'nullable|string',
+            'salesid' => 'nullable|string',
+            'salesidref' => 'nullable|string',
             'salesman_id' => 'nullable|string',
             'kind' => 'nullable|in:0,1',
             'payment_type' => 'nullable|integer',
@@ -71,11 +77,15 @@ class SalesController extends Controller
                 'customer.name as customer_name',
                 'salesman.id as salesman_id',
                 'salesman.name as salesman_name',
-                // Tipe pembayaran dari salespayments (MIN untuk ambil satu nilai representatif)
+                'sales.paidinfull',
+                'sales.paidinfulldate',
+                'sales.paidinfullref',
+                // Tipe pembayaran dari salespayments. Kita mengecek berdasarkan paidinfullref jika ada, atau salesidref jika tunai langsung
                 DB::raw('(
                     SELECT MIN(sp.paymenttype)
                     FROM salespayments sp
-                    WHERE sp.salesidref = sales.salesid
+                    WHERE (sp.salesid = sales.paidinfullref AND sp.salesidref = sales.salesid)
+                       OR (sp.salesidref = sales.salesid)
                 ) as payment_type'),
                 // Total nilai faktur = sum dari netamount di salesdetail
                 DB::raw('(
@@ -94,8 +104,28 @@ class SalesController extends Controller
             $query->where('sales.kind', (int) $request->kind);
         }
 
-        if ($request->filled('customer_id')) {
-            $query->where('sales.customerid', $request->customer_id);
+        if ($request->filled('customer_id') || $request->filled('customer_name')) {
+            $query->where(function ($q) use ($request) {
+                if ($request->filled('customer_id')) {
+                    // Customer ID wajib menggunakan exact match (=) karena ID bersifat hard-coded dari dropdown
+                    $q->where('sales.customerid', $request->customer_id);
+                }
+                if ($request->filled('customer_name')) {
+                    // Kalau pencarian via nama, baru boleh menggunakan partial search (LIKE)
+                    $q->orWhere('customer.name', 'like', '%' . $request->customer_name . '%');
+                }
+            });
+        }
+
+        if ($request->filled('salesid') || $request->filled('salesidref')) {
+            $query->where(function ($q) use ($request) {
+                if ($request->filled('salesid')) {
+                    $q->where('sales.salesid', 'like', '%' . $request->salesid . '%');
+                }
+                if ($request->filled('salesidref')) {
+                    $q->orWhere('sales.salesidref', 'like', '%' . $request->salesidref . '%');
+                }
+            });
         }
 
         if ($request->filled('salesman_id')) {
@@ -132,6 +162,9 @@ class SalesController extends Controller
                 'salestype' => $row->salestype,
                 'salestype_label' => $typeLabel[$row->salestype] ?? '-',
                 'payment_type' => $row->payment_type,
+                'paidinfull' => (bool) $row->paidinfull,
+                'paidinfulldate' => $row->paidinfulldate,
+                'paidinfullref' => $row->paidinfullref ?: '-',
                 'customer' => [
                     'id' => $row->customer_id,
                     'name' => $row->customer_name,
@@ -150,6 +183,9 @@ class SalesController extends Controller
                 'date_from' => $dateFrom->toDateString(),
                 'date_to' => $dateTo->toDateString(),
                 'customer_id' => $request->customer_id,
+                'customer_name' => $request->customer_name,
+                'salesid' => $request->salesid,
+                'salesidref' => $request->salesidref,
                 'salesman_id' => $request->salesman_id,
                 'kind' => $request->kind !== null ? (int) $request->kind : null,
                 'payment_type' => $request->payment_type !== null ? (int) $request->payment_type : null,
@@ -192,8 +228,12 @@ class SalesController extends Controller
                 'sales.kind',
                 'sales.salestype',
                 'sales.memo',
+                'sales.salespercentdisc',
+                'sales.salesvaluedisc',
                 'customer.id as customer_id',
                 'customer.name as customer_name',
+                'customer.address as customer_address',
+                'customer.telephone as customer_phone',
                 'salesman.id as salesman_id',
                 'salesman.name as salesman_name'
             )
@@ -262,10 +302,14 @@ class SalesController extends Controller
                     'kind_label' => $kindLabel[$header->kind] ?? '-',
                     'salestype' => $header->salestype,
                     'salestype_label' => $typeLabel[$header->salestype] ?? '-',
+                    'discount_percent' => (float) $header->salespercentdisc,
+                    'discount_value' => (float) $header->salesvaluedisc,
                     'memo' => $header->memo,
                     'customer' => [
                         'id' => $header->customer_id,
                         'name' => $header->customer_name,
+                        'address' => $header->customer_address,
+                        'phone' => $header->customer_phone,
                     ],
                     'salesman' => [
                         'id' => $header->salesman_id,
@@ -316,6 +360,9 @@ class SalesController extends Controller
      *     @OA\Parameter(name="date_from", in="query", required=false, description="Tanggal mulai (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="date_to", in="query", required=false, description="Tanggal akhir (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="customer_id", in="query", required=false, description="Filter berdasarkan ID Customer", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="customer_name", in="query", required=false, description="Filter berdasarkan Nama Customer (Like)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="salesid", in="query", required=false, description="Filter berdasarkan ID Faktur", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="salesidref", in="query", required=false, description="Filter berdasarkan Referensi Faktur", @OA\Schema(type="string")),
      *     @OA\Parameter(name="kind", in="query", required=false, description="Jenis order: 0=Standard, 1=Retur", @OA\Schema(type="integer", enum={0,1})),
      *     @OA\Parameter(name="per_page", in="query", required=false, description="Jumlah data per halaman (default: 15)", @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="Sukses"),
@@ -330,6 +377,9 @@ class SalesController extends Controller
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
             'customer_id' => 'nullable|string',
+            'customer_name' => 'nullable|string',
+            'salesid' => 'nullable|string',
+            'salesidref' => 'nullable|string',
             'kind' => 'nullable|in:0,1',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
@@ -373,8 +423,26 @@ class SalesController extends Controller
             ->orderBy('salesorder.salesid', 'desc');
 
         // --- 4. Filter Opsional ---
-        if ($request->filled('customer_id')) {
-            $query->where('salesorder.customerid', $request->customer_id);
+        if ($request->filled('customer_id') || $request->filled('customer_name')) {
+            $query->where(function ($q) use ($request) {
+                if ($request->filled('customer_id')) {
+                    $q->where('salesorder.customerid', 'like', '%' . $request->customer_id . '%');
+                }
+                if ($request->filled('customer_name')) {
+                    $q->orWhere('customer.name', 'like', '%' . $request->customer_name . '%');
+                }
+            });
+        }
+
+        if ($request->filled('salesid') || $request->filled('salesidref')) {
+            $query->where(function ($q) use ($request) {
+                if ($request->filled('salesid')) {
+                    $q->where('salesorder.salesid', 'like', '%' . $request->salesid . '%');
+                }
+                if ($request->filled('salesidref')) {
+                    $q->orWhere('salesorder.salesidref', 'like', '%' . $request->salesidref . '%');
+                }
+            });
         }
 
         if ($request->filled('kind')) {
@@ -386,7 +454,6 @@ class SalesController extends Controller
         $paginated = $query->paginate($perPage);
 
         // --- 6. Format Output ---
-        // kind label 0 sudah digunakan 1 masih dalam order bagaimana bahasanya
         $kindLabel = [0 => 'Order', 1 => 'Sales'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
 
@@ -421,6 +488,9 @@ class SalesController extends Controller
                 'date_from' => $dateFrom->toDateString(),
                 'date_to' => $dateTo->toDateString(),
                 'customer_id' => $request->customer_id,
+                'customer_name' => $request->customer_name,
+                'salesid' => $request->salesid,
+                'salesidref' => $request->salesidref,
                 'kind' => $request->kind !== null ? (int) $request->kind : null,
             ],
             'data' => $items,
@@ -681,8 +751,8 @@ class SalesController extends Controller
                 'shipment' => 0,
                 'accepted' => 0,
                 'dateaccepted' => null,
-                'usercreate' => $request->usercreate,
-                'useredit' => $request->usercreate,
+                'usercreate' => '$request->usercreate',
+                'useredit' => '$request->usercreate',
                 'paidinfull' => 0,
                 'paidinfulldate' => null,
                 'paidinfullref' => '',
@@ -804,6 +874,9 @@ class SalesController extends Controller
             'salesvaluedisc' => 'nullable|numeric',
             'salesmanid' => 'nullable|string',
             'salesorder_id_ref' => 'nullable|string',
+            'payment_type_id' => 'nullable|integer',
+            'dp_amount' => 'nullable|numeric|min:0',
+            'duedays' => 'nullable|integer|min:0',
             'details' => 'required|array|min:1',
             'details.*.productid' => 'required|string',
             'details.*.salesqty' => 'required|numeric',
@@ -812,8 +885,6 @@ class SalesController extends Controller
             'details.*.departement' => 'required|string',
             'details.*.supplier' => 'nullable|string',
         ]);
-
-        Log::info("Request Store Sale: " . json_encode($request->all()));
 
         if ($validator->fails()) {
             return response()->json([
@@ -826,15 +897,38 @@ class SalesController extends Controller
         DB::beginTransaction();
 
         try {
-            $div = DB::table('division')->where('id', "0011")->lockForUpdate()->first();
+            $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
 
             if (!$div) {
                 throw new \Exception("Divisi tidak ditemukan!");
             }
 
-            // Cukup 1 baris ini saja, sangat rapi!
+            // AMBIL METADATA CUSTOMER
+            $customer = DB::table('customer')->where('id', $request->customerid)->first();
+            $salesmanid = ($customer && $customer->defsalesmanid) ? $customer->defsalesmanid : "001";
+            $receivableAcc = ($customer && $customer->receivableacc) ? $customer->receivableacc : '104.001';
+            $termOfPaymentStr = ($customer && isset($customer->termofpayment)) ? $customer->termofpayment : '0';
+            $defaultDueDays = (int) preg_replace('/[^0-9]/', '', $termOfPaymentStr);
 
-            $salesmanid = DB::table('customer')->where('id', $request->customerid)->value('defsalesmanid') ?: "001";
+            // AMBIL METADATA PAYMENT TYPE
+            $paymentTypeId = $request->payment_type_id ?? 1; // Default 1 (Tunai)
+            $paymentTypeData = DB::table('paymenttype')->where('id', $paymentTypeId)->first();
+            $paymentAcc = ($paymentTypeData && $paymentTypeData->paymentacc) ? $paymentTypeData->paymentacc : '101.001';
+
+            // PRE-CALCULATE TOTAL NET (agar proporsi Cash/Piutang tepat saat simpan Header)
+            $totalNetCalculator = 0;
+            foreach ($request->details as $d) {
+                $totalNetCalculator += ((float) $d['salesqty'] * (float) $d['price']);
+            }
+
+            $isCash = ($request->salestype == 0);
+            $dpAmountParam = (float)($request->dp_amount ?? 0);
+            
+            $cashAllocated = $isCash ? $totalNetCalculator : min($dpAmountParam, $totalNetCalculator);
+            $creditAllocated = $totalNetCalculator - $cashAllocated;
+            
+            $isFullyPaid = ($creditAllocated <= 0); // Lunas jika alokasi cash menutupi/membayari seluruh tagihan
+            $dueDays = $request->filled('duedays') ? (int)$request->duedays : ($isCash ? 0 : $defaultDueDays);
 
             // 1. Format ID Sales
             $rawFormatSL = $div->frmsalesid ?? "I/SL-%0:6.6d";
@@ -857,9 +951,6 @@ class SalesController extends Controller
                 $nextNumberInv++;
                 $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
             }
-
-            //departement log
-
             DB::table('division')
                 ->where('id', $request->division)
                 ->update([
@@ -869,8 +960,6 @@ class SalesController extends Controller
 
             $currentTime = date('H:i:s');
             $currentDateTime = $request->salesdate . ' ' . $currentTime;
-            $isCash = ($request->salestype == 0);
-
             $memoType = $isCash ? "Penjualan: TUNAI" : "Penjualan: TEMPO";
 
             // 3. Header Sales
@@ -883,7 +972,7 @@ class SalesController extends Controller
                 'kind' => 0,
                 'earlydiscdays' => 0,
                 'earlydiscvalue' => 0,
-                'duedays' => 0,
+                'duedays' => $dueDays,
                 'customerid' => $request->customerid,
                 'currtrans' => 'IDR',
                 'ratedefault' => 9000,
@@ -900,9 +989,9 @@ class SalesController extends Controller
                 'dateaccepted' => $request->salesdate . ' 00:00:00',
                 'usercreate' => $request->usercreate,
                 'useredit' => $request->usercreate,
-                'paidinfull' => $isCash ? 1 : 0,
-                'paidinfulldate' => $isCash ? $request->salesdate : null,
-                'paidinfullref' => $isCash ? $salesId : '',
+                'paidinfull' => $isFullyPaid ? 1 : 0,
+                'paidinfulldate' => $isFullyPaid ? $request->salesdate : null,
+                'paidinfullref' => $isFullyPaid ? $salesId : '',
                 'taxprint' => 0,
                 'taxprintid' => '010.000-10.00000001',
                 'billto' => $request->customerid,
@@ -940,7 +1029,6 @@ class SalesController extends Controller
                 $totalGross += $gross;
                 $totalNet += $net;
                 $totalCogs += $totalCogsPerItem;
-
 
                 DB::table('salesdetail')->insert([
                     'transdate' => $request->salesdate,
@@ -986,22 +1074,34 @@ class SalesController extends Controller
                 ]);
             }
 
+            // (Recalculate accurately based on exact detail inputs instead of raw calculator input just in case)
+            $cashAllocated = $isCash ? $totalNet : min($dpAmountParam, $totalNet);
+            $creditAllocated = $totalNet - $cashAllocated;
+
+            // 6. JURNAL TRANSAKSI (DYNAMIC ACCOUNT)
             $journals = [];
 
-            if ($isCash) {
-                $journals[] = ['accountid' => '101.001', 'debit' => $totalNet, 'credit' => 0];
-            } else {
-                $journals[] = ['accountid' => '104.001', 'debit' => $totalNet, 'credit' => 0];
+            if ($cashAllocated > 0) {
+                // Debit Kas/Bank/Uang Muka
+                $memoDP = $isCash ? "Penjualan: TUNAI" : "Pembayaran DP Penjualan: " . $salesId;
+                $journals[] = ['accountid' => $paymentAcc, 'debit' => $cashAllocated, 'credit' => 0, 'memo' => $memoDP];
             }
-            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $totalNet];
-            $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0];
-            $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs];
+            if ($creditAllocated > 0) {
+                // Debit Piutang
+                $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => "Penjualan: TEMPO"];
+            }
+            
+            // Kredit Pendapatan Penjualan
+            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $totalNet, 'memo' => $memoType];
+            // Tambahan Jurnal HPP vs Persediaan
+            $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0, 'memo' => "Pengeluaran Persediaan (HPP)"];
+            $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs, 'memo' => "Pengeluaran Persediaan (HPP)"];
 
             foreach ($journals as $j) {
                 DB::table('journaltrans')->insert([
                     'jtid' => $salesId,
                     'jtdate' => $currentDateTime,
-                    'memo' => $memoType,
+                    'memo' => $j['memo'],
                     'accountid' => $j['accountid'],
                     'debit' => $j['debit'],
                     'credit' => $j['credit'],
@@ -1012,26 +1112,26 @@ class SalesController extends Controller
                 ]);
             }
 
-            if ($isCash) {
+            // 7. SALES PAYMENT JIKA ADA PEMBAYARAN KAS / DP SAAT INI
+            if ($cashAllocated > 0) {
                 DB::table('salespayments')->insert([
                     'salesid' => $salesId,
                     'salesidref' => $salesId,
                     'transdate' => $currentDateTime,
-                    'debit' => $totalNet,
-                    'discountpercent' => 0,
-                    'discountvalue' => 0,
+                    'debit' => $cashAllocated,
+                    'discountpercent' => $request->discount_percent ?? 0,
+                    'discountvalue' => $request->discount_value ?? 0,
                     'expensepercent' => 0,
                     'expensevalue' => 0,
                     'duedate' => $request->salesdate,
                     'accepted' => 1,
-                    'paymenttype' => 1,
+                    'paymenttype' => $paymentTypeId, // DYNAMIC ID DARI FE
                     'refpayment' => '',
                     'currtrans' => 'IDR',
                     'ratedefault' => 9000,
                     'rateused' => 9000,
                     'usercreate' => $request->usercreate,
                     'useredit' => $request->usercreate,
-                    //salest
                     'kind' => 0
                 ]);
             }
@@ -1042,6 +1142,261 @@ class SalesController extends Controller
                 'status' => 'success',
                 'message' => 'Transaksi Penjualan berhasil disimpan.',
                 'salesid' => $salesId,
+                'inventory_transid' => $invId,
+                'payment_info' => [
+                    'is_fully_paid' => $isFullyPaid,
+                    'cash_amount' => $cashAllocated,
+                    'credit_amount' => $creditAllocated
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/sales/return",
+     *     tags={"Sales"},
+     *     summary="Simpan Transaksi Retur Penjualan",
+     *     description="Menyimpan dokumen retur penjualan, mengembalikan quantity ke inventory, dan membalik jurnal.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="salesdate", type="string", format="date", example="2026-04-20"),
+     *             @OA\Property(property="salestype", type="integer", example=0, description="0=Cash, 1=COD, 2=Kredit"),
+     *             @OA\Property(property="customerid", type="string", example="CUST001"),
+     *             @OA\Property(property="division", type="string", example="0011"),
+     *             @OA\Property(property="salesidref", type="string", example="I/SL-009869", description="Faktur penjualan asal (opsional)"),
+     *             @OA\Property(property="memo", type="string", example="Retur Penjualan: CUST001"),
+     *             @OA\Property(property="usercreate", type="string", example="kasir"),
+     *             @OA\Property(property="details", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="productid", type="string", example="P001"),
+     *                     @OA\Property(property="returnqty", type="number", example=2),
+     *                     @OA\Property(property="unit", type="string", example="PCS"),
+     *                     @OA\Property(property="price", type="number", example=100000),
+     *                     @OA\Property(property="departement", type="string", example="001101")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Created")
+     * )
+     */
+    public function storeSalesReturn(Request $request)
+    {
+        $request->validate([
+            'salesdate' => 'required|date_format:Y-m-d',
+            'salestype' => 'required|integer|in:0,1,2',
+            'customerid' => 'required|string',
+            'division' => 'required|string',
+            'salesidref' => 'nullable|string',
+            'memo' => 'nullable|string',
+            'usercreate' => 'required|string',
+            'details' => 'required|array|min:1',
+            'details.*.productid' => 'required|string',
+            'details.*.returnqty' => 'required|numeric|min:0.01',
+            'details.*.unit' => 'required|string',
+            'details.*.price' => 'required|numeric|min:0',
+            'details.*.departement' => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $divisionId = $request->division;
+            $div = DB::table('division')->where('id', $divisionId)->lockForUpdate()->first();
+
+
+            if (!$div) {
+                throw new \Exception("Divisi tidak ditemukan / tidak valid.");
+            }
+
+            // Generate SR ID
+            $rawFormatSR = $div->frmsalesreturnid;
+            $prefixSR = str_replace('%0:6.6d', '', $rawFormatSR);
+            $nextNumberSR = $div->salesreturnidno + 1;
+            $salesRefId = $prefixSR . str_pad($nextNumberSR, 6, "0", STR_PAD_LEFT);
+
+            // Cegah duplikasi
+            while (DB::table('sales')->where('salesid', $salesRefId)->exists()) {
+                $nextNumberSR++;
+                $salesRefId = $prefixSR . str_pad($nextNumberSR, 6, "0", STR_PAD_LEFT);
+            }
+
+            DB::table('division')->where('id', $divisionId)->update(['salesreturnidno' => $nextNumberSR]);
+
+            // Generate Inventory ID
+            $rawFormatIM = $div->frminventoryid;
+            $prefixInv = str_replace('%0:6.6d', '', $rawFormatIM);
+            $nextNumberInv = $div->inventoryidno + 1;
+            $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
+
+            while (DB::table('inventory')->where('transid', $invId)->exists()) {
+                $nextNumberInv++;
+                $invId = $prefixInv . str_pad($nextNumberInv, 6, "0", STR_PAD_LEFT);
+            }
+
+            DB::table('division')->where('id', $divisionId)->update(['inventoryidno' => $nextNumberInv]);
+
+            $currentTime = Carbon::now()->format('H:i:s');
+            $currentDateTime = $request->salesdate . ' ' . $currentTime;
+            $isCash = ((int) $request->salestype === 0);
+
+            $rawSalesman = DB::table('customer')->where('id', $request->customerid)->value('defsalesmanid');
+
+            // 2. Validasi apakah 'EKO' BENAR-BENAR ada di tabel 'salesman'?
+            if ($rawSalesman && DB::table('salesman')->where('id', $rawSalesman)->exists()) {
+                $salesmanid = $rawSalesman;
+            } else {
+                // 3. JIKA 'EKO' ADALAH HANTU (Tidak Ada), Comot paksa 1 ID Salesman yang valid dari tabel!
+                $validSalesman = DB::table('salesman')->first();
+                if (!$validSalesman) {
+                    throw new \Exception("Gagal: Tabel Salesman di database Anda KOSONG. Harap isi minimal 1 data Sales.");
+                }
+                $salesmanid = $validSalesman->id; // Menggunakan ID yang dijamin 100% ada di database
+            }
+            $memoType = $request->memo ?: 'Retur Penjualan: ' . $request->customerid;
+
+            // 1. HEADER (kind = 1)
+            DB::table('sales')->insert([
+                'salesid' => $salesRefId,
+                'salesidref' => $request->salesidref ?: $salesRefId,
+                'salesdate' => $request->salesdate,
+                'salestime' => $currentTime,
+                'salestype' => $request->salestype,
+                'kind' => 1, // 1 = Retur
+                'customerid' => $request->customerid,
+                'currtrans' => 'IDR',
+                'ratedefault' => 9000,
+                'rateused' => 9000,
+                'salesmanid' => $salesmanid,
+                'memo' => $memoType,
+                'division' => $divisionId,
+                'accepted' => -1,
+                'dateaccepted' => $request->salesdate . ' 00:00:00',
+                'usercreate' => 'security',
+                'useredit' => 'security',
+                'paidinfull' => $isCash ? 1 : 0,
+                'paidinfulldate' => $isCash ? $request->salesdate : '1900-01-01',
+                'paidinfullref' => $isCash ? $salesRefId : '',
+            ]);
+
+            $totalGross = 0;
+            $totalNet = 0;
+            $totalCogs = 0;
+            $dateRef = Carbon::now()->format('YmdHisus');
+
+            // 2. DETAIL & INVENTORY
+            foreach ($request->details as $detail) {
+                $supplier = DB::table('product')->where('id', $detail['productid'])->value('supplier') ?: '001001';
+                $cogs = DB::table('product')->where('id', $detail['productid'])->value('cogs') ?: 0;
+                $qty = (float) $detail['returnqty'];
+                $price = (float) $detail['price'];
+
+                $gross = $qty * $price;
+                $net = $gross;
+                $totalCogsPerItem = $qty * $cogs;
+
+                $totalGross += $gross;
+                $totalNet += $net;
+                $totalCogs += $totalCogsPerItem;
+
+                DB::table('salesdetail')->insert([
+                    'transdate' => $request->salesdate,
+                    'salesid' => $salesRefId,
+                    'salesidref' => $request->salesidref ?: $salesRefId,
+                    'productid' => $detail['productid'],
+                    'snproduct' => '',
+                    'salesqty' => 0,
+                    'returnqty' => $qty, // <-- RETURN QTY
+                    'unit' => $detail['unit'],
+                    'price' => $price,
+                    'grossamount' => $gross,
+                    'taxid' => 0,
+                    'salestax' => 0,
+                    'percentdisc' => '0',
+                    'valuedisc' => 0,
+                    'netamount' => $net,
+                    'cogs' => $totalCogsPerItem,
+                    'memo' => '-',
+                    'departement' => $detail['departement'],
+                    'servicedoerid' => "001",
+                    'usercreate' => 'security',
+                    'useredit' => 'security',
+                ]);
+
+                // BARANG MASUK 
+                DB::table('inventory')->insert([
+                    'transid' => $invId,
+                    'transdate' => $currentDateTime,
+                    'departement' => $detail['departement'],
+                    'division' => $divisionId,
+                    'supplier' => $supplier,
+                    'productid' => $detail['productid'],
+                    'snproduct' => '',
+                    'invin' => $qty, // <-- RETURN QTY MASUK
+                    'invout' => 0,
+                    'invvalue' => $cogs,
+                    'reference' => $salesRefId,
+                    'datereference' => $dateRef,
+                    'transtype' => 4, // 4 = TRANSTYPE RETURN
+                    'memo' => $memoType,
+                    'usercreate' => 'security',
+                    'useredit' => '',
+                    'isempty' => 0
+                ]);
+            }
+
+            // 3. JURNAL BALIKAN (REVERSAL of Sales)
+            $journals = [];
+            // Retur Penjualan = Debit 401.002
+            $journals[] = ['accountid' => '401.002', 'debit' => $totalNet, 'credit' => 0];
+
+            if ($isCash) {
+                // Kas = Credit 101.001
+                $journals[] = ['accountid' => '101.001', 'debit' => 0, 'credit' => $totalNet];
+            } else {
+                // Piutang = Credit 104.001
+                $journals[] = ['accountid' => '104.001', 'debit' => 0, 'credit' => $totalNet];
+            }
+            // Persediaan = Debit 107.001  
+            $journals[] = ['accountid' => '107.001', 'debit' => $totalCogs, 'credit' => 0];
+            // HPP = Credit 501.001
+            $journals[] = ['accountid' => '501.001', 'debit' => 0, 'credit' => $totalCogs];
+
+            foreach ($journals as $j) {
+                DB::table('journaltrans')->insert([
+                    'jtid' => $salesRefId,
+                    'jtdate' => $currentDateTime,
+                    'memo' => $memoType,
+                    'accountid' => $j['accountid'],
+                    'debit' => $j['debit'],
+                    'credit' => $j['credit'],
+                    'division' => $divisionId,
+                    'reftransaction' => 'Retur Penjualan: ' . $salesRefId,
+                    'usercreate' => 'security',
+                    'useredit' => ''
+                ]);
+            }
+
+            // Optional: Payment reversal if cash? For now we don't insert to salespayments for return, unless standard Acosys inserts it. Usually negative payment is not used, just journal handled it. But we'll leave it out until requested.
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Transaksi Retur berhasil disimpan.',
+                'salesid' => $salesRefId,
                 'inventory_transid' => $invId
             ], 201);
 
