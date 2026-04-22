@@ -18,6 +18,7 @@ class InventoryMovingController extends Controller
             'fromdepartement' => 'required|string',
             'todivision' => 'required|string',
             'todepartement' => 'required|string',
+            'memo' => 'nullable|string',
             'details' => 'required|array',
             'usercreate' => 'required|string'
         ]);
@@ -47,6 +48,12 @@ class InventoryMovingController extends Controller
                 'usercreate' => $request->usercreate,
             ]);
 
+            $productsData = DB::table('product')
+                ->whereIn('id', collect($request->details)->pluck('productid'))
+                ->get()
+                ->keyBy('id');
+
+
             foreach ($request->details as $item) {
                 // 3. Insert Detail (inventorymovingdetail)
                 DB::table('inventorymovingdetail')->insert([
@@ -57,6 +64,11 @@ class InventoryMovingController extends Controller
                     'qty' => $item['qty'],
                     'usercreate' => $request->usercreate,
                 ]);
+
+
+                $productDb = $productsData[$item['productid']] ?? null;
+                $cogs = $productDb ? (float) $productDb->costprice : 0;
+                $dateRef = date('Ymd', strtotime($request->transdate)) . mt_rand(10000000, 99999999);
 
                 // 4. Update Buku Besar (inventory) - DUA BARIS
                 // BARIS 1: Keluar dari gudang asal
@@ -69,9 +81,10 @@ class InventoryMovingController extends Controller
                     'productid' => $item['productid'],
                     'invin' => 0,
                     'invout' => $item['qty'],
+                    'invvalue' => $cogs,
                     'reference' => $transId,
-                    'datereference' => $request->transdate,
-                    'transtype' => 2, // Kode 2 untuk Moving
+                    'datereference' => $dateRef,
+                    'transtype' => 5, // 5 = Pemindahan (Transfer/Movement)
                     'usercreate' => $request->usercreate,
                 ]);
 
@@ -84,10 +97,11 @@ class InventoryMovingController extends Controller
                     'supplier' => '001001',
                     'productid' => $item['productid'],
                     'invin' => $item['qty'],
+                    'invvalue' => $cogs,
                     'invout' => 0,
                     'reference' => $transId,
-                    'datereference' => $request->transdate,
-                    'transtype' => 2,
+                    'datereference' => $dateRef,
+                    'transtype' => 5, // 5 = Pemindahan (Transfer/Movement)
                     'usercreate' => $request->usercreate,
                 ]);
             }

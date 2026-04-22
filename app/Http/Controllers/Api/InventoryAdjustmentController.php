@@ -136,6 +136,8 @@ class InventoryAdjustmentController extends Controller
                     'useredit' => '',
                 ]);
 
+                //transtype if adjust in = 6 else = 7
+                $transtype = $inqty > 0 ? 6 : 7;
                 // 5. INSERT KE INVENTORY (BUKU STOK)
                 DB::table('inventory')->insert([
                     'transid' => $transId,
@@ -150,7 +152,7 @@ class InventoryAdjustmentController extends Controller
                     'invvalue' => $cogs,
                     'reference' => $transId,
                     'datereference' => $dateRef,
-                    'transtype' => 6,
+                    'transtype' => $transtype,
                     'memo' => 'Adjustment: ' . ($detail['memo'] ?? ''),
                     'usercreate' => $request->usercreate,
                     'useredit' => '',
