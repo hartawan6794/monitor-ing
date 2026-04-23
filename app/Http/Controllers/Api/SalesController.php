@@ -290,6 +290,8 @@ class SalesController extends Controller
         $kindLabel = [0 => 'Penjualan', 1 => 'Retur'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
 
+        //jadikan D-m-y
+        $header->salesdate = Carbon::parse($header->salesdate)->format('d-m-Y');
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -922,13 +924,13 @@ class SalesController extends Controller
             }
 
             $isCash = ($request->salestype == 0);
-            $dpAmountParam = (float)($request->dp_amount ?? 0);
-            
+            $dpAmountParam = (float) ($request->dp_amount ?? 0);
+
             $cashAllocated = $isCash ? $totalNetCalculator : min($dpAmountParam, $totalNetCalculator);
             $creditAllocated = $totalNetCalculator - $cashAllocated;
-            
+
             $isFullyPaid = ($creditAllocated <= 0); // Lunas jika alokasi cash menutupi/membayari seluruh tagihan
-            $dueDays = $request->filled('duedays') ? (int)$request->duedays : ($isCash ? 0 : $defaultDueDays);
+            $dueDays = $request->filled('duedays') ? (int) $request->duedays : ($isCash ? 0 : $defaultDueDays);
 
             // 1. Format ID Sales
             $rawFormatSL = $div->frmsalesid ?? "I/SL-%0:6.6d";
@@ -1090,7 +1092,7 @@ class SalesController extends Controller
                 // Debit Piutang
                 $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => "Penjualan: TEMPO"];
             }
-            
+
             // Kredit Pendapatan Penjualan
             $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $totalNet, 'memo' => $memoType];
             // Tambahan Jurnal HPP vs Persediaan
