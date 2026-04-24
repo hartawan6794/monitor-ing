@@ -99,10 +99,9 @@ class UserController extends Controller
         // Query untuk mengambil data yang sesuai dengan parameter
         $result = DB::table('usersconfig as uc')
             ->join('userconfigrules as ucf', 'ucf.id', '=', 'uc.userconfigrulesid')
-            ->select('ucf.id', 'ucf.description', 'uc.configvalues')
+            ->select('ucf.id', 'ucf.description', 'uc.configvalues', 'ucf.valuetype')
             ->where('ucf.section', '=', $section)
             ->where('uc.userid', '=', $userid)
-            ->where('ucf.valuetype', '=', '0')
             ->get();
 
         // Jika tidak ada data ditemukan

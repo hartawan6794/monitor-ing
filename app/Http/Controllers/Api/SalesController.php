@@ -677,6 +677,8 @@ class SalesController extends Controller
             'customerid' => 'required|string',
             'division' => 'required|string',
             'usercreate' => 'required|string',
+            'salespercentdisc' => 'required|numeric',
+            'salesvaluedisc' => 'required|numeric',
             'details' => 'required|array|min:1',
             'details.*.productid' => 'required|string',
             'details.*.salesqty' => 'required|numeric',
@@ -744,8 +746,8 @@ class SalesController extends Controller
                 'ratedefault' => 9000,
                 'rateused' => 9000,
                 'salesmanid' => $salesmanid,
-                'salespercentdisc' => 0,
-                'salesvaluedisc' => 0,
+                'salespercentdisc' => $request->salespercentdisc,
+                'salesvaluedisc' => $request->salesvaluedisc,
                 'memo' => $request->memo ?? '-',
                 'memoedit' => '-',
                 'division' => $request->division,
@@ -753,8 +755,8 @@ class SalesController extends Controller
                 'shipment' => 0,
                 'accepted' => 0,
                 'dateaccepted' => null,
-                'usercreate' => '$request->usercreate',
-                'useredit' => '$request->usercreate',
+                'usercreate' => $request->usercreate,
+                'useredit' => $request->usercreate,
                 'paidinfull' => 0,
                 'paidinfulldate' => null,
                 'paidinfullref' => '',
@@ -820,6 +822,7 @@ class SalesController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()

@@ -69,6 +69,30 @@ class AuthController extends Controller
             ->pluck('userconfigrulesid')
             ->toArray();
 
+        // Ambil SEMUA nilai konfigurasi user (termasuk Default Pelanggan, dll)
+        $allUserConfigs = \Illuminate\Support\Facades\DB::table('usersconfig as uc')
+            ->join('userconfigrules as ucf', 'ucf.id', '=', 'uc.userconfigrulesid')
+            ->select('ucf.id', 'ucf.section', 'ucf.description', 'uc.configvalues', 'ucf.valuetype')
+            ->where('uc.userid', $user->id)
+            ->get()
+            ->groupBy('section')
+            ->map(function ($items) {
+                // Ubah setiap section menjadi key-value yang mudah dibaca Android
+                return $items->mapWithKeys(function ($item) {
+                    return [$item->id => [
+                        'description' => $item->description,
+                        'value' => $item->configvalues,
+                        'valuetype' => $item->valuetype, // 0=boolean, 1=string/id
+                    ]];
+                });
+            });
+
+        // Shortcut untuk default pelanggan (agar Android mudah mengaksesnya)
+        $defaultCustomer = \Illuminate\Support\Facades\DB::table('usersconfig')
+            ->where('userid', $user->id)
+            ->where('userconfigrulesid', '023002')
+            ->value('configvalues');
+
         // 1. Tentukan Role Utama (Pseudo-Role) untuk Navigasi Android
         $role = 'kasir'; // Default fallback
         if ($user->id === 'admin') {
@@ -99,6 +123,8 @@ class AuthController extends Controller
                 'username' => $user->id,
                 'role' => $role,
                 'features' => $features,
+                'default_customer' => $defaultCustomer ?? null, // Shortcut langsung
+                'user_configs' => $allUserConfigs,              // Semua konfigurasi per section
                 'token' => $token
             ]
         ]);

@@ -94,7 +94,7 @@ class DynamicConnectionController extends Controller
                 'user_id' => $user->id,
                 'available_database_id' => $db->id,
                 'access_key' => $accessKey,
-                'expires_at' => now()->addMinutes(5),
+                'expires_at' => now()->addMonths(1),
             ]);
 
             return [

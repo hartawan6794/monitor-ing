@@ -54,6 +54,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
         Route::get('/low-stock-alert', [ProductController::class, 'lowStockAlert']);
+        Route::post('/', [ProductController::class, 'store']);
         Route::put('/{id}', [ProductController::class, 'update']);
     });
 

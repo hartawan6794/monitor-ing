@@ -312,7 +312,9 @@ class MasterDataController extends Controller
 
             // Pastikan backend hanya memproses jika 3 karakter atau lebih
             if ($searchTerm && strlen($searchTerm) >= 3) {
-                $query->where('name', 'like', '%' . $searchTerm . '%');
+                //when name or id like searchterm
+                $query->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('id', 'like', '%' . $searchTerm . '%');
             } else {
                 // Jika kurang dari 3, kembalikan data kosong atau pesan instruksi
                 return response()->json(['status' => 'success', 'data' => []]);

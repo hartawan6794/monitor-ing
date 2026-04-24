@@ -34,7 +34,7 @@ class ProductController extends Controller
                 'division.id as division_id',
                 'division.description as division_name',
                 'product.defunit as unit'
-            )
+            )->where('product.isactive', 1)
             // Mengaplikasikan filter division dan department terlebih dahulu
             ->when($divisionId, function ($query, $divisionId) {
                 return $query->where('inventory.division', $divisionId);
@@ -142,49 +142,158 @@ class ProductController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/products/{id}",
-     *     summary="Update Produk",
+     * @OA\Post(
+     *     path="/products",
+     *     summary="Tambah Produk Baru",
      *     tags={"Product"},
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="X-Database-Name",
-     *         in="header",
+     *     @OA\RequestBody(
      *         required=true,
-     *         description="Nama Database",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID Produk",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         required=true,
-     *         description="Nama Produk",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="price",
-     *         in="query",
-     *         required=true,
-     *         description="Harga Produk",
-     *         @OA\Schema(type="number")
+     *         @OA\JsonContent(
+     *             required={"id", "name", "productgroup", "defunit", "salesprice1"},
+     *             @OA\Property(property="id", type="string", example="SKU001"),
+     *             @OA\Property(property="name", type="string", example="Nama Produk"),
+     *             @OA\Property(property="productgroup", type="string", example="6197"),
+     *             @OA\Property(property="defunit", type="string", example="PCS"),
+     *             @OA\Property(property="salesprice1", type="number", example=100000),
+     *             @OA\Property(property="initial_stock", type="number", example=10),
+     *             @OA\Property(property="departement_id", type="string", example="001101"),
+     *             @OA\Property(property="division_id", type="string", example="0011"),
+     *             @OA\Property(property="usercreate", type="string", example="admin")
+     *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
-     *         description="Produk berhasil diupdate.",
+     *         response=201,
+     *         description="Produk berhasil dibuat.",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="Produk berhasil diupdate.")
+     *             @OA\Property(property="message", type="string", example="Produk berhasil dibuat."),
+     *             @OA\Property(property="id", type="string", example="SKU001")
      *         )
      *     )
      * )
      */
+    public function store(Request $request)
+    {
+        // 1. Validasi Input
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'id' => 'required|string|max:30|unique:product,id',
+            'name' => 'required|string|max:100',
+            'productgroup' => 'required|string|exists:productgroup,id',
+            'defunit' => 'required|string|exists:units,unit',
+            'salesprice1' => 'required|numeric|min:0',
+            // Opsional Initial Stock
+            'initial_stock' => 'nullable|numeric|min:0',
+            'departement_id' => 'required_with:initial_stock|string|exists:departement,id',
+            'division_id' => 'required_with:initial_stock|string|exists:division,id',
+            'usercreate' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validasi gagal.',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user = $request->usercreate ?? 'admin';
+            $now = now();
+
+            // 2. Insert ke Tabel Product
+            DB::table('product')->insert([
+                'id' => $request->id,
+                'aliasid' => $request->barcode ?? '',
+                'name' => $request->name,
+                'description' => $request->description ?? '',
+                'productgroup' => $request->productgroup,
+                'defunit' => $request->defunit,
+                'groupunit' => $request->defunit, // Default sama dengan defunit
+                'supplier' => $request->supplier ?? '001001', // Default UMUM
+                'category' => 0, // 0 = Inventory
+                'factory' => 'P1',
+                'brand' => $request->brand ?? '5487', // Default ABC or similar
+                'costprice' => $request->costprice ?? 0,
+                'purchasedisc' => 0,
+                'purchasetax' => 0,
+                'netpurchase' => $request->costprice ?? 0,
+                'salesprice1' => $request->salesprice1,
+                'salesprice2' => $request->salesprice2 ?? 0,
+                'salesprice3' => $request->salesprice3 ?? 0,
+                'salesprice4' => 0,
+                'salesprice5' => 0,
+                'salesprice6' => 0,
+                'salesprice7' => 0,
+                'usesn' => 1,
+                'minimum' => $request->minimum ?? 0,
+                'maximum' => 0,
+                'taxtype' => 0, // Non Pajak
+                'author' => 'p1',
+                'salesmancommrules' => '',
+                'salesproductrewardrules' => '',
+                'salespointrewardrules' => '',
+                'servicedoercommrules' => '',
+                'inventoryacc' => '107.001',
+                'taxacc' => '22.002',
+                'cogsacc' => '501.001',
+                'salesacc' => '401.001',
+                'salesdiscacc' => '401.003',
+                'salesreturnacc' => '401.002',
+                'consignrevenueacc' => '401.006',
+                'consignexpenseacc' => '601.001',
+                'isactive' => 1,
+                'usercreate' => $user,
+                'useredit' => '',
+                'updatetimestamp' => $now
+            ]);
+
+            // 3. Insert ke Tabel Inventory jika ada stok awal > 0
+            if ($request->initial_stock > 0) {
+                $transId = 'OP-' . $request->id;
+                $dateRef = date('Ymd') . mt_rand(1000, 9999);
+
+                DB::table('inventory')->insert([
+                    'transid' => $transId,
+                    'transdate' => $now,
+                    'departement' => $request->departement_id,
+                    'division' => $request->division_id,
+                    'supplier' => $request->supplier ?? '001001',
+                    'productid' => $request->id,
+                    'snproduct' => '',
+                    'invin' => $request->initial_stock,
+                    'invout' => 0,
+                    'invvalue' => $request->costprice ?? 0,
+                    'reference' => 'Initial Stock',
+                    'datereference' => $dateRef,
+                    'transtype' => 6, // Penyesuaian Masuk
+                    'memo' => 'Stok Awal Produk Baru: ' . $request->id,
+                    'usercreate' => $user,
+                    'useredit' => '',
+                    'isempty' => 0
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Produk berhasil dibuat.',
+                'id' => $request->id
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error create product: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal membuat produk: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         // Validasi input
