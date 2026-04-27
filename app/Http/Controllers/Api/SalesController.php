@@ -533,6 +533,8 @@ class SalesController extends Controller
                 'salesorder.salestype',
                 'salesorder.accepted',
                 'salesorder.dateaccepted',
+                'salesorder.salespercentdisc',
+                'salesorder.salesvaluedisc',
                 'salesorder.memo',
                 'customer.id as customer_id',
                 'customer.name as customer_name',
@@ -597,6 +599,8 @@ class SalesController extends Controller
                     'salestype_label' => $typeLabel[$header->salestype] ?? '-',
                     'accepted' => (bool) $header->accepted,
                     'dateaccepted' => $header->dateaccepted,
+                    'discount_percent' => $header->salespercentdisc,
+                    'discount_value' => $header->salesvaluedisc,
                     'memo' => $header->memo,
                     'customer' => [
                         'id' => $header->customer_id,
@@ -873,11 +877,11 @@ class SalesController extends Controller
             'salesdate' => 'required|date',
             'salestype' => 'required|in:0,2',
             'customerid' => 'required|string',
-            'division' => 'required|string',
+            'division' => 'nullable|string',
             'usercreate' => 'required|string',
             'salespercentdisc' => 'nullable|numeric',
             'salesvaluedisc' => 'nullable|numeric',
-            'salesmanid' => 'nullable|string',
+            //'salesmanid' => 'nullable|string',
             'salesorder_id_ref' => 'nullable|string',
             'payment_type_id' => 'nullable|integer',
             'dp_amount' => 'nullable|numeric|min:0',
@@ -891,6 +895,8 @@ class SalesController extends Controller
             'details.*.supplier' => 'nullable|string',
         ]);
 
+        Log::info('Sales Order Request: ' . json_encode($request->all()));
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -902,7 +908,17 @@ class SalesController extends Controller
         DB::beginTransaction();
 
         try {
-            $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
+            $div = null;
+            if ($request->division != null || $request->division != "") {
+                $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
+            } else {
+                if ($request->salesorder_id_ref) {
+                    $divId = DB::table('salesorder')->where('salesid', $request->salesorder_id_ref)->value('division');
+                    $div = DB::table('division')->where('id', $divId)->lockForUpdate()->first();
+                } else {
+                    $div = DB::table('division')->where('id', "0011")->lockForUpdate()->first();
+                }
+            }
 
             if (!$div) {
                 throw new \Exception("Divisi tidak ditemukan!");
@@ -987,7 +1003,7 @@ class SalesController extends Controller
                 'salesvaluedisc' => $request->salesvaluedisc ?? 0,
                 'memo' => $request->memo ?? '-',
                 'memoedit' => '-',
-                'division' => "0011",
+                'division' => $div->id,
                 'printed' => 0,
                 'shipment' => 0,
                 'accepted' => -1,
@@ -1062,7 +1078,7 @@ class SalesController extends Controller
                     'transid' => $invId,
                     'transdate' => $currentDateTime,
                     'departement' => $detail['departement'],
-                    'division' => "0011",
+                    'division' => $div->id,
                     'supplier' => $detail['supplier'] ?? '001001',
                     'productid' => $detail['productid'],
                     'snproduct' => '',

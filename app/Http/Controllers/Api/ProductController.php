@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Log;
+use Validator;
 
 class ProductController extends Controller
 {
@@ -176,16 +177,30 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         // 1. Validasi Input
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'id' => 'required|string|max:30|unique:product,id',
+            'aliasid' => 'nullable|string|max:30',
             'name' => 'required|string|max:100',
+            'description' => 'nullable|string|max:200',
             'productgroup' => 'required|string|exists:productgroup,id',
             'defunit' => 'required|string|exists:units,unit',
+            'groupunit' => 'nullable|string',
+            'supplier' => 'nullable|string|exists:supplier,id',
+            'category' => 'nullable|integer', // 0=Inventory, 1=Service
+            'factory' => 'nullable|string|exists:factories,id',
+            'brand' => 'nullable|string|exists:productbrand,id',
+            'costprice' => 'nullable|numeric|min:0',
             'salesprice1' => 'required|numeric|min:0',
-            // Opsional Initial Stock
-            'initial_stock' => 'nullable|numeric|min:0',
-            'departement_id' => 'required_with:initial_stock|string|exists:departement,id',
-            'division_id' => 'required_with:initial_stock|string|exists:division,id',
+            'salesprice2' => 'nullable|numeric|min:0',
+            'salesprice3' => 'nullable|numeric|min:0',
+            'salesprice4' => 'nullable|numeric|min:0',
+            'salesprice5' => 'nullable|numeric|min:0',
+            'salesprice6' => 'nullable|numeric|min:0',
+            'salesprice7' => 'nullable|numeric|min:0',
+            'minimum' => 'nullable|numeric|min:0',
+            'maximum' => 'nullable|numeric|min:0',
+            'author' => 'nullable|string',
+            'taxtype' => 'nullable|integer',
             'usercreate' => 'nullable|string'
         ]);
 
@@ -203,35 +218,49 @@ class ProductController extends Controller
             $user = $request->usercreate ?? 'admin';
             $now = now();
 
-            // 2. Insert ke Tabel Product
+            // 2. Insert ke Tabel Product (Sesuai DDL Lengkap)
             DB::table('product')->insert([
                 'id' => $request->id,
-                'aliasid' => $request->barcode ?? '',
+                'aliasid' => $request->aliasid ?? '',
                 'name' => $request->name,
                 'description' => $request->description ?? '',
                 'productgroup' => $request->productgroup,
                 'defunit' => $request->defunit,
-                'groupunit' => $request->defunit, // Default sama dengan defunit
-                'supplier' => $request->supplier ?? '001001', // Default UMUM
-                'category' => 0, // 0 = Inventory
-                'factory' => 'P1',
-                'brand' => $request->brand ?? '5487', // Default ABC or similar
+                'groupunit' => $request->defunit,
+                'supplier' => $request->supplier ?? '001001',
+                'category' => $request->category ?? 0,
+                'factory' => $request->factory ?? 'P1',
+                'brand' => $request->brand ?? '5487',
                 'costprice' => $request->costprice ?? 0,
                 'purchasedisc' => 0,
                 'purchasetax' => 0,
                 'netpurchase' => $request->costprice ?? 0,
-                'salesprice1' => $request->salesprice1,
+                'salesprice1' => $request->salesprice1 ?? 0,
                 'salesprice2' => $request->salesprice2 ?? 0,
                 'salesprice3' => $request->salesprice3 ?? 0,
-                'salesprice4' => 0,
-                'salesprice5' => 0,
-                'salesprice6' => 0,
-                'salesprice7' => 0,
+                'salesprice4' => $request->salesprice4 ?? 0,
+                'salesprice5' => $request->salesprice5 ?? 0,
+                'salesprice6' => $request->salesprice6 ?? 0,
+                'salesprice7' => $request->salesprice7 ?? 0,
+                'salesdiscqty1' => 0,
+                'salesdiscprice1' => 0,
+                'salesdiscqty2' => 0,
+                'salesdiscprice2' => 0,
+                'salesdiscqty3' => 0,
+                'salesdiscprice3' => 0,
                 'usesn' => 1,
                 'minimum' => $request->minimum ?? 0,
-                'maximum' => 0,
-                'taxtype' => 0, // Non Pajak
+                'maximum' => $request->maximum ?? 0,
+                'minimumreorder' => 0,
+                'defaultreorder' => 0,
+                'salesdisc' => '',
+                'taxtype' => 0,
                 'author' => 'p1',
+                'dwidth' => 0,
+                'dheight' => 0,
+                'dlength' => 0,
+                'weight' => 0,
+                'salesdiscrules' => '',
                 'salesmancommrules' => '',
                 'salesproductrewardrules' => '',
                 'salespointrewardrules' => '',
@@ -247,34 +276,35 @@ class ProductController extends Controller
                 'isactive' => 1,
                 'usercreate' => $user,
                 'useredit' => '',
-                'updatetimestamp' => $now
+                'updatetimestamp' => $now,
+                'image' => null
             ]);
 
             // 3. Insert ke Tabel Inventory jika ada stok awal > 0
-            if ($request->initial_stock > 0) {
-                $transId = 'OP-' . $request->id;
-                $dateRef = date('Ymd') . mt_rand(1000, 9999);
+            // if ($request->initial_stock > 0) {
+            //     $transId = 'OP-' . $request->id;
+            //     $dateRef = date('Ymd') . mt_rand(1000, 9999);
 
-                DB::table('inventory')->insert([
-                    'transid' => $transId,
-                    'transdate' => $now,
-                    'departement' => $request->departement_id,
-                    'division' => $request->division_id,
-                    'supplier' => $request->supplier ?? '001001',
-                    'productid' => $request->id,
-                    'snproduct' => '',
-                    'invin' => $request->initial_stock,
-                    'invout' => 0,
-                    'invvalue' => $request->costprice ?? 0,
-                    'reference' => 'Initial Stock',
-                    'datereference' => $dateRef,
-                    'transtype' => 6, // Penyesuaian Masuk
-                    'memo' => 'Stok Awal Produk Baru: ' . $request->id,
-                    'usercreate' => $user,
-                    'useredit' => '',
-                    'isempty' => 0
-                ]);
-            }
+            //     DB::table('inventory')->insert([
+            //         'transid' => $transId,
+            //         'transdate' => $now,
+            //         'departement' => $request->departement_id,
+            //         'division' => $request->division_id,
+            //         'supplier' => $request->supplier ?? '001001',
+            //         'productid' => $request->id,
+            //         'snproduct' => '',
+            //         'invin' => $request->initial_stock,
+            //         'invout' => 0,
+            //         'invvalue' => $request->costprice ?? 0,
+            //         'reference' => 'Initial Stock',
+            //         'datereference' => $dateRef,
+            //         'transtype' => 6, // Penyesuaian Masuk
+            //         'memo' => 'Stok Awal Produk Baru: ' . $request->id,
+            //         'usercreate' => $user,
+            //         'useredit' => '',
+            //         'isempty' => 0
+            //     ]);
+            // }
 
             DB::commit();
 

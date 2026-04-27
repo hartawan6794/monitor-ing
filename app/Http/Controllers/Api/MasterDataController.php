@@ -147,7 +147,7 @@ class MasterDataController extends Controller
      *     @OA\Response(response=401, description="Unauthorized")
      * )
      */
-    public function productBrands()
+    public function getProductBrand()
     {
         // Mengambil id dan nama brand dari tabel productbrand
         try {
@@ -418,6 +418,110 @@ class MasterDataController extends Controller
     {
         try {
             $data = DB::table('salesman')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/master/payment-types",
+     *     tags={"Master"},
+     *     summary="Daftar tipe pembayaran",
+     *     description="Mengambil data tipe pembayaran",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getFactories()
+    {
+        try {
+            $data = DB::table('factories')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/master/units",
+     *     tags={"Master"},
+     *     summary="Daftar unit",
+     *     description="Mengambil data unit",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getUnits()
+    {
+        try {
+            $data = DB::table('units')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+
+
+    /**
+     * @OA\Get(
+     *     path="/master/taxtype",
+     *     tags={"Master"},
+     *     summary="Daftar tipe pajak",
+     *     description="Mengambil data tipe pajak",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getTaxType()
+    {
+        try {
+            $data = DB::table('taxtype')->select('id', 'name')->get();
+            return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/master/author",
+     *     tags={"Master"},
+     *     summary="Daftar penulis",
+     *     description="Mengambil data penulis",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(
+     *         response=200,description="Sukses",
+     *         @OA\JsonContent(@OA\Property(property="status", type="string", example="success"))
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getAuthor()
+    {
+        try {
+            $data = DB::table('author')->select('id', 'name')->get();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);

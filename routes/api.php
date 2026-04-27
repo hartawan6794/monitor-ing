@@ -45,6 +45,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/salesman', [DashboardController::class, 'getDailySalesBySalesman']);
         Route::get('/salesman/yearly', [DashboardController::class, 'getYearlySalesBySalesman']);
         Route::get('/summary', [DashboardController::class, 'summary']);
+        Route::get('/owner-summary', [DashboardController::class, 'ownerSummary']);
         Route::get('/top-products', [DashboardController::class, 'topProducts']);
         Route::get('/top-salesmen', [DashboardController::class, 'topSalesmen']);
         Route::get('/chart', [DashboardController::class, 'revenueChart']);
@@ -76,7 +77,6 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/departments', [MasterDataController::class, 'departments']);
         Route::get('/suppliers', [MasterDataController::class, 'suppliers']);
         Route::get('/product-groups', [MasterDataController::class, 'productGroups']);
-        Route::get('/product-brands', [MasterDataController::class, 'productBrands']);
         Route::get('/accounts', [MasterDataController::class, 'accounts']);
         Route::get('/user-config-rules', [MasterDataController::class, 'userConfigRules']);
         Route::get('/customer-groups', [MasterDataController::class, 'customerGroups']);
@@ -85,6 +85,11 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/company', [MasterDataController::class, 'getCompany']);
         Route::get('/payment-types', [MasterDataController::class, 'getPaymentType']);
         Route::get('/salesman', [MasterDataController::class, 'getSalesman']);
+        Route::get('/factories', [MasterDataController::class, 'getFactories']);
+        Route::get('/units', [MasterDataController::class, 'getUnits']);
+        Route::get('/product-brands', [MasterDataController::class, 'getProductBrand']);
+        Route::get('/tax-types', [MasterDataController::class, 'getTaxType']);
+        Route::get('/authors', [MasterDataController::class, 'getAuthor']);
     });
 
 

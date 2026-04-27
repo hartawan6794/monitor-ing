@@ -79,11 +79,13 @@ class AuthController extends Controller
             ->map(function ($items) {
                 // Ubah setiap section menjadi key-value yang mudah dibaca Android
                 return $items->mapWithKeys(function ($item) {
-                    return [$item->id => [
-                        'description' => $item->description,
-                        'value' => $item->configvalues,
-                        'valuetype' => $item->valuetype, // 0=boolean, 1=string/id
-                    ]];
+                    return [
+                        $item->id => [
+                            'description' => $item->description,
+                            'value' => $item->configvalues,
+                            'valuetype' => $item->valuetype, // 0=boolean, 1=string/id
+                        ]
+                    ];
                 });
             });
 
@@ -105,6 +107,8 @@ class AuthController extends Controller
         } elseif (in_array('020001', $userConfigs)) {
             // Contoh: Jika punya akses menu tertentu untuk gudang
             $role = 'gudang';
+        } elseif (in_array('051001', $userConfigs)) {
+            $role = 'owner';
         }
 
         // 2. Mapping Toggles (Features) untuk Visibilitas UI di Android

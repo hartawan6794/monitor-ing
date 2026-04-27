@@ -140,6 +140,49 @@ class DashboardController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/dashboard/owner-summary",
+     *     tags={"Dashboard"},
+     *     summary="Ringkasan Penjualan Owner (Omzet, Laba, Margin)",
+     *     description="Menghitung omzet, laba kotor, dan margin untuk 6 periode: hari ini, kemarin, minggu ini, minggu lalu, bulan ini, dan bulan lalu.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function ownerSummary()
+    {
+        $todayStart = Carbon::today();
+        $todayEnd = Carbon::now();
+        
+        $yesterdayStart = Carbon::yesterday();
+        $yesterdayEnd = Carbon::yesterday()->endOfDay();
+        
+        $startOfWeek = Carbon::now()->startOfWeek();
+        
+        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
+        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
+        
+        $startOfMonth = Carbon::now()->startOfMonth();
+        
+        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
+        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'hari_ini' => $this->calculateMetrics($todayStart, $todayEnd),
+                'kemarin' => $this->calculateMetrics($yesterdayStart, $yesterdayEnd),
+                'minggu_ini' => $this->calculateMetrics($startOfWeek, $todayEnd),
+                'minggu_lalu' => $this->calculateMetrics($startOfLastWeek, $endOfLastWeek),
+                'bulan_ini' => $this->calculateMetrics($startOfMonth, $todayEnd),
+                'bulan_lalu' => $this->calculateMetrics($startOfLastMonth, $endOfLastMonth),
+            ]
+        ]);
+    }
+
+    /**
      * Helper untuk menghitung Omzet, Laba, Margin per rentang waktu
      */
     private function calculateMetrics($startDate, $endDate)
