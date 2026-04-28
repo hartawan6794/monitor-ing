@@ -51,107 +51,108 @@ class SalesController extends Controller
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
 
-        // --- 2. Default Range: hari ini jika tidak diisi ---
-        $dateFrom = $request->filled('date_from')
-            ? Carbon::parse($request->date_from)->startOfDay()
-            : Carbon::today()->startOfDay();
+        // --- 2. Default Range ---
+        $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : Carbon::today()->startOfDay();
+        $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : Carbon::today()->endOfDay();
 
-        $dateTo = $request->filled('date_to')
-            ? Carbon::parse($request->date_to)->endOfDay()
-            : Carbon::today()->endOfDay();
-
-        // --- 3. Build Query Header Faktur ---
-        // Catatan: tabel `sales` tidak memiliki kolom totalamount / salesno.
-        // Total dihitung dari SUM(salesdetail.netamount) via subquery.
+        // --- 3. Build Query ---
         $query = DB::table('sales')
             ->join('customer', 'sales.customerid', '=', 'customer.id')
             ->join('salesman', 'sales.salesmanid', '=', 'salesman.id')
             ->select(
                 'sales.salesid',
-                'sales.salesidref',   // referensi dokumen asal (misal untuk retur)
+                'sales.salesidref',
                 'sales.salesdate',
                 'sales.salestime',
                 'sales.kind',
                 'sales.salestype',
+                'sales.paidinfull',
+                'sales.paidinfulldate',
+                'sales.paidinfullref',
+                'sales.salesvaluedisc',
                 'customer.id as customer_id',
                 'customer.name as customer_name',
                 'salesman.id as salesman_id',
                 'salesman.name as salesman_name',
-                'sales.paidinfull',
-                'sales.paidinfulldate',
-                'sales.paidinfullref',
-                // Tipe pembayaran dari salespayments. Kita mengecek berdasarkan paidinfullref jika ada, atau salesidref jika tunai langsung
-                DB::raw('(
-                    SELECT MIN(sp.paymenttype)
-                    FROM salespayments sp
-                    WHERE (sp.salesid = sales.paidinfullref AND sp.salesidref = sales.salesid)
-                       OR (sp.salesidref = sales.salesid)
-                ) as payment_type'),
-                // Total nilai faktur = sum dari netamount di salesdetail
-                DB::raw('(
-                    SELECT COALESCE(SUM(sd.netamount), 0)
-                    FROM salesdetail sd
-                    WHERE sd.salesid = sales.salesid
-                ) as net_amount')
+
+                // Subqueries: Dijalankan HANYA untuk baris yang ter-paginasi (Aman & Cepat)
+                DB::raw('(SELECT MIN(paymenttype) FROM salespayments WHERE (salesid = sales.paidinfullref AND salesidref = sales.salesid) OR (salesidref = sales.salesid)) as payment_type'),
+                DB::raw('(SELECT COALESCE(SUM(grossamount), 0) FROM salesdetail WHERE salesid = sales.salesid) as gross_amount'),
+                DB::raw('(SELECT COALESCE(SUM(valuedisc), 0) FROM salesdetail WHERE salesid = sales.salesid) as item_discount_amount'),
+                DB::raw('(SELECT COALESCE(SUM(salestax), 0) FROM salesdetail WHERE salesid = sales.salesid) as tax_amount'),
+                DB::raw('(SELECT COALESCE(SUM(netamount), 0) FROM salesdetail WHERE salesid = sales.salesid) - sales.salesvaluedisc as net_amount'),
+                DB::raw('(SELECT COALESCE(SUM(debit) - SUM(credit), 0) FROM salespayments WHERE salesidref = sales.salesid) as paid_amount')
             )
             ->whereBetween('sales.salesdate', [$dateFrom, $dateTo])
-            ->orderBy('sales.salesdate', 'desc')
-            ->orderBy('sales.salesid', 'desc');
+            ->where('sales.kind', '!=', 2);
 
-        // --- 4. Filter Opsional ---
+        // --- 4. Smart Filters (Menggunakan Index Database) ---
 
-        if ($request->filled('kind')) {
-            $query->where('sales.kind', (int) $request->kind);
-        }
-
-        if ($request->filled('customer_id') || $request->filled('customer_name')) {
-            $query->where(function ($q) use ($request) {
-                if ($request->filled('customer_id')) {
-                    // Customer ID wajib menggunakan exact match (=) karena ID bersifat hard-coded dari dropdown
-                    $q->where('sales.customerid', $request->customer_id);
-                }
-                if ($request->filled('customer_name')) {
-                    // Kalau pencarian via nama, baru boleh menggunakan partial search (LIKE)
-                    $q->orWhere('customer.name', 'like', '%' . $request->customer_name . '%');
-                }
+        // Filter Customer
+        $query->when($request->filled('customer_id') || $request->filled('customer_name'), function ($q) use ($request) {
+            $q->where(function ($sub) use ($request) {
+                // ID gunakan Exact Match "=" agar sangat cepat
+                if ($request->filled('customer_id'))
+                    $sub->where('sales.customerid', $request->customer_id);
+                // Nama gunakan LIKE
+                if ($request->filled('customer_name'))
+                    $sub->orWhere('customer.name', 'like', '%' . $request->customer_name . '%');
             });
-        }
+        });
 
-        if ($request->filled('salesid') || $request->filled('salesidref')) {
-            $query->where(function ($q) use ($request) {
-                if ($request->filled('salesid')) {
-                    $q->where('sales.salesid', 'like', '%' . $request->salesid . '%');
-                }
-                if ($request->filled('salesidref')) {
-                    $q->orWhere('sales.salesidref', 'like', '%' . $request->salesidref . '%');
-                }
+        // Filter Sales ID (Gunakan Prefix pencarian, hilangkan '%' di depan)
+        $query->when($request->filled('salesid') || $request->filled('salesidref'), function ($q) use ($request) {
+            $q->where(function ($sub) use ($request) {
+                // 'INV-123%' lebih cepat dari '%INV-123%'
+                if ($request->filled('salesid'))
+                    $sub->where('sales.salesid', 'like', $request->salesid . '%');
+                if ($request->filled('salesidref'))
+                    $sub->orWhere('sales.salesidref', 'like', $request->salesidref . '%');
             });
-        }
+        });
 
-        if ($request->filled('salesman_id')) {
-            $query->where('sales.salesmanid', $request->salesman_id);
-        }
+        // Filter Exact Match
+        $query->when($request->filled('kind'), fn($q) => $q->where('sales.kind', (int) $request->kind));
+        $query->when($request->filled('salesman_id'), fn($q) => $q->where('sales.salesmanid', $request->salesman_id));
 
-        // Filter tipe pembayaran via whereExists (hindari duplikasi baris)
-        if ($request->filled('payment_type')) {
-            $paymentType = (int) $request->payment_type;
-            $query->whereExists(function ($sub) use ($paymentType) {
+        // Filter Payment Type (EXISTS lebih cepat dari JOIN untuk filtering)
+        $query->when($request->filled('payment_type'), function ($q) use ($request) {
+            $q->whereExists(function ($sub) use ($request) {
                 $sub->select(DB::raw(1))
                     ->from('salespayments')
                     ->whereColumn('salespayments.salesidref', 'sales.salesid')
-                    ->where('salespayments.paymenttype', $paymentType);
+                    ->where('salespayments.paymenttype', (int) $request->payment_type);
             });
-        }
+        });
 
-        // --- 5. Paginasi ---
-        $perPage = $request->input('per_page', 15);
-        $paginated = $query->paginate($perPage);
+        // Sorting utama harus di kolom yang di-Index (salesdate)
+        $query->orderByDesc('sales.salesdate')->orderByDesc('sales.salesid');
 
-        // --- 6. Format Output ---
+        // --- 4.5. Hitung Summary Keseluruhan (Berdasarkan Filter, Sebelum Paginasi) ---
+        $summaryQuery = clone $query;
+        // Hapus orderBy untuk mempercepat proses kalkulasi SUM
+        $summaryQuery->orders = []; 
+        
+        $summaryData = DB::table(DB::raw("({$summaryQuery->toSql()}) as sub"))
+            ->mergeBindings($summaryQuery)
+            ->select(
+                DB::raw('COALESCE(SUM(net_amount), 0) as total_net'),
+                DB::raw('COALESCE(SUM(paid_amount), 0) as total_paid'),
+                DB::raw('COALESCE(SUM(net_amount - paid_amount), 0) as total_balance')
+            )
+            ->first();
+
+        // --- 5. Eksekusi Pagination ---
+        $paginated = $query->paginate($request->input('per_page', 20));
+
+        // --- 6. Formatting & Response ---
         $kindLabel = [0 => 'Penjualan', 1 => 'Retur'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
 
         $items = collect($paginated->items())->map(function ($row) use ($kindLabel, $typeLabel) {
+            $net = (float) $row->net_amount;
+            $paid = (float) $row->paid_amount;
+
             return [
                 'salesid' => $row->salesid,
                 'salesidref' => $row->salesidref ?: null,
@@ -163,33 +164,25 @@ class SalesController extends Controller
                 'salestype_label' => $typeLabel[$row->salestype] ?? '-',
                 'payment_type' => $row->payment_type,
                 'paidinfull' => (bool) $row->paidinfull,
-                'paidinfulldate' => $row->paidinfulldate,
-                'paidinfullref' => $row->paidinfullref ?: '-',
-                'customer' => [
-                    'id' => $row->customer_id,
-                    'name' => $row->customer_name,
-                ],
-                'salesman' => [
-                    'id' => $row->salesman_id,
-                    'name' => $row->salesman_name,
-                ],
-                'net_amount' => (float) $row->net_amount,
+                'customer' => ['id' => $row->customer_id, 'name' => $row->customer_name],
+                'salesman' => ['id' => $row->salesman_id, 'name' => $row->salesman_name],
+                'gross_amount' => (float) $row->gross_amount,
+                'discount_amount' => (float) $row->item_discount_amount + (float) $row->salesvaluedisc,
+                'tax_amount' => (float) $row->tax_amount,
+                'net_amount' => $net,
+                'paid_amount' => $paid,
+                'balance_amount' => max(0, $net - $paid), // Cegah minus jika bayar berlebih
             ];
         });
 
         return response()->json([
             'status' => 'success',
-            'filter_applied' => [
-                'date_from' => $dateFrom->toDateString(),
-                'date_to' => $dateTo->toDateString(),
-                'customer_id' => $request->customer_id,
-                'customer_name' => $request->customer_name,
-                'salesid' => $request->salesid,
-                'salesidref' => $request->salesidref,
-                'salesman_id' => $request->salesman_id,
-                'kind' => $request->kind !== null ? (int) $request->kind : null,
-                'payment_type' => $request->payment_type !== null ? (int) $request->payment_type : null,
+            'summary' => [
+                'total_net' => (float) $summaryData->total_net,
+                'total_paid' => (float) $summaryData->total_paid,
+                'total_balance' => (float) $summaryData->total_balance,
             ],
+            'filter_applied' => $request->only(['date_from', 'date_to', 'customer_id', 'customer_name', 'salesid', 'kind', 'payment_type']),
             'data' => $items,
             'pagination' => [
                 'current_page' => $paginated->currentPage(),
@@ -942,11 +935,15 @@ class SalesController extends Controller
                 $totalNetCalculator += ((float) $d['salesqty'] * (float) $d['price']);
             }
 
+            // Kurangi dengan diskon global
+            $globalDiscount = (float) ($request->salesvaluedisc ?? 0);
+            $finalNetCalculator = $totalNetCalculator - $globalDiscount;
+
             $isCash = ($request->salestype == 0);
             $dpAmountParam = (float) ($request->dp_amount ?? 0);
 
-            $cashAllocated = $isCash ? $totalNetCalculator : min($dpAmountParam, $totalNetCalculator);
-            $creditAllocated = $totalNetCalculator - $cashAllocated;
+            $cashAllocated = $isCash ? $finalNetCalculator : min($dpAmountParam, $finalNetCalculator);
+            $creditAllocated = $finalNetCalculator - $cashAllocated;
 
             $isFullyPaid = ($creditAllocated <= 0); // Lunas jika alokasi cash menutupi/membayari seluruh tagihan
             $dueDays = $request->filled('duedays') ? (int) $request->duedays : ($isCash ? 0 : $defaultDueDays);
@@ -1096,8 +1093,9 @@ class SalesController extends Controller
             }
 
             // (Recalculate accurately based on exact detail inputs instead of raw calculator input just in case)
-            $cashAllocated = $isCash ? $totalNet : min($dpAmountParam, $totalNet);
-            $creditAllocated = $totalNet - $cashAllocated;
+            $finalNet = $totalNet - $globalDiscount;
+            $cashAllocated = $isCash ? $finalNet : min($dpAmountParam, $finalNet);
+            $creditAllocated = $finalNet - $cashAllocated;
 
             // 6. JURNAL TRANSAKSI (DYNAMIC ACCOUNT)
             $journals = [];
@@ -1112,8 +1110,8 @@ class SalesController extends Controller
                 $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => "Penjualan: TEMPO"];
             }
 
-            // Kredit Pendapatan Penjualan
-            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $totalNet, 'memo' => $memoType];
+            // Kredit Pendapatan Penjualan (Net Revenue setelah diskon)
+            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $finalNet, 'memo' => $memoType];
             // Tambahan Jurnal HPP vs Persediaan
             $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0, 'memo' => "Pengeluaran Persediaan (HPP)"];
             $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs, 'memo' => "Pengeluaran Persediaan (HPP)"];

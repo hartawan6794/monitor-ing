@@ -56,7 +56,8 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/', [ProductController::class, 'index']);
         Route::get('/low-stock-alert', [ProductController::class, 'lowStockAlert']);
         Route::post('/', [ProductController::class, 'store']);
-        Route::put('/{id}', [ProductController::class, 'update']);
+        Route::get('/{id}', [ProductController::class, 'show'])->where('id', '.*'); // Menambahkan endpoint detail produk dengan support karakter slash (/)
+        Route::match(['put', 'post'], '/{id}', [ProductController::class, 'update'])->where('id', '.*'); // Menerima POST agar multipart/form-data berjalan lancar
     });
 
     Route::prefix('customers')->group(function () {

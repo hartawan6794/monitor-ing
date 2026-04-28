@@ -468,7 +468,7 @@ class MasterDataController extends Controller
     public function getUnits()
     {
         try {
-            $data = DB::table('units')->select('id', 'name')->get();
+            $data = DB::table('units')->select('unit as id', 'unit as name')->get();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
@@ -495,7 +495,7 @@ class MasterDataController extends Controller
     public function getTaxType()
     {
         try {
-            $data = DB::table('taxtype')->select('id', 'name')->get();
+            $data = DB::table('taxes')->select('id', 'name')->get();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
@@ -521,7 +521,7 @@ class MasterDataController extends Controller
     public function getAuthor()
     {
         try {
-            $data = DB::table('author')->select('id', 'name')->get();
+            $data = DB::table('authors')->select('id', 'name')->get();
             return response()->json(['status' => 'success', 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
