@@ -321,4 +321,74 @@ class ReportController extends Controller
             'data' => $data
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/report/payment-summary",
+     *     summary="Laporan Rekap Jenis Pembayaran (Untuk Kasir)",
+     *     tags={"Report"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="X-Database-Name",
+     *         in="header",
+     *         required=true,
+     *         description="Nama Database (misal: acosys)",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(name="start_date", in="query", description="Format: YYYY-MM-DD", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="end_date", in="query", description="Format: YYYY-MM-DD", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="usercreate", in="query", description="ID Kasir", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="division", in="query", description="ID Divisi", required=false, @OA\Schema(type="string")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Berhasil",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="payment_type_id", type="integer", example=1),
+     *                 @OA\Property(property="payment_type_name", type="string", example="Tunai"),
+     *                 @OA\Property(property="total_amount", type="number", example=5000000)
+     *             )),
+     *             @OA\Property(property="grand_total", type="number", example=5000000)
+     *         )
+     *     )
+     * )
+     */
+    public function paymentSummaryReport(Request $request)
+    {
+        $startDate = $request->query('start_date', date('Y-m-d'));
+        $endDate = $request->query('end_date', date('Y-m-d'));
+        $userCreate = $request->query('usercreate');
+        $division = $request->query('division');
+
+        $query = DB::table('salespayments as sp')
+            ->join('paymenttype as pt', 'sp.paymenttype', '=', 'pt.id')
+            ->join('sales as s', 'sp.salesidref', '=', 's.salesid')
+            ->select(
+                'pt.id as payment_type_id',
+                'pt.name as payment_type_name',
+                DB::raw('SUM(sp.debit - sp.credit) as total_amount')
+            )
+            ->whereBetween('s.salesdate', [$startDate, $endDate]);
+
+        if ($userCreate) {
+            $query->where('sp.usercreate', $userCreate);
+        }
+
+        if ($division) {
+            $query->where('s.division', $division);
+        }
+
+        $data = $query->groupBy('pt.id', 'pt.name')
+                      ->havingRaw('SUM(sp.debit - sp.credit) != 0')
+                      ->get();
+
+        $grandTotal = $data->sum('total_amount');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+            'grand_total' => $grandTotal
+        ]);
+    }
 }

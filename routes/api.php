@@ -101,6 +101,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/in-out', [ReportController::class, 'inOutReport']);
         Route::get('/adjust', [ReportController::class, 'adjustReport']);
         Route::get('/transfer', [ReportController::class, 'transferReport']);
+        Route::get('/payment-summary', [ReportController::class, 'paymentSummaryReport']);
     });
 
     // Transaksi Adjustment

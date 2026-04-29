@@ -105,9 +105,9 @@ class SalesController extends Controller
             $q->where(function ($sub) use ($request) {
                 // 'INV-123%' lebih cepat dari '%INV-123%'
                 if ($request->filled('salesid'))
-                    $sub->where('sales.salesid', 'like', $request->salesid . '%');
+                    $sub->where('sales.salesid', 'like', '%' . $request->salesid . '%');
                 if ($request->filled('salesidref'))
-                    $sub->orWhere('sales.salesidref', 'like', $request->salesidref . '%');
+                    $sub->orWhere('sales.salesidref', 'like', '%' . $request->salesidref . '%');
             });
         });
 
@@ -131,8 +131,8 @@ class SalesController extends Controller
         // --- 4.5. Hitung Summary Keseluruhan (Berdasarkan Filter, Sebelum Paginasi) ---
         $summaryQuery = clone $query;
         // Hapus orderBy untuk mempercepat proses kalkulasi SUM
-        $summaryQuery->orders = []; 
-        
+        $summaryQuery->orders = [];
+
         $summaryData = DB::table(DB::raw("({$summaryQuery->toSql()}) as sub"))
             ->mergeBindings($summaryQuery)
             ->select(
@@ -371,11 +371,9 @@ class SalesController extends Controller
         $request->validate([
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
-            'customer_id' => 'nullable|string',
-            'customer_name' => 'nullable|string',
-            'salesid' => 'nullable|string',
-            'salesidref' => 'nullable|string',
+            'search' => 'nullable|string',
             'kind' => 'nullable|in:0,1',
+            'department_id' => 'nullable|string',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
 
@@ -418,25 +416,12 @@ class SalesController extends Controller
             ->orderBy('salesorder.salesid', 'desc');
 
         // --- 4. Filter Opsional ---
-        if ($request->filled('customer_id') || $request->filled('customer_name')) {
+        if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                if ($request->filled('customer_id')) {
-                    $q->where('salesorder.customerid', 'like', '%' . $request->customer_id . '%');
-                }
-                if ($request->filled('customer_name')) {
-                    $q->orWhere('customer.name', 'like', '%' . $request->customer_name . '%');
-                }
-            });
-        }
-
-        if ($request->filled('salesid') || $request->filled('salesidref')) {
-            $query->where(function ($q) use ($request) {
-                if ($request->filled('salesid')) {
-                    $q->where('salesorder.salesid', 'like', '%' . $request->salesid . '%');
-                }
-                if ($request->filled('salesidref')) {
-                    $q->orWhere('salesorder.salesidref', 'like', '%' . $request->salesidref . '%');
-                }
+                $search = '%' . $request->search . '%';
+                $q->where('customer.name', 'like', $search)
+                  ->orWhere('salesorder.salesid', 'like', $search)
+                  ->orWhere('salesorder.customerid', 'like', $search);
             });
         }
 
@@ -444,12 +429,32 @@ class SalesController extends Controller
             $query->where('salesorder.kind', (int) $request->kind);
         }
 
+        if ($request->filled('department_id')) {
+            $query->whereExists(function ($q) use ($request) {
+                $q->select(DB::raw(1))
+                    ->from('salesorderdetail')
+                    ->whereColumn('salesorderdetail.salesid', 'salesorder.salesid')
+                    ->where('salesorderdetail.departement', $request->department_id);
+            });
+        }
+
+        // --- 4.5. Hitung Summary Keseluruhan (Sebelum Paginasi) ---
+        $summaryQuery = clone $query;
+        $summaryQuery->orders = []; // Hapus orderBy untuk mempercepat proses kalkulasi SUM
+
+        $summaryData = DB::table(DB::raw("({$summaryQuery->toSql()}) as sub"))
+            ->mergeBindings($summaryQuery)
+            ->select(
+                DB::raw('COALESCE(SUM(net_amount), 0) as total_net')
+            )
+            ->first();
+
         // --- 5. Paginasi ---
         $perPage = $request->input('per_page', 15);
         $paginated = $query->paginate($perPage);
 
         // --- 6. Format Output ---
-        $kindLabel = [0 => 'Order', 1 => 'Sales'];
+        $kindLabel = [0 => 'Draft', 1 => 'Sales'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
 
         $items = collect($paginated->items())->map(function ($row) use ($kindLabel, $typeLabel) {
@@ -479,14 +484,15 @@ class SalesController extends Controller
 
         return response()->json([
             'status' => 'success',
+            'summary' => [
+                'total_net' => (float) $summaryData->total_net,
+            ],
             'filter_applied' => [
                 'date_from' => $dateFrom->toDateString(),
                 'date_to' => $dateTo->toDateString(),
-                'customer_id' => $request->customer_id,
-                'customer_name' => $request->customer_name,
-                'salesid' => $request->salesid,
-                'salesidref' => $request->salesidref,
+                'search' => $request->search,
                 'kind' => $request->kind !== null ? (int) $request->kind : null,
+                'department_id' => $request->department_id,
             ],
             'data' => $items,
             'pagination' => [
