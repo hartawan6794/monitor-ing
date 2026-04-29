@@ -167,7 +167,10 @@ class ProductController extends Controller
                 'supplier.id',
                 'supplier.name',
                 'factories.id',
-                'factories.name'
+                'factories.name',
+                'product.image',
+                'taxes.name as tax_name',
+                'authors.name as author_name'
             )
             ->first();
 
