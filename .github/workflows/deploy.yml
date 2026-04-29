@@ -23,6 +23,9 @@ jobs:
           rsync -avz --exclude '.env' --exclude 'actions-runner' --exclude 'storage' ./ /var/www/html/DashMoWeb/
 
       - name: 📦 Install Composer Dependencies
+        env:
+          COMPOSER_ALLOW_SUPERUSER: 1
+          HOME: /root
         run: |
           cd /var/www/html/DashMoWeb
           composer install --optimize-autoloader --no-dev
