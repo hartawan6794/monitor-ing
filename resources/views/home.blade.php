@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor-ing — Sistem Monitoring Penjualan</title>
+    <title>DashMo — Sistem Monitoring Penjualan</title>
     <meta name="description"
         content="Sistem monitoring penjualan real-time terintegrasi untuk tim salesman dan manajemen.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -690,7 +690,7 @@
                     <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
                 </svg>
             </div>
-            <span class="nav-brand-name">Monitor-ing</span>
+            <span class="nav-brand-name">DashMo</span>
         </a>
         <ul class="nav-links">
             <li><a href="#fitur">Fitur</a></li>
@@ -812,7 +812,7 @@
             <div class="section-header">
                 <div class="section-badge">Fitur Unggulan</div>
                 <h2 class="section-title">Semua yang Anda Butuhkan</h2>
-                <p class="section-desc">Dari dashboard ringkasan hingga riwayat transaksi detail — Monitor-ing
+                <p class="section-desc">Dari dashboard ringkasan hingga riwayat transaksi detail — DashMo
                     menyediakan semua informasi dalam genggaman.</p>
             </div>
             <div class="features-grid">
@@ -896,9 +896,9 @@
                     <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
                 </svg>
             </div>
-            <span style="font-weight:700;font-size:1rem;">Monitor-ing</span>
+            <span style="font-weight:700;font-size:1rem;">DashMo</span>
         </div>
-        <p class="footer-text">&copy; {{ date('Y') }} Monitor-ing System. All rights reserved.</p>
+        <p class="footer-text">&copy; {{ date('Y') }} DashMo System. All rights reserved.</p>
     </footer>
 
     <script>

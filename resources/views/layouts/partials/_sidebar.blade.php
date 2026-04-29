@@ -1,36 +1,35 @@
 <div class="main-sidebar-header">
     <a href="{{ route('dashboard') }}" class="header-logo">
         {{-- Desktop logo: teks brand --}}
-        <span class="desktop-logo" style="display:flex;align-items:center;gap:8px;">
-            <span
-                style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-                    <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                </svg>
-            </span>
-            <span style="font-weight:700;font-size:1rem;color:var(--header-prime-color,#1e293b);">Monitor-ing</span>
+        @php
+            $logoIcon = '<span style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" /></svg></span>';
+        @endphp
+
+        {{-- Desktop logo (Light) --}}
+        <span class="desktop-logo">
+            <div style="display:flex;align-items:center;gap:8px;">
+                {!! $logoIcon !!}
+                <span style="font-weight:700;font-size:1rem;color:var(--header-prime-color,#1e293b);">DashMo</span>
+            </div>
         </span>
-        {{-- Toggle logo (collapsed): hanya icon --}}
-        <span class="toggle-logo"
-            style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-                <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-            </svg>
+        {{-- Toggle logo (Light) --}}
+        <span class="toggle-logo">
+            <div style="display:flex;align-items:center;justify-content:center;">
+                {!! $logoIcon !!}
+            </div>
         </span>
-        <span class="desktop-dark" style="display:flex;align-items:center;gap:8px;">
-            <span
-                style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-                    <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                </svg>
-            </span>
-            <span style="font-weight:700;font-size:1rem;color:#f1f5f9;">Monitor-ing</span>
+        {{-- Desktop logo (Dark) --}}
+        <span class="desktop-dark">
+            <div style="display:flex;align-items:center;gap:8px;">
+                {!! $logoIcon !!}
+                <span style="font-weight:700;font-size:1rem;color:#f1f5f9;">DashMo</span>
+            </div>
         </span>
-        <span class="toggle-dark"
-            style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-                <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-            </svg>
+        {{-- Toggle logo (Dark) --}}
+        <span class="toggle-dark">
+            <div style="display:flex;align-items:center;justify-content:center;">
+                {!! $logoIcon !!}
+            </div>
         </span>
     </a>
 </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Monitor-ing</title>
+    <title>Login — DashMo</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -364,7 +364,7 @@
                     <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z"/>
                 </svg>
             </div>
-            <div class="version-badge">Monitor-ing System</div>
+            <div class="version-badge">DashMo System</div>
             <h1>Selamat Datang</h1>
             <p>Masuk ke akun Anda untuk melanjutkan</p>
         </div>
@@ -454,7 +454,7 @@
         </form>
 
         <div class="card-footer">
-            &copy; {{ date('Y') }} Monitor-ing. Sistem Monitoring Internal.
+            &copy; {{ date('Y') }} DashMo. Sistem Monitoring Internal.
         </div>
     </div>
 

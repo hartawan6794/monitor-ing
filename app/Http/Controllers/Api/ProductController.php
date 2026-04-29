@@ -53,7 +53,7 @@ class ProductController extends Controller
                         ->orWhere('product.id', 'LIKE', "%{$search}%");
                 });
             })
-            ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3', 'departement.id', 'departement.name', 'division.id', 'division.description', 'product.defunit')
+            ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3', 'departement.id', 'departement.name', 'division.id', 'division.description', 'product.defunit', 'product.image')
             ->when($limit, function ($query, $limit) {
                 return $query->limit($limit);
             })
