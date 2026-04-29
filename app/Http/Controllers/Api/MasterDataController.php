@@ -426,10 +426,10 @@ class MasterDataController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/master/payment-types",
+     *     path="/master/factories",
      *     tags={"Master"},
-     *     summary="Daftar tipe pembayaran",
-     *     description="Mengambil data tipe pembayaran",
+     *     summary="Daftar pabrik",
+     *     description="Mengambil data pabrik",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
      *     @OA\Response(

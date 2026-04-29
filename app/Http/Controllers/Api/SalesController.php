@@ -47,6 +47,7 @@ class SalesController extends Controller
             'salesidref' => 'nullable|string',
             'salesman_id' => 'nullable|string',
             'kind' => 'nullable|in:0,1',
+            'salestype' => 'nullable|in:0,2',
             'payment_type' => 'nullable|integer',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
@@ -112,6 +113,7 @@ class SalesController extends Controller
         });
 
         // Filter Exact Match
+        $query->when($request->filled('salestype'), fn($q) => $q->where('sales.salestype', (int) $request->salestype));
         $query->when($request->filled('kind'), fn($q) => $q->where('sales.kind', (int) $request->kind));
         $query->when($request->filled('salesman_id'), fn($q) => $q->where('sales.salesmanid', $request->salesman_id));
 
@@ -146,6 +148,8 @@ class SalesController extends Controller
         $paginated = $query->paginate($request->input('per_page', 20));
 
         // --- 6. Formatting & Response ---
+
+        //salestype 0 = Tunai 2 = Tempo
         $kindLabel = [0 => 'Penjualan', 1 => 'Retur'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
 
@@ -374,6 +378,7 @@ class SalesController extends Controller
             'search' => 'nullable|string',
             'kind' => 'nullable|in:0,1',
             'department_id' => 'nullable|string',
+            'salesman_id' => 'nullable|string',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
 
@@ -420,9 +425,13 @@ class SalesController extends Controller
             $query->where(function ($q) use ($request) {
                 $search = '%' . $request->search . '%';
                 $q->where('customer.name', 'like', $search)
-                  ->orWhere('salesorder.salesid', 'like', $search)
-                  ->orWhere('salesorder.customerid', 'like', $search);
+                    ->orWhere('salesorder.salesid', 'like', $search)
+                    ->orWhere('salesorder.customerid', 'like', $search);
             });
+        }
+
+        if ($request->filled('salesman_id')) {
+            $query->where('salesorder.salesmanid', $request->salesman_id);
         }
 
         if ($request->filled('kind')) {

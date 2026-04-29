@@ -1,0 +1,49 @@
+name: Deploy to VPS (Bare Metal)
+
+on:
+  push:
+    branches:
+      - main # Akan berjalan setiap kali ada push ke branch main
+
+jobs:
+  deploy:
+    name: Deploy Laravel App
+    runs-on: self-hosted # Ini akan men-trigger server Anda (Listening for Jobs)
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 📂 Sync Files to Web Directory
+        # Ini menyalin file dari GitHub ke folder web Anda.
+        # Mengecualikan .env agar konfigurasi DB Anda tidak tertimpa
+        # Mengecualikan storage agar file upload tidak hilang
+        # Mengecualikan actions-runner agar folder runner tidak tertimpa
+        run: |
+          rsync -avz --exclude '.env' --exclude 'actions-runner' --exclude 'storage' ./ /var/www/html/DashMoWeb/
+
+      - name: 📦 Install Composer Dependencies
+        run: |
+          cd /var/www/html/DashMoWeb
+          composer install --optimize-autoloader --no-dev
+
+      - name: 🚀 Clear and Optimize Cache
+        run: |
+          cd /var/www/html/DashMoWeb
+          php artisan optimize:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      # - name: 🗄️ Run Migrations
+      #   run: |
+      #     cd /var/www/html/DashMoWeb
+      #     php artisan migrate --force
+      # (Diberi komentar/dimatikan dulu demi keamanan database production. Buka komentarnya jika butuh migrate otomatis)
+
+      - name: 🔐 Fix Permissions
+        # Memastikan Nginx tetap memiliki hak akses setelah ada file baru
+        run: |
+          chown -R www-data:www-data /var/www/html/DashMoWeb
+          chmod -R 775 /var/www/html/DashMoWeb/storage
+          chmod -R 775 /var/www/html/DashMoWeb/bootstrap/cache

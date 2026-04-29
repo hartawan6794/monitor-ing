@@ -84,6 +84,73 @@
                 }
             }
         },
+        "/customers": {
+            "post": {
+                "tags": [
+                    "Master Data"
+                ],
+                "summary": "Tambah Pelanggan Baru",
+                "description": "Endpoint untuk menambahkan data pelanggan baru ke database secara autopilot.",
+                "operationId": "05089f633eadb677aafc9f3d471e7d3e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Budi Sentosa"
+                                    },
+                                    "id": {
+                                        "description": "Opsional. Jika kosong akan auto-generate.",
+                                        "type": "string",
+                                        "example": "CUST-0001"
+                                    },
+                                    "customergroup": {
+                                        "description": "ID Grup Pelanggan",
+                                        "type": "string",
+                                        "example": "001"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Jl. Merdeka No. 45"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    },
+                                    "usercreate": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pelanggan berhasil ditambahkan"
+                    },
+                    "400": {
+                        "description": "Validasi gagal"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/dashboard": {
             "get": {
                 "tags": [
@@ -189,6 +256,34 @@
                 "summary": "Ringkasan penjualan (Omzet, Laba, Margin)",
                 "description": "Menghitung omzet, laba kotor, dan margin untuk 4 periode: hari ini, minggu ini, bulan ini, dan tahun ini.",
                 "operationId": "892e76df1345997e0682213c6fbbb52d",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/owner-summary": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Ringkasan Penjualan Owner (Omzet, Laba, Margin)",
+                "description": "Menghitung omzet, laba kotor, dan margin untuk 6 periode: hari ini, kemarin, minggu ini, minggu lalu, bulan ini, dan bulan lalu.",
+                "operationId": "39dd73198b04e9f563d3abe2e7b9257e",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/X-Database-Name"
@@ -526,7 +621,7 @@
                 ],
                 "summary": "Daftar brand produk",
                 "description": "Mengambil data brand produk",
-                "operationId": "859da4d9f0a7d1ed571214c936937c14",
+                "operationId": "babda17b53793eed4a462913b058793f",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/X-Database-Name"
@@ -792,6 +887,252 @@
                 ]
             }
         },
+        "/master/payment-types": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar tipe pembayaran",
+                "description": "Mengambil data tipe pembayaran",
+                "operationId": "b0637723c62234047a4b993935f7edb1",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/salesman": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar salesman",
+                "description": "Mengambil data salesman",
+                "operationId": "61b0ffede8416f847841c1c0e74406e4",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/factories": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar pabrik",
+                "description": "Mengambil data pabrik",
+                "operationId": "1fbb790003b3339480c19167dec64044",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/units": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar unit",
+                "description": "Mengambil data unit",
+                "operationId": "518e1607f9509ad630885ed94f8f44cc",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/taxtype": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar tipe pajak",
+                "description": "Mengambil data tipe pajak",
+                "operationId": "608f9665b6bc45f27e2baa99eb249b09",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/master/author": {
+            "get": {
+                "tags": [
+                    "Master"
+                ],
+                "summary": "Daftar penulis",
+                "description": "Mengambil data penulis",
+                "operationId": "90daf3bfcfceb5ac842a3e1adf407e40",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/products/low-stock-alert": {
             "get": {
                 "tags": [
@@ -874,54 +1215,71 @@
                 ]
             }
         },
-        "/products/{id}": {
-            "put": {
+        "/products": {
+            "post": {
                 "tags": [
                     "Product"
                 ],
-                "summary": "Update Produk",
-                "operationId": "2ce632b9d1c0c445557821d09add7ec2",
-                "parameters": [
-                    {
-                        "name": "X-Database-Name",
-                        "in": "header",
-                        "description": "Nama Database",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID Produk",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name",
-                        "in": "query",
-                        "description": "Nama Produk",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "price",
-                        "in": "query",
-                        "description": "Harga Produk",
-                        "required": true,
-                        "schema": {
-                            "type": "number"
+                "summary": "Tambah Produk Baru",
+                "operationId": "eddf8c7847239ddc1040daadd814e21b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "productgroup",
+                                    "defunit",
+                                    "salesprice1"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "example": "SKU001"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Nama Produk"
+                                    },
+                                    "productgroup": {
+                                        "type": "string",
+                                        "example": "6197"
+                                    },
+                                    "defunit": {
+                                        "type": "string",
+                                        "example": "PCS"
+                                    },
+                                    "salesprice1": {
+                                        "type": "number",
+                                        "example": 100000
+                                    },
+                                    "initial_stock": {
+                                        "type": "number",
+                                        "example": 10
+                                    },
+                                    "departement_id": {
+                                        "type": "string",
+                                        "example": "001101"
+                                    },
+                                    "division_id": {
+                                        "type": "string",
+                                        "example": "0011"
+                                    },
+                                    "usercreate": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
-                    "200": {
-                        "description": "Produk berhasil diupdate.",
+                    "201": {
+                        "description": "Produk berhasil dibuat.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -932,7 +1290,114 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Produk berhasil diupdate."
+                                            "example": "Produk berhasil dibuat."
+                                        },
+                                        "id": {
+                                            "type": "string",
+                                            "example": "SKU001"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/report/payment-summary": {
+            "get": {
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Laporan Rekap Jenis Pembayaran (Untuk Kasir)",
+                "operationId": "cd3b44411ce397ea162934465339cddd",
+                "parameters": [
+                    {
+                        "name": "X-Database-Name",
+                        "in": "header",
+                        "description": "Nama Database (misal: acosys)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Format: YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Format: YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "usercreate",
+                        "in": "query",
+                        "description": "ID Kasir",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "division",
+                        "in": "query",
+                        "description": "ID Divisi",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "payment_type_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "payment_type_name": {
+                                                        "type": "string",
+                                                        "example": "Tunai"
+                                                    },
+                                                    "total_amount": {
+                                                        "type": "number",
+                                                        "example": 5000000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "grand_total": {
+                                            "type": "number",
+                                            "example": 5000000
                                         }
                                     },
                                     "type": "object"
@@ -984,6 +1449,33 @@
                         "name": "customer_id",
                         "in": "query",
                         "description": "Filter ID Customer",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "customer_name",
+                        "in": "query",
+                        "description": "Filter Nama Customer (Like)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "salesid",
+                        "in": "query",
+                        "description": "Filter ID Faktur",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "salesidref",
+                        "in": "query",
+                        "description": "Filter Referensi Faktur",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -1124,6 +1616,33 @@
                         "name": "customer_id",
                         "in": "query",
                         "description": "Filter berdasarkan ID Customer",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "customer_name",
+                        "in": "query",
+                        "description": "Filter berdasarkan Nama Customer (Like)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "salesid",
+                        "in": "query",
+                        "description": "Filter berdasarkan ID Faktur",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "salesidref",
+                        "in": "query",
+                        "description": "Filter berdasarkan Referensi Faktur",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -1445,6 +1964,102 @@
                     }
                 ]
             }
+        },
+        "/sales/return": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Simpan Transaksi Retur Penjualan",
+                "description": "Menyimpan dokumen retur penjualan, mengembalikan quantity ke inventory, dan membalik jurnal.",
+                "operationId": "591c2c47802637130f9db06e265bd079",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "salesdate": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-20"
+                                    },
+                                    "salestype": {
+                                        "description": "0=Cash, 1=COD, 2=Kredit",
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "customerid": {
+                                        "type": "string",
+                                        "example": "CUST001"
+                                    },
+                                    "division": {
+                                        "type": "string",
+                                        "example": "0011"
+                                    },
+                                    "salesidref": {
+                                        "description": "Faktur penjualan asal (opsional)",
+                                        "type": "string",
+                                        "example": "I/SL-009869"
+                                    },
+                                    "memo": {
+                                        "type": "string",
+                                        "example": "Retur Penjualan: CUST001"
+                                    },
+                                    "usercreate": {
+                                        "type": "string",
+                                        "example": "kasir"
+                                    },
+                                    "details": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "productid": {
+                                                    "type": "string",
+                                                    "example": "P001"
+                                                },
+                                                "returnqty": {
+                                                    "type": "number",
+                                                    "example": 2
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "PCS"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 100000
+                                                },
+                                                "departement": {
+                                                    "type": "string",
+                                                    "example": "001101"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1483,6 +2098,10 @@
             "description": "Auth"
         },
         {
+            "name": "Master Data",
+            "description": "Master Data"
+        },
+        {
             "name": "Dashboard",
             "description": "Dashboard"
         },
@@ -1497,6 +2116,10 @@
         {
             "name": "Product",
             "description": "Product"
+        },
+        {
+            "name": "Report",
+            "description": "Report"
         },
         {
             "name": "Sales",

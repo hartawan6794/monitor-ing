@@ -90,10 +90,18 @@ class AuthController extends Controller
             });
 
         // Shortcut untuk default pelanggan (agar Android mudah mengaksesnya)
-        $defaultCustomer = \Illuminate\Support\Facades\DB::table('usersconfig')
+        $defaultConfig = \Illuminate\Support\Facades\DB::table('usersconfig')
             ->where('userid', $user->id)
-            ->where('userconfigrulesid', '023002')
-            ->value('configvalues');
+            ->whereIn('userconfigrulesid', ['022002', '023002', '027002'])
+            ->pluck('configvalues', 'userconfigrulesid');
+
+        $defaultUser = [
+            'defaultSupplier' => $defaultConfig['022002'] ?? null,
+            'defaultCustomer' => $defaultConfig['023002'] ?? null,
+            'defaultSalesman' => $defaultConfig['027002'] ?? null,
+        ];
+        var_dump($defaultUser);
+        die;
 
         // 1. Tentukan Role Utama (Pseudo-Role) untuk Navigasi Android
         $role = 'kasir'; // Default fallback
