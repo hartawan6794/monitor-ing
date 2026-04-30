@@ -100,8 +100,6 @@ class AuthController extends Controller
             'defaultCustomer' => $defaultConfig['023002'] ?? null,
             'defaultSalesman' => $defaultConfig['027002'] ?? null,
         ];
-        var_dump($defaultUser);
-        die;
 
         // 1. Tentukan Role Utama (Pseudo-Role) untuk Navigasi Android
         $role = 'kasir'; // Default fallback
@@ -134,9 +132,9 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'username' => $user->id,
                 'role' => $role,
-                'features' => $features,
-                'default_customer' => $defaultCustomer ?? null, // Shortcut langsung
-                'user_configs' => $allUserConfigs,              // Semua konfigurasi per section
+                //'features' => $features,
+                'userDefaultConfig' => $defaultUser, // Shortcut langsung
+                //'user_configs' => $allUserConfigs,              // Semua konfigurasi per section
                 'token' => $token
             ]
         ]);

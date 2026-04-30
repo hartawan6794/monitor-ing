@@ -155,17 +155,17 @@ class DashboardController extends Controller
     {
         $todayStart = Carbon::today();
         $todayEnd = Carbon::now();
-        
+
         $yesterdayStart = Carbon::yesterday();
         $yesterdayEnd = Carbon::yesterday()->endOfDay();
-        
+
         $startOfWeek = Carbon::now()->startOfWeek();
-        
+
         $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
         $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
-        
+
         $startOfMonth = Carbon::now()->startOfMonth();
-        
+
         $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
         $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
 
@@ -473,6 +473,199 @@ class DashboardController extends Controller
                 'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
                 'penjualan' => $salesArray,
                 'retur' => $returnsArray
+            ]
+        ]);
+    }
+    /**
+     * @OA\Get(
+     *     path="/dashboard/salesman-monthly",
+     *     tags={"Dashboard"},
+     *     summary="Dashboard Sales - Omset & Jumlah Order Bulan Ini",
+     *     description="Mengambil total omset dan jumlah order bulan berjalan berdasarkan salesmanid yang login.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(name="salesman_id", in="query", required=true, @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function salesmanDashboard(Request $request)
+    {
+        $userId = $request->query('user_id'); // username login yang dikirim FE
+
+        // Ambil default salesmanid dari usersconfig (rule 027002)
+        $salesmanId = DB::table('usersconfig')
+            ->where('userid', $userId)
+            ->where('userconfigrulesid', '027002')
+            ->value('configvalues');
+
+        if (!$salesmanId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Default salesman tidak ditemukan untuk user ini. Pastikan konfigurasi 027002 sudah diset.',
+            ], 404);
+        }
+
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        // 1. Total Omset Penjualan Bulan Ini (kind=0 = Penjualan)
+        $omset_bulan_ini = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startOfMonth, $endOfMonth])
+            ->where('sales.kind', 0)
+            ->where('sales.salesmanid', $salesmanId)
+            ->sum('salesdetail.netamount');
+
+        // 2. Total Nilai Retur Bulan Ini (kind=1 = Retur Penjualan)
+        $retur_bulan_ini = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startOfMonth, $endOfMonth])
+            ->where('sales.kind', 1)
+            ->where('sales.salesmanid', $salesmanId)
+            ->sum('salesdetail.netamount');
+
+        // 3. Penjualan Tunai Bulan Ini (salestype=0 = Cash, kind=0)
+        $penjualan_tunai = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startOfMonth, $endOfMonth])
+            ->where('sales.kind', 0)
+            ->where('sales.salestype', 0) // 0 = Tunai/Cash
+            ->where('sales.salesmanid', $salesmanId)
+            ->sum('salesdetail.netamount');
+
+        // 4. Jumlah Order Bulan Ini (dari salesorder, bukan sales)
+        $jumlah_order_bulan_ini = DB::table('salesorder')
+            ->whereBetween('salesdate', [$startOfMonth, $endOfMonth])
+            ->where('salesmanid', $salesmanId)
+            ->count('salesid');
+
+        // 5. Chart Penjualan 7 Hari Terakhir (filter by salesmanid)
+        $startDate7 = Carbon::today()->subDays(6);
+        $today = Carbon::today();
+
+        $chart_penjualan = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
+            ->where('sales.kind', 0)
+            ->where('sales.salesmanid', $salesmanId)
+            ->whereBetween('sales.salesdate', [$startDate7, $today])
+            ->groupBy('sales.salesdate')
+            ->orderBy('sales.salesdate', 'asc')
+            ->get();
+
+        // Chart Order 7 Hari Terakhir (filter by salesmanid)
+        $chart_order = DB::table('salesorder')
+            ->select('salesdate as tanggal', DB::raw('COUNT(salesid) as total'))
+            ->where('salesmanid', $salesmanId)
+            ->whereBetween('salesdate', [$startDate7, $today])
+            ->groupBy('salesdate')
+            ->orderBy('salesdate', 'asc')
+            ->get();
+
+        // Susun menjadi 7 slot tepat (H-6 s/d H-0), isi 0 jika tidak ada data
+        $penjualan_array = [];
+        $order_array = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i)->toDateString();
+            $penjualan_array[$date] = 0.0;
+            $order_array[$date] = 0;
+        }
+        foreach ($chart_penjualan as $item) {
+            $penjualan_array[$item->tanggal] = (float) $item->total;
+        }
+        foreach ($chart_order as $item) {
+            $order_array[$item->tanggal] = (int) $item->total;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'period' => [
+                    'month' => Carbon::now()->translatedFormat('F Y'),
+                    'start' => $startOfMonth->toDateString(),
+                    'end' => $endOfMonth->toDateString(),
+                ],
+                'salesman_id' => $salesmanId,
+                'omset_bulan_ini' => (float) $omset_bulan_ini,
+                'retur_bulan_ini' => (float) $retur_bulan_ini,
+                'penjualan_tunai' => (float) $penjualan_tunai,
+                'jumlah_order_bulan_ini' => (int) $jumlah_order_bulan_ini,
+                'chart_7_hari' => [
+                    'labels'    => array_keys($penjualan_array),
+                    'penjualan' => array_values($penjualan_array),
+                    'order'     => array_values($order_array),
+                ],
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/dashboard/kasir-today",
+     *     tags={"Dashboard"},
+     *     summary="Dashboard Kasir - Ringkasan Hari Ini",
+     *     description="Mengambil omset, retur, kas di tangan, dan biaya hari ini berdasarkan usercreate kasir yang login.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(name="usercreate", in="query", required=true, @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function kasirDashboard(Request $request)
+    {
+        $userCreate = $request->query('usercreate');
+        $today = Carbon::today();
+
+        // 1. Omset Penjualan Hari Ini (kind=0, berdasarkan usercreate kasir)
+        $omset_hari_ini = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 0)
+            ->when($userCreate, fn($q) => $q->where('sales.usercreate', $userCreate))
+            ->sum('salesdetail.netamount');
+
+        // 2. Nilai Retur Hari Ini (kind=1, berdasarkan usercreate kasir)
+        $retur_hari_ini = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 1)
+            ->when($userCreate, fn($q) => $q->where('sales.usercreate', $userCreate))
+            ->sum('salesdetail.netamount');
+
+        // 3. Kas di Tangan Hari Ini
+        // = SUM debit dari journaltrans akun Kas (101.001) yang dibuat oleh kasir hari ini
+        // Debit = uang masuk ke kas, Credit = uang keluar dari kas
+        // $kas_di_tangan = DB::table('journaltrans')
+        //     ->whereDate('jtdate', $today)
+        //     ->whereIn('accountid', ['101.001', '101.003'])
+        //     ->when($userCreate, fn($q) => $q->where('usercreate', $userCreate))
+        //     ->selectRaw('SUM(debit - credit) as total')
+        //     ->value('total') ?? 0;
+
+        $kas_di_tangan = DB::table('journaltrans')
+            ->join('journal', 'journaltrans.jtid', '=', 'journal.jtid')
+            ->whereDate('journal.jtdate', '<=', $today) // Gunakan akumulasi waktu untuk Saldo/Balance
+            ->where('journaltrans.accountid', '101.002')
+            ->where('journal.approved', 1)
+            ->sum(DB::raw('journaltrans.debit - journaltrans.credit'));
+        // 4. Biaya Hari Ini
+        // = SUM debit dari journaltrans akun biaya (6xx) yang dibuat oleh kasir hari ini
+        $biaya_hari_ini = DB::table('journaltrans')
+            ->whereDate('jtdate', $today)
+            ->where('accountid', 'like', '6%')
+            ->when($userCreate, fn($q) => $q->where('usercreate', $userCreate))
+            ->sum('debit');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'date' => $today->toDateString(),
+                'omset_hari_ini' => (float) $omset_hari_ini,
+                'retur_hari_ini' => (float) $retur_hari_ini,
+                'kas_di_tangan' => (float) $kas_di_tangan,
+                'biaya_hari_ini' => (float) $biaya_hari_ini,
             ]
         ]);
     }

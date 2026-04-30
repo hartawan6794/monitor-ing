@@ -120,5 +120,8 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::post('/store', [SalesController::class, 'storeSale']);
         Route::post('/return', [SalesController::class, 'storeSalesReturn']);
     });
-});
 
+    // Dashboard Spesifik Per Role
+    Route::get('/dashboard/salesman-monthly', [DashboardController::class, 'salesmanDashboard']);
+    Route::get('/dashboard/kasir-today', [DashboardController::class, 'kasirDashboard']);
+});

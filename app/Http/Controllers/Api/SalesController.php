@@ -268,7 +268,10 @@ class SalesController extends Controller
             ->get();
 
         // --- 3. Hitung Total Tagihan ---
+        // grand_total = SUM item (harga penuh sebelum diskon global)
         $grandTotal = $details->sum('netamount');
+        // Diskon global dari header faktur
+        $globalDiscount = (float) ($header->salesvaluedisc ?? 0);
 
         // --- 4. Ambil Info Pembayaran ---
         $payments = DB::table('salespayments')
@@ -282,10 +285,17 @@ class SalesController extends Controller
                 'salespayments.refpayment'
             )
             ->where('salespayments.salesidref', $salesid)
+            ->orderBy('salespayments.transdate', 'asc')
             ->get();
 
+        // --- 5. Hitung Riwayat & Sisa Pembayaran ---
+        // totalPaid = uang yang sudah masuk (setelah diskon)
+        // remainingBalance = grandTotal (harga penuh) - diskon global - totalPaid
+        $totalPaid = $payments->sum('debit');
+        $remainingBalance = max(0, $grandTotal - $globalDiscount - $totalPaid);
+
         $kindLabel = [0 => 'Penjualan', 1 => 'Retur'];
-        $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
+        $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit (Tempo)'];
 
         //jadikan D-m-y
         $header->salesdate = Carbon::parse($header->salesdate)->format('d-m-Y');
@@ -315,6 +325,9 @@ class SalesController extends Controller
                         'name' => $header->salesman_name,
                     ],
                     'grand_total' => (float) $grandTotal,
+                    'total_paid' => (float) $totalPaid,
+                    'remaining_balance' => (float) $remainingBalance,
+                    'is_paid_in_full' => $remainingBalance <= 0,
                 ],
                 'items' => $details->map(function ($item) {
                     return [
@@ -379,6 +392,8 @@ class SalesController extends Controller
             'kind' => 'nullable|in:0,1',
             'department_id' => 'nullable|string',
             'salesman_id' => 'nullable|string',
+            'customer_id' => 'nullable|string',
+            'customer_name' => 'nullable|string',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
 
@@ -436,6 +451,14 @@ class SalesController extends Controller
 
         if ($request->filled('kind')) {
             $query->where('salesorder.kind', (int) $request->kind);
+        }
+
+        if ($request->filled('customer_id')) {
+            $query->where('salesorder.customerid', $request->customer_id);
+        }
+
+        if ($request->filled('customer_name')) {
+            $query->where('customer.name', 'like', '%' . $request->customer_name . '%');
         }
 
         if ($request->filled('department_id')) {
@@ -588,10 +611,33 @@ class SalesController extends Controller
             ->get();
 
         // --- 3. Hitung Total ---
-        $grandTotal = $details->sum('netamount');
+        // grand_total = SUM item - diskon global dari header
+        // Diskon global disimpan di tabel salesorder (salesvaluedisc), bukan di salesorderdetail
+        $subTotal = $details->sum('netamount');
+        $globalDiscount = (float) ($header->salesvaluedisc ?? 0);
+        $grandTotal = max(0, $subTotal - $globalDiscount);
 
         $kindLabel = [0 => 'Order', 1 => 'Sales'];
         $typeLabel = [0 => 'Cash', 1 => 'Cash on Delivery', 2 => 'Kredit'];
+
+        // Cek jika statusnya sudah di Sales (kind == 1), cari datanya di tabel sales
+        $salesInvoiceData = null;
+        if ($header->kind == 1) {
+            $salesInvoice = DB::table('sales')
+                ->where('orderid', $salesid)
+                ->select('salesid', 'salesdate', 'salestime', 'paidinfull', 'paidinfulldate')
+                ->first();
+
+            if ($salesInvoice) {
+                $salesInvoiceData = [
+                    'salesid' => $salesInvoice->salesid,
+                    'salesdate' => $salesInvoice->salesdate,
+                    'salestime' => $salesInvoice->salestime,
+                    'is_paid_in_full' => (bool) $salesInvoice->paidinfull,
+                    'paid_in_full_date' => $salesInvoice->paidinfulldate,
+                ];
+            }
+        }
 
         return response()->json([
             'status' => 'success',
@@ -619,6 +665,7 @@ class SalesController extends Controller
                         'name' => $header->salesman_name,
                     ],
                     'grand_total' => (float) $grandTotal,
+                    'related_sales_invoice' => $salesInvoiceData,
                 ],
                 'items' => $details->map(function ($item) {
                     return [
@@ -903,8 +950,6 @@ class SalesController extends Controller
             'details.*.supplier' => 'nullable|string',
         ]);
 
-        Log::info('Sales Order Request: ' . json_encode($request->all()));
-
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -999,6 +1044,7 @@ class SalesController extends Controller
             DB::table('sales')->insert([
                 'salesid' => $salesId,
                 'salesidref' => $salesId,
+                'orderid' => $request->salesorder_id_ref,
                 'salesdate' => $request->salesdate,
                 'salestime' => $currentTime,
                 'salestype' => $request->salestype,
@@ -1125,9 +1171,16 @@ class SalesController extends Controller
                 $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => "Penjualan: TEMPO"];
             }
 
-            // Kredit Pendapatan Penjualan (Net Revenue setelah diskon)
-            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $finalNet, 'memo' => $memoType];
-            // Tambahan Jurnal HPP vs Persediaan
+            // GROSS METHOD: Kredit Pendapatan dengan harga PENUH sebelum diskon
+            // agar laporan laba rugi menampilkan gross revenue yang sesungguhnya
+            $journals[] = ['accountid' => '401.001', 'debit' => 0, 'credit' => $totalNet, 'memo' => $memoType];
+
+            // Jika ada diskon global, catat secara eksplisit ke akun 401.003 (Potongan Penjualan)
+            if ($globalDiscount > 0) {
+                $journals[] = ['accountid' => '401.003', 'debit' => $globalDiscount, 'credit' => 0, 'memo' => "Potongan Penjualan: " . $salesId];
+            }
+
+            // Jurnal HPP vs Persediaan
             $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0, 'memo' => "Pengeluaran Persediaan (HPP)"];
             $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs, 'memo' => "Pengeluaran Persediaan (HPP)"];
 
@@ -1153,8 +1206,8 @@ class SalesController extends Controller
                     'salesidref' => $salesId,
                     'transdate' => $currentDateTime,
                     'debit' => $cashAllocated,
-                    'discountpercent' => $request->discount_percent ?? 0,
-                    'discountvalue' => $request->discount_value ?? 0,
+                    'discountpercent' => $request->salespercentdisc ?? 0,
+                    'discountvalue' => $request->salesvaluedisc ?? 0,
                     'expensepercent' => 0,
                     'expensevalue' => 0,
                     'duedate' => $request->salesdate,
