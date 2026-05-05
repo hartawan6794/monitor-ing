@@ -197,6 +197,13 @@ class DashboardController extends Controller
             ->whereBetween('transdate', [$startDate, $endDate])
             ->sum('cogs');
 
+        $globalDiscount = DB::table('sales')
+            ->whereBetween('salesdate', [$startDate, $endDate])
+            ->where('kind', 0) // Pastikan hanya data penjualan nor mal
+            ->sum('salesvaluedisc');
+
+        $cogs = $cogs - $globalDiscount;
+
         // Laba Kotor = Omzet - HPP
         $laba = $omzet - $cogs;
 
@@ -213,19 +220,32 @@ class DashboardController extends Controller
     public function topProducts(Request $request)
     {
         $dates = $this->getDateRange($request->query('period', 'today'));
+        $products = $this->getTopProductsData($dates);
 
-        $products = DB::table('salesdetail')
+        return response()->json(['status' => 'success', 'data' => $products]);
+    }
+
+    /**
+     * Helper Chart/List Top Products
+     */
+    private function getTopProductsData($dates)
+    {
+        return DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
             ->join('product', 'salesdetail.productid', '=', 'product.id')
             ->select('product.id', 'product.name', DB::raw('SUM(salesdetail.salesqty) as total_qty'), DB::raw('SUM(salesdetail.netamount) as total_net'))
             ->whereBetween('salesdetail.transdate', $dates)
+            ->where('sales.kind', 0) // Hanya hitung penjualan normal, abaikan retur (kind=1)
             ->groupBy('product.id', 'product.name')
-            ->orderByDesc('total_net')
+            ->orderByDesc('total_qty') // Gudang butuh qty terlaris, sales butuh net. Kita pakai total_qty.
             ->limit(5)
             ->get()
             ->map(function ($item, $index) {
                 return [
                     'rank' => $index + 1,
                     'id' => $item->id,
+                    'sku' => $item->id, // Alias untuk Gudang FE
+                    'name' => $item->name, // Alias untuk Gudang FE
                     'title' => $item->name,
                     'qty' => $item->total_qty,
                     'subtitle' => number_format($item->total_qty, 0, ',', '.') . ' Terjual',
@@ -235,8 +255,6 @@ class DashboardController extends Controller
                     'total_net' => $item->total_net
                 ];
             });
-
-        return response()->json(['status' => 'success', 'data' => $products]);
     }
 
     /**
@@ -374,41 +392,8 @@ class DashboardController extends Controller
             ->where('journal.approved', 1)
             ->sum(DB::raw('journaltrans.debit - journaltrans.credit'));
 
-        // 7. Penjualan 7 hari terakhir
-        $chart_penjualan = DB::table('salesdetail')
-            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
-            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
-            ->where('sales.kind', 0)
-            ->whereBetween('sales.salesdate', [$startDate7, $today])
-            ->groupBy('sales.salesdate')
-            ->orderBy('sales.salesdate', 'asc')
-            ->get();
-
-        // Order 7 hari terakhir
-        $chart_order = DB::table('salesorderdetail')
-            ->join('salesorder', 'salesorderdetail.salesid', '=', 'salesorder.salesid')
-            ->select('salesorder.salesdate as tanggal', DB::raw('SUM(salesorderdetail.netamount) as total'))
-            ->whereBetween('salesorder.salesdate', [$startDate7, $today])
-            ->groupBy('salesorder.salesdate')
-            ->orderBy('salesorder.salesdate', 'asc')
-            ->get();
-
-        // Android FE GSON mengharapkan List<Double> (array primitif angka tunggal per indeks)
-        // Kita perlu menyusunnya menjadi 7 angka pas sesuai urutan 7 hari ke belakang (misal H-6 s/d H-0)
-        $penjualan_array = [];
-        $order_array = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i)->toDateString();
-            $penjualan_array[$date] = 0;
-            $order_array[$date] = 0;
-        }
-
-        foreach ($chart_penjualan as $item) {
-            $penjualan_array[$item->tanggal] = (float) $item->total;
-        }
-        foreach ($chart_order as $item) {
-            $order_array[$item->tanggal] = (float) $item->total;
-        }
+        // Gunakan helper untuk mendapatkan data chart
+        $chartData = $this->getSalesAndOrderChart($startDate7, $today);
 
         return response()->json([
             'status' => 'success',
@@ -420,8 +405,8 @@ class DashboardController extends Controller
                 'biaya_operasional' => (float) $biaya_operasional,
                 'kas_di_tangan' => (float) $kas_di_tangan,
                 'chart_7_hari' => [
-                    'penjualan' => array_values($penjualan_array),
-                    'order' => array_values($order_array)
+                    'penjualan' => $chartData['penjualan'],
+                    'order' => $chartData['order']
                 ]
             ]
         ]);
@@ -491,18 +476,17 @@ class DashboardController extends Controller
      */
     public function salesmanDashboard(Request $request)
     {
-        $userId = $request->query('user_id'); // username login yang dikirim FE
+        $salesmanId = $request->query('salesman_id'); // username login yang dikirim FE
 
-        // Ambil default salesmanid dari usersconfig (rule 027002)
-        $salesmanId = DB::table('usersconfig')
-            ->where('userid', $userId)
-            ->where('userconfigrulesid', '027002')
-            ->value('configvalues');
+        // // Ambil default salesmanid dari usersconfig (rule 027002)
+        $salesmanData = DB::table('salesman')
+            ->where('id', $salesmanId)
+            ->first();
 
-        if (!$salesmanId) {
+        if (!$salesmanData) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Default salesman tidak ditemukan untuk user ini. Pastikan konfigurasi 027002 sudah diset.',
+                'message' => 'Data salesman tidak ditemukan.',
             ], 404);
         }
 
@@ -525,14 +509,13 @@ class DashboardController extends Controller
             ->where('sales.salesmanid', $salesmanId)
             ->sum('salesdetail.netamount');
 
-        // 3. Penjualan Tunai Bulan Ini (salestype=0 = Cash, kind=0)
-        $penjualan_tunai = DB::table('salesdetail')
-            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
-            ->whereBetween('sales.salesdate', [$startOfMonth, $endOfMonth])
-            ->where('sales.kind', 0)
-            ->where('sales.salestype', 0) // 0 = Tunai/Cash
-            ->where('sales.salesmanid', $salesmanId)
-            ->sum('salesdetail.netamount');
+        // 3. Order Penjualan Bulan Ini (salestype=0 = Cash, kind=0)
+        $order_penjualan = DB::table('salesorderdetail')
+            ->join('salesorder', 'salesorderdetail.salesid', '=', 'salesorder.salesid')
+            ->whereBetween('salesorder.salesdate', [$startOfMonth, $endOfMonth])
+            ->where('salesorder.salestype', 2) // 0 = Tunai/Cash
+            ->where('salesorder.salesmanid', $salesmanId)
+            ->sum('salesorderdetail.netamount');
 
         // 4. Jumlah Order Bulan Ini (dari salesorder, bukan sales)
         $jumlah_order_bulan_ini = DB::table('salesorder')
@@ -540,64 +523,115 @@ class DashboardController extends Controller
             ->where('salesmanid', $salesmanId)
             ->count('salesid');
 
-        // 5. Chart Penjualan 7 Hari Terakhir (filter by salesmanid)
+        // Ambil data chart (H-6 sampai hari ini)
         $startDate7 = Carbon::today()->subDays(6);
         $today = Carbon::today();
 
-        $chart_penjualan = DB::table('salesdetail')
-            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
-            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
-            ->where('sales.kind', 0)
-            ->where('sales.salesmanid', $salesmanId)
-            ->whereBetween('sales.salesdate', [$startDate7, $today])
-            ->groupBy('sales.salesdate')
-            ->orderBy('sales.salesdate', 'asc')
-            ->get();
-
-        // Chart Order 7 Hari Terakhir (filter by salesmanid)
-        $chart_order = DB::table('salesorder')
-            ->select('salesdate as tanggal', DB::raw('COUNT(salesid) as total'))
-            ->where('salesmanid', $salesmanId)
-            ->whereBetween('salesdate', [$startDate7, $today])
-            ->groupBy('salesdate')
-            ->orderBy('salesdate', 'asc')
-            ->get();
-
-        // Susun menjadi 7 slot tepat (H-6 s/d H-0), isi 0 jika tidak ada data
-        $penjualan_array = [];
-        $order_array = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i)->toDateString();
-            $penjualan_array[$date] = 0.0;
-            $order_array[$date] = 0;
-        }
-        foreach ($chart_penjualan as $item) {
-            $penjualan_array[$item->tanggal] = (float) $item->total;
-        }
-        foreach ($chart_order as $item) {
-            $order_array[$item->tanggal] = (int) $item->total;
-        }
+        $chartPenjualan = $this->getSalesChart($startDate7, $today, 'sales.salesmanid', $salesmanId);
+        $chartOrder = $this->getOrderChart($startDate7, $today, $salesmanId);
 
         return response()->json([
             'status' => 'success',
             'data' => [
                 'period' => [
-                    'month' => Carbon::now()->translatedFormat('F Y'),
-                    'start' => $startOfMonth->toDateString(),
-                    'end' => $endOfMonth->toDateString(),
+                    'month' => Carbon::now()->locale('id')->translatedFormat('F Y'),
+                    'start' => $startOfMonth->format('d-m-Y'),
+                    'end' => $endOfMonth->format('d-m-Y'),
                 ],
                 'salesman_id' => $salesmanId,
                 'omset_bulan_ini' => (float) $omset_bulan_ini,
                 'retur_bulan_ini' => (float) $retur_bulan_ini,
-                'penjualan_tunai' => (float) $penjualan_tunai,
+                'order_bulan_ini' => (float) $order_penjualan,
                 'jumlah_order_bulan_ini' => (int) $jumlah_order_bulan_ini,
                 'chart_7_hari' => [
-                    'labels'    => array_keys($penjualan_array),
-                    'penjualan' => array_values($penjualan_array),
-                    'order'     => array_values($order_array),
-                ],
+                    'labels' => $chartPenjualan['labels'],
+                    'penjualan' => $chartPenjualan['data'],
+                    'order' => $chartOrder['data']
+                ]
             ]
         ]);
+    }
+
+    /**
+     * Helper Chart Penjualan (Bisa filter by salesmanid atau usercreate)
+     */
+    private function getSalesChart($startDate, $endDate, $filterField, $filterValue)
+    {
+        // 1. Ambil Gross Amount (Harga sebelum diskon global) dari Detail
+        $grossSales = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
+            ->where('sales.kind', 0)
+            ->whereBetween('sales.salesdate', [$startDate, $endDate])
+            ->when($filterValue, fn($q) => $q->where($filterField, $filterValue))
+            ->groupBy('sales.salesdate')
+            ->pluck('total', 'tanggal');
+
+        // 2. Ambil Global Discount dari Header (Agar tidak double/triple count saat join dengan detail)
+        $globalDiscounts = DB::table('sales')
+            ->select('salesdate as tanggal', DB::raw('SUM(salesvaluedisc) as total_disc'))
+            ->where('kind', 0)
+            ->whereBetween('salesdate', [$startDate, $endDate])
+            ->when($filterValue, fn($q) => $q->where($filterField, $filterValue))
+            ->groupBy('salesdate')
+            ->pluck('total_disc', 'tanggal');
+
+        // 3. Susun slot tanggal
+        $diffInDays = $startDate->diffInDays($endDate);
+        $labels = [];
+        $data = [];
+
+        for ($i = $diffInDays; $i >= 0; $i--) {
+            $carbonDate = Carbon::parse($endDate)->subDays($i);
+            $date = $carbonDate->toDateString();
+
+            // Paksa locale ke 'id' untuk bahasa Indonesia
+            $labels[] = $carbonDate->locale('id')->translatedFormat('l');
+
+            $gross = isset($grossSales[$date]) ? (float) $grossSales[$date] : 0.0;
+            $disc = isset($globalDiscounts[$date]) ? (float) $globalDiscounts[$date] : 0.0;
+
+            // Net Amount = Gross dari Detail - Diskon Global Faktur
+            $data[] = max(0, $gross - $disc);
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data
+        ];
+    }
+
+    /**
+     * Helper Chart Order (Spesifik Salesman)
+     */
+    private function getOrderChart($startDate, $endDate, $salesmanId)
+    {
+        $chart_order = DB::table('salesorderdetail')
+            ->join('salesorder', 'salesorderdetail.salesid', '=', 'salesorder.salesid')
+            ->select('salesorder.salesdate as tanggal', DB::raw('SUM(salesorderdetail.netamount) as total'))
+            ->whereBetween('salesorder.salesdate', [$startDate, $endDate])
+            ->when($salesmanId, fn($q) => $q->where('salesorder.salesmanid', $salesmanId))
+            ->groupBy('salesorder.salesdate')
+            ->pluck('total', 'tanggal');
+
+        $diffInDays = $startDate->diffInDays($endDate);
+        $labels = [];
+        $data = [];
+
+        for ($i = $diffInDays; $i >= 0; $i--) {
+            $carbonDate = Carbon::parse($endDate)->subDays($i);
+            $date = $carbonDate->toDateString();
+
+            // Paksa locale ke 'id' untuk bahasa Indonesia
+            $labels[] = $carbonDate->locale('id')->translatedFormat('l');
+
+            $data[] = isset($chart_order[$date]) ? (float) $chart_order[$date] : 0.0;
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data
+        ];
     }
 
     /**
@@ -619,12 +653,20 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         // 1. Omset Penjualan Hari Ini (kind=0, berdasarkan usercreate kasir)
-        $omset_hari_ini = DB::table('salesdetail')
+        $omset_kotor_hari_ini = DB::table('salesdetail')
             ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
             ->whereDate('sales.salesdate', $today)
             ->where('sales.kind', 0)
             ->when($userCreate, fn($q) => $q->where('sales.usercreate', $userCreate))
             ->sum('salesdetail.netamount');
+
+        $diskon_hari_ini = DB::table('sales')
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 0)
+            ->when($userCreate, fn($q) => $q->where('sales.usercreate', $userCreate))
+            ->sum('sales.salesvaluedisc');
+
+        $omset_hari_ini = $omset_kotor_hari_ini - $diskon_hari_ini;
 
         // 2. Nilai Retur Hari Ini (kind=1, berdasarkan usercreate kasir)
         $retur_hari_ini = DB::table('salesdetail')
@@ -666,6 +708,159 @@ class DashboardController extends Controller
                 'retur_hari_ini' => (float) $retur_hari_ini,
                 'kas_di_tangan' => (float) $kas_di_tangan,
                 'biaya_hari_ini' => (float) $biaya_hari_ini,
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/dashboard/gudang",
+     *     tags={"Dashboard"},
+     *     summary="Dashboard Gudang",
+     *     description="Mengambil data low stock, barang retur fisik hari ini, dan barang expired/mendekati expired.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Response(response=200, description="Sukses"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function gudangDashboard()
+    {
+        $today = Carbon::today();
+
+        // -------------------------------------------------------------
+        // 1. LOW STOCK (Kritis: Stok <= Minimum Reorder)
+        // -------------------------------------------------------------
+        $queryLowStock = DB::table('product')
+            ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
+            ->select(
+                'product.id as sku',
+                'product.name',
+                'product.minimumreorder',
+                DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock')
+            )
+            ->where('product.isactive', 1)
+            ->groupBy('product.id', 'product.name', 'product.minimumreorder')
+            ->havingRaw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) <= product.minimumreorder');
+
+        // Menghitung total data dan mengambil Top 5 yang paling kritis (stok terendah)
+        $totalLowStock = (clone $queryLowStock)->get()->count();
+        $previewLowStock = $queryLowStock->orderBy('stock', 'asc')->limit(5)->get();
+
+        // -------------------------------------------------------------
+        // 2. MENDEKATI MIN REORDER (Stok > Min Reorder TAPI <= Min Reorder + 5)
+        // -------------------------------------------------------------
+        $queryApproachingReorder = DB::table('product')
+            ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
+            ->select(
+                'product.id as sku',
+                'product.name',
+                'product.minimumreorder',
+                DB::raw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) as stock')
+            )
+            ->where('product.isactive', 1)
+            ->where('product.minimumreorder', '>', 0) // Pastikan barang ini memang punya setting reorder
+            ->groupBy('product.id', 'product.name', 'product.minimumreorder')
+            // Logika: Stok sedikit di atas batas min reorder (batas aman sementara)
+            ->havingRaw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) > product.minimumreorder')
+            ->havingRaw('COALESCE(SUM(inventory.invin) - SUM(inventory.invout), 0) <= (product.minimumreorder + 5)');
+
+        $totalApproachingReorder = (clone $queryApproachingReorder)->get()->count();
+        $previewApproachingReorder = $queryApproachingReorder->orderBy('stock', 'asc')->limit(5)->get();
+
+        // -------------------------------------------------------------
+        // 3. BARANG RETUR FISIK HARI INI (Biasanya tidak banyak, ambil semua/limit 20)
+        // -------------------------------------------------------------
+        $retur_hari_ini = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->join('product', 'salesdetail.productid', '=', 'product.id')
+            ->select(
+                'sales.salesid',
+                'product.id as sku',
+                'product.name',
+                'salesdetail.returnqty',
+                'salesdetail.unit',
+                'sales.memo as alasan_retur'
+            )
+            ->whereDate('sales.salesdate', $today)
+            ->where('sales.kind', 1) // 1 = Retur
+            ->orderBy('sales.salesid', 'desc')
+            ->limit(20) // Maksimal 20 di dashboard
+            ->get();
+
+        // -------------------------------------------------------------
+        // 4. STOCK EXPIRED (Sudah Kadaluarsa: <= Hari Ini)
+        // -------------------------------------------------------------
+        $queryExpired = DB::table('inventory')
+            ->join('product', 'inventory.productid', '=', 'product.id')
+            ->select(
+                'product.id as sku',
+                'product.name',
+                'inventory.expireddate',
+                DB::raw('SUM(inventory.invin) - SUM(inventory.invout) as sisa_stok')
+            )
+            ->whereNotNull('inventory.expireddate')
+            ->whereDate('inventory.expireddate', '<', $today)
+            ->groupBy('product.id', 'product.name', 'inventory.expireddate')
+            ->havingRaw('SUM(inventory.invin) - SUM(inventory.invout) > 0');
+
+        $totalExpired = (clone $queryExpired)->get()->count();
+        $previewExpired = $queryExpired->orderBy('inventory.expireddate', 'asc')->limit(5)->get();
+
+        // -------------------------------------------------------------
+        // 5. EXPIRING SOON (Akan Kadaluarsa: Hari Ini s/d H+30)
+        // -------------------------------------------------------------
+        $queryExpiringSoon = DB::table('inventory')
+            ->join('product', 'inventory.productid', '=', 'product.id')
+            ->select(
+                'product.id as sku',
+                'product.name',
+                'inventory.expireddate',
+                DB::raw('SUM(inventory.invin) - SUM(inventory.invout) as sisa_stok')
+            )
+            ->whereNotNull('inventory.expireddate')
+            ->whereBetween('inventory.expireddate', [$today, $today->copy()->addDays(30)])
+            ->groupBy('product.id', 'product.name', 'inventory.expireddate')
+            ->havingRaw('SUM(inventory.invin) - SUM(inventory.invout) > 0');
+
+        $totalExpiringSoon = (clone $queryExpiringSoon)->get()->count();
+        $previewExpiringSoon = $queryExpiringSoon->orderBy('inventory.expireddate', 'asc')->limit(5)->get();
+
+        // -------------------------------------------------------------
+        // 6. PRODUK TERLARIS BULAN INI (Berdasarkan Qty Terjual)
+        // -------------------------------------------------------------
+        $startOfMonth = $today->copy()->startOfMonth();
+        $topProducts = $this->getTopProductsData([$startOfMonth, $today]);
+
+        // =============================================================
+        // FINAL RESPONSE (Optimized)
+        // =============================================================
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'date' => $today->format('d-m-Y'),
+
+                'low_stock' => [
+                    'total_items' => $totalLowStock,
+                    'preview' => $previewLowStock
+                ],
+                'approaching_reorder' => [
+                    'total_items' => $totalApproachingReorder,
+                    'preview' => $previewApproachingReorder
+                ],
+                'retur_hari_ini' => [
+                    'total_items' => $retur_hari_ini->count(), // Diasumsikan retur harian < 20
+                    'preview' => $retur_hari_ini
+                ],
+                'expired' => [
+                    'total_items' => $totalExpired,
+                    'preview' => $previewExpired
+                ],
+                'expiring_soon' => [
+                    'total_items' => $totalExpiringSoon,
+                    'preview' => $previewExpiringSoon
+                ],
+                'top_products_bulan_ini' => $topProducts
             ]
         ]);
     }

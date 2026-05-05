@@ -1,8 +1,8 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Montor-ing API",
-        "description": "Dokumentasi API untuk aplikasi Montor-ing (Inventory & Sales Monitoring).",
+        "title": "DashMo API",
+        "description": "Dokumentasi API untuk aplikasi Dashboard Monitoring (Dashboard & Sales Monitoring).",
         "version": "1.0.0"
     },
     "servers": [
@@ -347,6 +347,106 @@
                 "responses": {
                     "200": {
                         "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/salesman-monthly": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dashboard Sales - Omset & Jumlah Order Bulan Ini",
+                "description": "Mengambil total omset dan jumlah order bulan berjalan berdasarkan salesmanid yang login.",
+                "operationId": "454c15b188eaaf9eafb982eb521842fa",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "salesman_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/kasir-today": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dashboard Kasir - Ringkasan Hari Ini",
+                "description": "Mengambil omset, retur, kas di tangan, dan biaya hari ini berdasarkan usercreate kasir yang login.",
+                "operationId": "d90733c290ca150452286002f1f32cd7",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "usercreate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/gudang": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dashboard Gudang",
+                "description": "Mengambil data low stock, barang retur fisik hari ini, dan barang expired/mendekati expired.",
+                "operationId": "3b44d1e57be47d70c7bd7e30629613fa",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [

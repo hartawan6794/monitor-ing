@@ -27,7 +27,9 @@ class UserController extends Controller
             'id' => 'required|string|unique:mysql.users,id|max:16', // DB: char(16)
             'name' => 'required|string', // DB: varchar(10)
             'userpassword' => 'required|string|max:41', // DB: char(41)
-            'description' => 'required|string' // DB: varchar(200) - NO NULL
+            'description' => 'required|string', // DB: varchar(200) - NO NULL
+            'role' => 'nullable|string|in:kasir,sales,gudang,owner', // Tambahan Role
+            'usercreate' => 'nullable|string'
         ]);
 
         // Jika validasi gagal
@@ -41,27 +43,43 @@ class UserController extends Controller
 
         try {
             // 2. Simpan ke Database menggunakan Model BranchUser
-            // Catatan: Semua kolom NOT NULL harus diisi
             $user = \App\Models\BranchUser::create([
                 'id' => $request->id,
                 'name' => $request->name,
                 'userpassword' => encryptXor($request->userpassword),
                 'description' => $request->description,
-                'usercreate' => 'API', // Identitas pembuat
-                'isactive' => 1,      // Aktifkan user
-                'useredit' => ''       // Diisi string kosong untuk awal
+                'usercreate' => $request->usercreate,
+                'isactive' => 1,
+                'useredit' => ''
             ]);
 
-            // 2. Ambil semua ID dari tabel userconfigrules
+            // Ambil semua ID dari tabel userconfigrules
             $rules = \DB::table('userconfigrules')->select('id')->get();
+
+            // Tentukan ID rule mana yang harus di-set 'true' berdasarkan role yang dipilih
+            $trueRules = [];
+            $role = $request->role;
+            if ($role === 'sales') {
+                $trueRules[] = '051001';
+            } elseif ($role === 'kasir') {
+                $trueRules[] = '053025';
+            } elseif ($role === 'gudang') {
+                $trueRules[] = '020001';
+            } elseif ($role === 'owner') {
+                // Owner mungkin butuh lebih banyak akses, tapi minimal kita set sesuai contoh
+                $trueRules[] = '051001';
+            }
 
             // 3. Siapkan data untuk Batch Insert ke usersconfig
             $configData = [];
             foreach ($rules as $rule) {
+                // Jika ID rule cocok dengan role, set 'true', sisanya 'false'
+                $value = in_array($rule->id, $trueRules) ? 'true' : 'false';
+
                 $configData[] = [
-                    'userid' => $request->id, // Merujuk ke user baru
+                    'userid' => $request->id,
                     'userconfigrulesid' => $rule->id,
-                    'configvalues' => 'false',      // Default value sesuai permintaan
+                    'configvalues' => $value,
                 ];
             }
 

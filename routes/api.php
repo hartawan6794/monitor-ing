@@ -50,6 +50,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/top-salesmen', [DashboardController::class, 'topSalesmen']);
         Route::get('/chart', [DashboardController::class, 'revenueChart']);
         Route::get('/chart-monthly', [DashboardController::class, 'monthlyChart']);
+        Route::get('/gudang', [DashboardController::class, 'gudangDashboard']);
     });
 
     Route::prefix('products')->group(function () {
@@ -124,4 +125,5 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
     // Dashboard Spesifik Per Role
     Route::get('/dashboard/salesman-monthly', [DashboardController::class, 'salesmanDashboard']);
     Route::get('/dashboard/kasir-today', [DashboardController::class, 'kasirDashboard']);
+    Route::get('/dashboard/gudang', [DashboardController::class, 'gudangDashboard']);
 });

@@ -119,6 +119,7 @@ class ProductController extends Controller
                 'division.id as division_id',
                 'division.description as division_name',
                 'product.defunit as unit',
+                'product.groupunit as groupunit',
                 'productgroup.id as productgroup_id',
                 'productgroup.name as productgroup_name',
                 'productbrand.id as brand_id',
@@ -514,7 +515,7 @@ class ProductController extends Controller
                 'description' => $request->has('description') ? $request->description : $product->description,
                 'productgroup' => $request->has('productgroup') ? $request->productgroup : $product->productgroup,
                 'defunit' => $request->has('defunit') ? $request->defunit : $product->defunit,
-                'groupunit' => $request->has('defunit') ? $request->defunit : $product->groupunit, // Samakan defunit
+                'groupunit' => $request->has('groupunit') ? $request->groupunit : $product->groupunit, // Samakan defunit
                 'supplier' => $request->has('supplier') ? $request->supplier : $product->supplier,
                 'category' => $request->has('category') ? $request->category : $product->category,
                 'factory' => $request->has('factory') ? $request->factory : $product->factory,

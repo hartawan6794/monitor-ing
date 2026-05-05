@@ -8,9 +8,9 @@ use Illuminate\Routing\Controller as BaseController;
 
 /**
  * @OA\Info(
- *     title="Montor-ing API",
+ *     title="DashMo API",
  *     version="1.0.0",
- *     description="Dokumentasi API untuk aplikasi Montor-ing (Inventory & Sales Monitoring)."
+ *     description="Dokumentasi API untuk aplikasi Dashboard Monitoring (Dashboard & Sales Monitoring)."
  * )
  *     @OA\Parameter(
  *         name="X-Database-Name",
