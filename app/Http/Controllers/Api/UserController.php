@@ -67,7 +67,7 @@ class UserController extends Controller
                 $trueRules[] = '020001';
             } elseif ($role === 'owner') {
                 // Owner mungkin butuh lebih banyak akses, tapi minimal kita set sesuai contoh
-                $trueRules[] = '051001';
+                $trueRules[] = ['103001', '103002'];
             }
 
             // 3. Siapkan data untuk Batch Insert ke usersconfig
