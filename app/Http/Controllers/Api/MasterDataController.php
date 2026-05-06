@@ -327,14 +327,33 @@ class MasterDataController extends Controller
                 'address',
                 'telephone',
                 'pricelevel',
-                'creditlimit',
-                // Subquery untuk menghitung Piutang berjalan (Total Penjualan Kredit - Total Pembayaran Piutang)
+                // Ambil nilai dari penyesuaian credit (receivableadjust), tetap menggunakan alias 'creditlimit'
+                DB::raw("COALESCE((SELECT SUM(ra.credit) FROM receivableadjust ra WHERE ra.customerid = customer.id), 0) as creditlimit"),
+                // Subquery komprehensif untuk menghitung Piutang berjalan (Sisa Piutang)
                 DB::raw("(
-                        (SELECT COALESCE(SUM(sd.netamount), 0) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.salestype = 2) 
-                        - 
-                        (SELECT COALESCE(SUM(s.salesvaluedisc), 0) FROM sales s WHERE s.customerid = customer.id AND s.salestype = 2)
-                        - 
-                        (SELECT COALESCE(SUM(sp.debit), 0) FROM sales s JOIN salespayments sp ON s.salesid = sp.salesidref WHERE s.customerid = customer.id AND s.salestype = 2)
+                        -- 1. Saldo Awal (kind = 2)
+                        COALESCE((SELECT SUM(sed.debit) FROM sales s JOIN salesexpensesdetail sed ON s.salesid = sed.salesid WHERE s.customerid = customer.id AND s.kind = 2), 0)
+                        +
+                        -- 2. Total Penjualan (kind IN 0, 2)
+                        COALESCE((SELECT SUM(sd.netamount) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.kind IN (0, 2)), 0)
+                        -
+                        -- 3. Diskon Penjualan (kind IN 0, 2)
+                        COALESCE((SELECT SUM(s.salesvaluedisc) FROM sales s WHERE s.customerid = customer.id AND s.kind IN (0, 2)), 0)
+                        +
+                        -- 4. Penyesuaian Debit
+                        COALESCE((SELECT SUM(ra.debit) FROM receivableadjust ra WHERE ra.customerid = customer.id), 0)
+                        -
+                        -- 5. Retur yang memotong piutang (kind = 1, belum ada pembayaran)
+                        COALESCE((SELECT SUM(sd.netamount) FROM sales s JOIN salesdetail sd ON s.salesid = sd.salesid WHERE s.customerid = customer.id AND s.kind = 1 AND NOT EXISTS (SELECT 1 FROM salespayments sp WHERE sp.salesidref = s.salesid)), 0)
+                        +
+                        -- 6. Diskon Retur (Mengurangi nilai retur, sehingga di sini menjadi plus terhadap total piutang karena returnya minus)
+                        COALESCE((SELECT SUM(s.returnvaluedisc) FROM sales s WHERE s.customerid = customer.id AND s.kind = 1 AND NOT EXISTS (SELECT 1 FROM salespayments sp WHERE sp.salesidref = s.salesid)), 0)
+                        -
+                        -- 7. Pembayaran Bersih (Debit - Credit)
+                        COALESCE((SELECT SUM(sp.debit) - SUM(sp.credit) FROM sales s JOIN salespayments sp ON s.salesid = sp.salesidref WHERE s.customerid = customer.id AND s.kind IN (0, 2)), 0)
+                        -
+                        -- 8. Penyesuaian Credit
+                        COALESCE((SELECT SUM(ra.credit) FROM receivableadjust ra WHERE ra.customerid = customer.id), 0)
                     ) as piutang")
             )
                 ->orderBy('name', 'asc')
