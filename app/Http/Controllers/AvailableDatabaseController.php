@@ -54,11 +54,13 @@ class AvailableDatabaseController extends Controller
             // 1. Ubah koneksi template MySQL agar mengarah ke IP Server yang dipilih
             Config::set('database.connections.mysql_temp.driver', 'mysql');
             Config::set('database.connections.mysql_temp.host', $server->ip_address);
-            Config::set('database.connections.mysql_temp.port', $server->port);
-            // Gunakan kredensial database master/root untuk server tersebut
-            // Pastikan Anda sudah mengatur user yang punya hak akses 'SHOW DATABASES'
+            Config::set('database.connections.mysql_temp.port', $server->port ?? 3306);
             Config::set('database.connections.mysql_temp.username', $server->username);
             Config::set('database.connections.mysql_temp.password', $server->password);
+            // Gunakan information_schema sebagai database awal agar koneksi bisa terbentuk
+            // tanpa perlu mengetahui nama database klien terlebih dahulu
+            Config::set('database.connections.mysql_temp.database', 'information_schema');
+            Config::set('database.connections.mysql_temp.charset', 'utf8mb4');
 
             // Reset koneksi sementara ini
             DB::purge('mysql_temp');

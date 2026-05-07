@@ -109,6 +109,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
     Route::prefix('inventory')->group(function () {
         Route::post('/adjust', [InventoryAdjustmentController::class, 'storeAdjustment']);
         Route::post('/move', [InventoryMovingController::class, 'storeMoving']);
+        Route::post('/initial-stock', [InventoryAdjustmentController::class, 'storeInitialInventory']);
     });
 
 

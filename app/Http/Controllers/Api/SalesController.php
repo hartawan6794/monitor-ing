@@ -1177,7 +1177,7 @@ class SalesController extends Controller
 
             // Jika ada diskon global, catat secara eksplisit ke akun 401.003 (Potongan Penjualan)
             if ($globalDiscount > 0) {
-                $journals[] = ['accountid' => '401.003', 'debit' => $globalDiscount, 'credit' => 0, 'memo' => "Potongan Penjualan: " . $salesId];
+                $journals[] = ['accountid' => '409.001', 'debit' => $globalDiscount, 'credit' => 0, 'memo' => "Diskon Penjualan: " . $salesId];
             }
 
             // Jurnal HPP vs Persediaan

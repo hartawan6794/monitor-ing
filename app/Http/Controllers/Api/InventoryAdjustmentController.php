@@ -209,4 +209,140 @@ class InventoryAdjustmentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 2. POST API: Simpan Inventory Awal (Initial Stock)
+     * Dipanggil setelah membuat produk baru jika ada stok awal.
+     */
+    public function storeInitialInventory(Request $request)
+    {
+        // A. Validasi Input
+        $validator = Validator::make($request->all(), [
+            'productid' => 'required|string',
+            'qty' => 'required|numeric|min:0.01',
+            'division' => 'required|string',
+            'departement' => 'required|string',
+            'usercreate' => 'required|string',
+            'transdate' => 'nullable|date',
+            'accountid' => 'nullable|string', // Akun Modal / Saldo Awal, misal 300.001
+            'memo' => 'nullable|string' // Memo custom dari frontend
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap atau tidak valid.',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $transdate = $request->transdate ?? date('Y-m-d');
+
+            // Cek produk
+            $productDb = DB::table('product')->where('id', $request->productid)->first();
+            if (!$productDb) {
+                throw new \Exception("Produk tidak ditemukan!");
+            }
+
+            // AUTO-NUMBERING BERDASARKAN DIVISI
+            $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
+            if (!$div) {
+                throw new \Exception("Divisi tidak ditemukan!");
+            }
+
+            // Format ID Transaksi
+            $rawFormat = $div->frminventoryid;
+            $prefix = str_replace('%0:6.6d', '', $rawFormat);
+            $nextNumber = $div->inventoryidno + 1;
+            $transId = $prefix . str_pad($nextNumber, 6, "0", STR_PAD_LEFT);
+
+            // Update nomor urut di tabel divisi
+            DB::table('division')
+                ->where('id', $request->division)
+                ->update(['inventoryidno' => $nextNumber]);
+
+            $currentTime = date('H:i:s');
+            $currentDateTime = $transdate . ' ' . $currentTime;
+
+            // KITA SKIP INSERT KE inventoryadjust & inventoryadjustdetail
+            // Langsung dicatat ke BUKU STOK (inventory) dan JURNAL (journaltrans)
+
+            $qty = (float) $request->qty;
+            $cogs = (float) $productDb->costprice;
+            $inventoryAccount = !empty($productDb->inventoryacc) ? $productDb->inventoryacc : '107.001';
+            $userAccountId = $request->accountid ?? '300.001'; // Default ke akun Modal/Saldo Awal
+            $totalValue = $qty * $cogs;
+            $dateRef = date('Ymd', strtotime($transdate)) . mt_rand(10000000, 99999999);
+
+            // INSERT KE INVENTORY (BUKU STOK)
+            DB::table('inventory')->insert([
+                'transid' => $transId,
+                'transdate' => $currentDateTime,
+                'departement' => $request->departement,
+                'division' => $request->division,
+                'supplier' => $productDb->supplier ?? '001001',
+                'productid' => $request->productid,
+                'snproduct' => '',
+                'invin' => $qty,
+                'invout' => 0,
+                'invvalue' => $cogs,
+                'reference' => $transId,
+                'datereference' => $dateRef,
+                'transtype' => 99, // 6 = Adjust In
+                'memo' => $request->memo ?? 'Saldo Awal Produk',
+                'usercreate' => $request->usercreate,
+                'useredit' => '',
+                'isempty' => 0
+            ]);
+
+            // INSERT JURNAL (JIKA COGS > 0)
+            if ($totalValue > 0) {
+                // Debit: Persediaan
+                DB::table('journaltrans')->insert([
+                    'jtid' => $transId,
+                    'jtdate' => $transdate . ' 00:00:00',
+                    'memo' => $request->memo ?? 'Saldo Awal Produk ' . $productDb->name,
+                    'accountid' => $inventoryAccount,
+                    'debit' => $totalValue,
+                    'credit' => 0,
+                    'division' => $request->division,
+                    'reftransaction' => $transId,
+                    'usercreate' => $request->usercreate,
+                    'useredit' => ''
+                ]);
+
+                // Kredit: Modal/Saldo Awal
+                DB::table('journaltrans')->insert([
+                    'jtid' => $transId,
+                    'jtdate' => $transdate . ' 00:00:00',
+                    'memo' => $request->memo ?? 'Saldo Awal Produk ' . $productDb->name,
+                    'accountid' => $userAccountId,
+                    'debit' => 0,
+                    'credit' => $totalValue,
+                    'division' => $request->division,
+                    'reftransaction' => $transId,
+                    'usercreate' => $request->usercreate,
+                    'useredit' => ''
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Inventory awal berhasil disimpan!',
+                'transid' => $transId
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyimpan inventory awal: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
