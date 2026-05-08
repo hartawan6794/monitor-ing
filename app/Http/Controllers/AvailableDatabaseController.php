@@ -60,7 +60,9 @@ class AvailableDatabaseController extends Controller
             // Gunakan information_schema sebagai database awal agar koneksi bisa terbentuk
             // tanpa perlu mengetahui nama database klien terlebih dahulu
             Config::set('database.connections.mysql_temp.database', 'information_schema');
-            Config::set('database.connections.mysql_temp.charset', 'utf8mb4');
+            // Gunakan utf8 bukan utf8mb4 agar kompatibel dengan MySQL versi lama di server klien
+            Config::set('database.connections.mysql_temp.charset', 'utf8');
+            Config::set('database.connections.mysql_temp.collation', 'utf8_general_ci');
 
             // Reset koneksi sementara ini
             DB::purge('mysql_temp');
