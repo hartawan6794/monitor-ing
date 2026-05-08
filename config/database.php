@@ -140,8 +140,8 @@ return [
             'database' => '',
             'username' => '',
             'password' => '',
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
+            'charset' => 'utf8',        // utf8 untuk kompatibilitas MySQL lama (< 5.5.3)
+            'collation' => 'utf8_general_ci',
             'prefix' => '',
             'strict' => true,
             'engine' => null,
