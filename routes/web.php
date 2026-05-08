@@ -37,3 +37,11 @@ Route::get('/get-databases-by-server/{serverId}', [App\Http\Controllers\Availabl
 
 // ── Koneksi portable (via web session, tidak butuh API token) ──
 Route::post('/connections/test', [ConnectionWebController::class, 'test'])->name('connections.test')->middleware('auth');
+
+// ── Setup Wizard ──
+Route::middleware('auth')->group(function () {
+    Route::get('/setup-wizard', [\App\Http\Controllers\SetupWizardController::class, 'index'])->name('setup.wizard');
+    Route::post('/setup-wizard/step-user', [\App\Http\Controllers\SetupWizardController::class, 'storeUser'])->name('setup.wizard.user');
+    Route::post('/setup-wizard/step-server', [\App\Http\Controllers\SetupWizardController::class, 'storeServer'])->name('setup.wizard.server');
+    Route::post('/setup-wizard/step-database', [\App\Http\Controllers\SetupWizardController::class, 'storeDatabase'])->name('setup.wizard.database');
+});

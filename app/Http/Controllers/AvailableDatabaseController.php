@@ -69,6 +69,8 @@ class AvailableDatabaseController extends Controller
 
             // 2. Jalankan perintah native SQL untuk membaca seluruh database
             $databases = DB::connection('mysql_temp')->select('SHOW DATABASES');
+            
+            \Illuminate\Support\Facades\Log::info('Raw SHOW DATABASES result:', (array)$databases);
 
             // 3. Filter database bawaan sistem MySQL agar tidak muncul
             $excludedDbs = ['information_schema', 'mysql', 'performance_schema', 'sys', 'phpmyadmin'];

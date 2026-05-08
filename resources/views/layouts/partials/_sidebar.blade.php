@@ -56,6 +56,13 @@
                 </a>
             </li>
 
+            <li class="slide {{ request()->routeIs('setup.wizard') ? 'active' : '' }}">
+                <a href="{{ route('setup.wizard') }}" class="side-menu__item">
+                    <i class="bx bx-rocket side-menu__icon text-primary"></i>
+                    <span class="side-menu__label font-bold text-primary">Setup Wizard Baru</span>
+                </a>
+            </li>
+
             <!-- MONITORING -->
             <li class="slide__category" style="display: none;"><span class="category-name">Monitoring</span></li>
 
