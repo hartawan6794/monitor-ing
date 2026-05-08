@@ -22,14 +22,15 @@ class InventoryAdjustmentController extends Controller
             'division' => 'required|string',
             'usercreate' => 'required|string',
             'memo' => 'nullable|string',
+            'accountid' => 'nullable|string', // Akun Modal / Saldo Awal, misal 300.001
             'details' => 'required|array|min:1',
             'details.*.productid' => 'required|string',
-            'details.*.departement' => 'required|string', // Departemen per barang
+            'details.*.departement_id' => 'required|string', // Departemen per barang
+            'details.*.supplier_id' => 'required|string',
             'details.*.unit' => 'required|string',
             'details.*.recorded' => 'required|numeric',
             'details.*.physical' => 'required|numeric',
             'details.*.memo' => 'nullable|string',
-            'details.*.accountid' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -110,8 +111,7 @@ class InventoryAdjustmentController extends Controller
                 $outvalue = $outqty * $cogs;
                 $totalValue = abs($diff) * $cogs;
 
-                $userAccountId = $detail['accountid'] ?? '300.001';
-                // HAPUS BARIS INI: $inventoryAccount = '107.001'; (Karena akan menimpa akun dinamis dari DB)
+                $userAccountId = $request->accountid;
 
                 $dateRef = date('Ymd', strtotime($request->transdate)) . mt_rand(10000000, 99999999);
 
@@ -120,7 +120,7 @@ class InventoryAdjustmentController extends Controller
                     'transid' => $transId,
                     'transdate' => $currentDateTime,
                     'division' => $request->division,
-                    'departement' => $detail['departement'],
+                    'departement' => $detail['departement_id'],
                     'productid' => $detail['productid'],
                     'snproduct' => '',
                     'unit' => $detail['unit'],
@@ -142,9 +142,9 @@ class InventoryAdjustmentController extends Controller
                 DB::table('inventory')->insert([
                     'transid' => $transId,
                     'transdate' => $currentDateTime,
-                    'departement' => $detail['departement'],
+                    'departement' => $detail['departement_id'],
                     'division' => $request->division,
-                    'supplier' => '001001',
+                    'supplier' => $detail['supplier_id'],
                     'productid' => $detail['productid'],
                     'snproduct' => '',
                     'invin' => $inqty,
@@ -219,13 +219,18 @@ class InventoryAdjustmentController extends Controller
         // A. Validasi Input
         $validator = Validator::make($request->all(), [
             'productid' => 'required|string',
-            'qty' => 'required|numeric|min:0.01',
             'division' => 'required|string',
-            'departement' => 'required|string',
             'usercreate' => 'required|string',
-            'transdate' => 'nullable|date',
             'accountid' => 'nullable|string', // Akun Modal / Saldo Awal, misal 300.001
-            'memo' => 'nullable|string' // Memo custom dari frontend
+            'memo' => 'nullable|string', // Memo custom dari frontend
+            'details' => 'required|array|min:1',
+            'details.*.productid' => 'required|string',
+            'details.*.departement' => 'required|string', // Departemen per barang
+            'details.*.unit' => 'required|string',
+            'details.*.recorded' => 'required|numeric',
+            'details.*.physical' => 'required|numeric',
+            'details.*.memo' => 'nullable|string',
+            'details.*.accountid' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -240,12 +245,6 @@ class InventoryAdjustmentController extends Controller
 
         try {
             $transdate = $request->transdate ?? date('Y-m-d');
-
-            // Cek produk
-            $productDb = DB::table('product')->where('id', $request->productid)->first();
-            if (!$productDb) {
-                throw new \Exception("Produk tidak ditemukan!");
-            }
 
             // AUTO-NUMBERING BERDASARKAN DIVISI
             $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
@@ -266,67 +265,120 @@ class InventoryAdjustmentController extends Controller
 
             $currentTime = date('H:i:s');
             $currentDateTime = $transdate . ' ' . $currentTime;
+            $dateRef = date('Ymd', strtotime($transdate)) . mt_rand(10000000, 99999999);
 
             // KITA SKIP INSERT KE inventoryadjust & inventoryadjustdetail
             // Langsung dicatat ke BUKU STOK (inventory) dan JURNAL (journaltrans)
 
-            $qty = (float) $request->qty;
-            $cogs = (float) $productDb->costprice;
-            $inventoryAccount = !empty($productDb->inventoryacc) ? $productDb->inventoryacc : '107.001';
-            $userAccountId = $request->accountid ?? '300.001'; // Default ke akun Modal/Saldo Awal
-            $totalValue = $qty * $cogs;
-            $dateRef = date('Ymd', strtotime($transdate)) . mt_rand(10000000, 99999999);
+            foreach ($request->details as $detail) {
+                // Cek produk per detail
+                $productDb = DB::table('product')->where('id', $detail['productid'])->first();
+                if (!$productDb) {
+                    throw new \Exception("Produk dengan ID " . $detail['productid'] . " tidak ditemukan!");
+                }
 
-            // INSERT KE INVENTORY (BUKU STOK)
-            DB::table('inventory')->insert([
-                'transid' => $transId,
-                'transdate' => $currentDateTime,
-                'departement' => $request->departement,
-                'division' => $request->division,
-                'supplier' => $productDb->supplier ?? '001001',
-                'productid' => $request->productid,
-                'snproduct' => '',
-                'invin' => $qty,
-                'invout' => 0,
-                'invvalue' => $cogs,
-                'reference' => $transId,
-                'datereference' => $dateRef,
-                'transtype' => 99, // 6 = Adjust In
-                'memo' => $request->memo ?? 'Saldo Awal Produk',
-                'usercreate' => $request->usercreate,
-                'useredit' => '',
-                'isempty' => 0
-            ]);
+                $physical = (float) $detail['physical'];
+                $recorded = (float) $detail['recorded'];
+                $qty = $physical - $recorded;
 
-            // INSERT JURNAL (JIKA COGS > 0)
-            if ($totalValue > 0) {
-                // Debit: Persediaan
-                DB::table('journaltrans')->insert([
-                    'jtid' => $transId,
-                    'jtdate' => $transdate . ' 00:00:00',
-                    'memo' => $request->memo ?? 'Saldo Awal Produk ' . $productDb->name,
-                    'accountid' => $inventoryAccount,
-                    'debit' => $totalValue,
-                    'credit' => 0,
+                // Abaikan jika tidak ada selisih/penambahan
+                if ($qty == 0) {
+                    continue;
+                }
+
+                $cogs = (float) $productDb->costprice;
+                $inventoryAccount = !empty($productDb->inventoryacc) ? $productDb->inventoryacc : '107.001';
+
+                // Gunakan accountid dari detail, jika kosong gunakan dari root (untuk kompatibilitas)
+                $userAccountId = $detail['accountid'] ?? ($request->accountid ?? '300.001');
+
+                $totalValue = $qty * $cogs;
+                $memoDetail = $detail['memo'] ?? ($request->memo ?? 'Saldo Awal Produk ' . $productDb->name);
+
+                // INSERT KE INVENTORY (BUKU STOK)
+                DB::table('inventory')->insert([
+                    'transid' => $transId,
+                    'transdate' => $currentDateTime,
+                    'departement' => $detail['departement'],
                     'division' => $request->division,
-                    'reftransaction' => $transId,
+                    'supplier' => $productDb->supplier ?? '001001',
+                    'productid' => $detail['productid'],
+                    'snproduct' => '',
+                    'invin' => $qty > 0 ? $qty : 0,
+                    'invout' => $qty < 0 ? abs($qty) : 0,
+                    'invvalue' => $cogs,
+                    'reference' => $transId,
+                    'datereference' => $dateRef,
+                    'transtype' => 99, // 99 = Saldo Awal
+                    'memo' => $memoDetail,
                     'usercreate' => $request->usercreate,
-                    'useredit' => ''
+                    'useredit' => '',
+                    'isempty' => 0
                 ]);
 
-                // Kredit: Modal/Saldo Awal
-                DB::table('journaltrans')->insert([
-                    'jtid' => $transId,
-                    'jtdate' => $transdate . ' 00:00:00',
-                    'memo' => $request->memo ?? 'Saldo Awal Produk ' . $productDb->name,
-                    'accountid' => $userAccountId,
-                    'debit' => 0,
-                    'credit' => $totalValue,
-                    'division' => $request->division,
-                    'reftransaction' => $transId,
-                    'usercreate' => $request->usercreate,
-                    'useredit' => ''
-                ]);
+                // INSERT JURNAL (JIKA COGS > 0)
+                if (abs($totalValue) > 0) {
+                    if ($qty > 0) {
+                        // Debit: Persediaan
+                        DB::table('journaltrans')->insert([
+                            'jtid' => $transId,
+                            'jtdate' => $transdate . ' 00:00:00',
+                            'memo' => $memoDetail,
+                            'accountid' => $inventoryAccount,
+                            'debit' => $totalValue,
+                            'credit' => 0,
+                            'division' => $request->division,
+                            'reftransaction' => $transId,
+                            'usercreate' => $request->usercreate,
+                            'useredit' => ''
+                        ]);
+
+                        // Kredit: Modal/Saldo Awal
+                        DB::table('journaltrans')->insert([
+                            'jtid' => $transId,
+                            'jtdate' => $transdate . ' 00:00:00',
+                            'memo' => $memoDetail,
+                            'accountid' => $userAccountId,
+                            'debit' => 0,
+                            'credit' => $totalValue,
+                            'division' => $request->division,
+                            'reftransaction' => $transId,
+                            'usercreate' => $request->usercreate,
+                            'useredit' => ''
+                        ]);
+                    } else {
+                        // Jika qty < 0 (Koreksi Minus)
+                        $absTotalValue = abs($totalValue);
+
+                        // Debit: Modal/Saldo Awal
+                        DB::table('journaltrans')->insert([
+                            'jtid' => $transId,
+                            'jtdate' => $transdate . ' 00:00:00',
+                            'memo' => 'Koreksi Minus ' . $memoDetail,
+                            'accountid' => $userAccountId,
+                            'debit' => $absTotalValue,
+                            'credit' => 0,
+                            'division' => $request->division,
+                            'reftransaction' => $transId,
+                            'usercreate' => $request->usercreate,
+                            'useredit' => ''
+                        ]);
+
+                        // Kredit: Persediaan
+                        DB::table('journaltrans')->insert([
+                            'jtid' => $transId,
+                            'jtdate' => $transdate . ' 00:00:00',
+                            'memo' => 'Koreksi Minus ' . $memoDetail,
+                            'accountid' => $inventoryAccount,
+                            'debit' => 0,
+                            'credit' => $absTotalValue,
+                            'division' => $request->division,
+                            'reftransaction' => $transId,
+                            'usercreate' => $request->usercreate,
+                            'useredit' => ''
+                        ]);
+                    }
+                }
             }
 
             DB::commit();

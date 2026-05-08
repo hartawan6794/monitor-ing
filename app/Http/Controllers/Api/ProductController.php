@@ -24,6 +24,7 @@ class ProductController extends Controller
             ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
             ->leftJoin('departement', 'inventory.departement', '=', 'departement.id')
             ->leftJoin('division', 'inventory.division', '=', 'division.id')
+            ->leftJoin('supplier', 'product.supplier', '=', 'supplier.id')
             ->select(
                 'product.id as sku',
                 'product.name',
@@ -36,6 +37,8 @@ class ProductController extends Controller
                 'division.id as division_id',
                 'division.description as division_name',
                 'product.defunit as unit',
+                'supplier.id as supplier_id',
+                'supplier.name as supplier_name',
                 'product.image as image_blob'
             )->where('product.isactive', 1)
             // Mengaplikasikan filter division dan department terlebih dahulu

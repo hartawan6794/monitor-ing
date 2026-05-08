@@ -91,6 +91,8 @@ class DatabaseSwitcher
         Config::set('database.connections.mysql.database', $dbName);
         Config::set('database.connections.mysql.username', $username);
         Config::set('database.connections.mysql.password', $password);
+        Config::set('database.connections.mysql.charset', 'utf8');
+        Config::set('database.connections.mysql.collation', 'utf8_general_ci');
 
         DB::purge('mysql');
         DB::reconnect('mysql');
