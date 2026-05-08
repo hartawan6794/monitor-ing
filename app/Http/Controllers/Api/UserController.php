@@ -181,4 +181,61 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * API POST: Ubah Password User
+     */
+    public function updatePassword(Request $request)
+    {
+        // 1. Validasi Input
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|string', // ID user yang akan diubah
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // 2. Cari user berdasarkan ID
+            $user = \App\Models\BranchUser::find($request->id);
+            
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User tidak ditemukan'
+                ], 404);
+            }
+
+            // 3. Verifikasi password lama (menggunakan encryptXor sesuai format aplikasi)
+            if ($user->userpassword !== encryptXor($request->old_password)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Password lama yang dimasukkan salah'
+                ], 400);
+            }
+
+            // 4. Update dengan password baru
+            $user->update([
+                'userpassword' => encryptXor($request->new_password)
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Password berhasil diubah'
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan pada server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

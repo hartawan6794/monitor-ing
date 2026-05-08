@@ -71,6 +71,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::post('/', [UserController::class, 'store']);
         Route::get('/config', [UserController::class, 'getUserConfig']);
         Route::post('/config', [UserController::class, 'updateBulkConfig']);
+        Route::post('/change-password', [UserController::class, 'updatePassword']);
     });
 
     // Master Data Dropdown

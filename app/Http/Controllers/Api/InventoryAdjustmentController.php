@@ -218,19 +218,17 @@ class InventoryAdjustmentController extends Controller
     {
         // A. Validasi Input
         $validator = Validator::make($request->all(), [
-            'productid' => 'required|string',
             'division' => 'required|string',
             'usercreate' => 'required|string',
+            'memo' => 'nullable|string',
             'accountid' => 'nullable|string', // Akun Modal / Saldo Awal, misal 300.001
-            'memo' => 'nullable|string', // Memo custom dari frontend
             'details' => 'required|array|min:1',
             'details.*.productid' => 'required|string',
-            'details.*.departement' => 'required|string', // Departemen per barang
+            'details.*.departement_id' => 'required|string', // Departemen per barang
             'details.*.unit' => 'required|string',
             'details.*.recorded' => 'required|numeric',
             'details.*.physical' => 'required|numeric',
             'details.*.memo' => 'nullable|string',
-            'details.*.accountid' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -299,9 +297,9 @@ class InventoryAdjustmentController extends Controller
                 DB::table('inventory')->insert([
                     'transid' => $transId,
                     'transdate' => $currentDateTime,
-                    'departement' => $detail['departement'],
+                    'departement' => $detail['departement_id'],
                     'division' => $request->division,
-                    'supplier' => $productDb->supplier ?? '001001',
+                    'supplier' => $productDb->supplier,
                     'productid' => $detail['productid'],
                     'snproduct' => '',
                     'invin' => $qty > 0 ? $qty : 0,

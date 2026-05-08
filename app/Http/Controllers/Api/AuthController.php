@@ -128,7 +128,7 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'Login Berhasil',
             'data' => [
-                'user_id' => $user->id,
+                'userId' => $user->id,
                 'name' => $user->name,
                 'username' => $user->id,
                 'role' => $role,
