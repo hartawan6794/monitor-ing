@@ -8,7 +8,7 @@ class DatabaseAccessKey extends Model
 {
     protected $connection = 'central';
 
-    protected $fillable = ['user_id', 'available_database_id', 'access_key', 'expires_at'];
+    protected $fillable = ['user_id', 'available_database_id', 'access_key', 'device_id', 'expires_at'];
 
     protected $casts = ['expires_at' => 'datetime'];
 

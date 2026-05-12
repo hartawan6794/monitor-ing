@@ -76,24 +76,27 @@ class DynamicConnectionController extends Controller
             ], 404);
         }
 
-        // 5. Hapus key lama milik user ini yang sudah expired (cleanup)
+        // 5. Hapus key lama milik user ini dari device yang sama (cleanup)
+        if ($request->has('device_id') && !empty($request->device_id)) {
+            \App\Models\DatabaseAccessKey::where('user_id', $user->id)
+                ->where('device_id', $request->device_id)
+                ->delete();
+        }
+
+        // Tetap bersihkan sampah key yang sudah expired (dari device mana pun)
         \App\Models\DatabaseAccessKey::where('user_id', $user->id)
             ->where('expires_at', '<', now())
             ->delete();
 
-        // 6. Buat Access Key baru per database (single-use, berlaku 5 menit)
-        $dbList = $availableDatabases->map(function ($db) use ($user) {
-            // Hapus key lama untuk kombinasi user+db ini jika ada
-            // \App\Models\DatabaseAccessKey::where('user_id', $user->id)
-            //     ->where('available_database_id', $db->id)
-            //     ->delete();
-
+        // 6. Buat Access Key baru per database
+        $dbList = $availableDatabases->map(function ($db) use ($user, $request) {
             // Buat key baru
             $accessKey = bin2hex(random_bytes(32)); // 64 karakter hex
             \App\Models\DatabaseAccessKey::create([
                 'user_id' => $user->id,
                 'available_database_id' => $db->id,
                 'access_key' => $accessKey,
+                'device_id' => $request->device_id, // Simpan device_id
                 'expires_at' => now()->addMonths(1),
             ]);
 
