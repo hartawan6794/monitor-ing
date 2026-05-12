@@ -362,6 +362,16 @@ class ProductController extends Controller
         DB::beginTransaction();
 
         try {
+
+            //cek data exist
+            $cek = DB::table('product')->where('id', $request->id)->first();
+            if ($cek) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data sudah ada.'
+                ], 400);
+            }
+
             $user = $request->usercreate ?? 'admin';
             $now = now();
 
@@ -428,7 +438,7 @@ class ProductController extends Controller
                 'consignexpenseacc' => '601.001',
                 'isactive' => 1,
                 'usercreate' => $user,
-                'useredit' => '',
+                'useredit' => $user,
                 'updatetimestamp' => $now,
                 'image' => $imageData
             ]);

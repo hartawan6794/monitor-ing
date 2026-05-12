@@ -50,7 +50,7 @@ class UserController extends Controller
                 'description' => $request->description,
                 'usercreate' => $request->usercreate,
                 'isactive' => 1,
-                'useredit' => ''
+                'useredit' => $request->usercreate
             ]);
 
             // Ambil semua ID dari tabel userconfigrules
