@@ -317,39 +317,45 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         // 1. Validasi Input
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|string|max:20',
-            'aliasid' => 'nullable|string|max:30',
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:200',
-            'productgroup' => 'required|string|exists:productgroup,id',
-            'defunit' => 'required|string|exists:units,unit',
-            'groupunit' => 'nullable|string',
-            'supplier' => 'nullable|string|exists:supplier,id',
-            'category' => 'nullable|integer', // 0=Inventory, 1=Service
-            'factory' => 'nullable|string|exists:factories,id',
-            'brand' => 'nullable|string|exists:productbrand,id',
-            'costprice' => 'nullable|numeric|min:0',
-            'salesprice1' => 'required|numeric|min:0',
-            'salesprice2' => 'nullable|numeric|min:0',
-            'salesprice3' => 'nullable|numeric|min:0',
-            'salesprice4' => 'nullable|numeric|min:0',
-            'salesprice5' => 'nullable|numeric|min:0',
-            'salesprice6' => 'nullable|numeric|min:0',
-            'salesprice7' => 'nullable|numeric|min:0',
-            'salesdiscqty1' => 'nullable|numeric|min:0',
-            'salesdiscqty2' => 'nullable|numeric|min:0',
-            'salesdiscqty3' => 'nullable|numeric|min:0',
-            'salesdiscprice1' => 'nullable|numeric|min:0',
-            'salesdiscprice2' => 'nullable|numeric|min:0',
-            'salesdiscprice3' => 'nullable|numeric|min:0',
-            'minimum' => 'nullable|numeric|min:0',
-            'maximum' => 'nullable|numeric|min:0',
-            'author' => 'nullable|string',
-            'taxtype' => 'nullable|integer',
-            'usercreate' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'id' => 'required|string|max:20',
+                'aliasid' => 'nullable|string|max:30',
+                'name' => 'required|string|max:100',
+                'description' => 'nullable|string|max:200',
+                'productgroup' => 'required|string|exists:productgroup,id',
+                'defunit' => 'required|string|exists:units,unit',
+                'groupunit' => 'nullable|string',
+                'supplier' => 'nullable|string|exists:supplier,id',
+                'category' => 'nullable|integer', // 0=Inventory, 1=Service
+                'factory' => 'nullable|string|exists:factories,id',
+                'brand' => 'nullable|string|exists:productbrand,id',
+                'costprice' => 'nullable|numeric|min:0',
+                'salesprice1' => 'required|numeric|min:0',
+                'salesprice2' => 'nullable|numeric|min:0',
+                'salesprice3' => 'nullable|numeric|min:0',
+                'salesprice4' => 'nullable|numeric|min:0',
+                'salesprice5' => 'nullable|numeric|min:0',
+                'salesprice6' => 'nullable|numeric|min:0',
+                'salesprice7' => 'nullable|numeric|min:0',
+                'salesdiscqty1' => 'nullable|numeric|min:0',
+                'salesdiscqty2' => 'nullable|numeric|min:0',
+                'salesdiscqty3' => 'nullable|numeric|min:0',
+                'salesdiscprice1' => 'nullable|numeric|min:0',
+                'salesdiscprice2' => 'nullable|numeric|min:0',
+                'salesdiscprice3' => 'nullable|numeric|min:0',
+                'minimum' => 'nullable|numeric|min:0',
+                'maximum' => 'nullable|numeric|min:0',
+                'author' => 'nullable|string',
+                'taxtype' => 'nullable|integer',
+                'usercreate' => 'nullable|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            ],
+            [
+                'id.unique' => 'Data ' . $request->id . ' sudah ada di sistem.'
+            ]
+        );
 
         if ($validator->fails()) {
             return response()->json([
@@ -364,13 +370,13 @@ class ProductController extends Controller
         try {
 
             //cek data exist
-            $cek = DB::table('product')->where('id', $request->id)->first();
-            if ($cek) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Data ' . $request->id . ' sudah ada.'
-                ], 400);
-            }
+            // $cek = DB::table('product')->where('id', $request->id)->first();
+            // if ($cek) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'Data ' . $request->id . ' sudah ada.'
+            //     ], 400);
+            // }
 
             $user = $request->usercreate ?? 'admin';
             $now = now();
