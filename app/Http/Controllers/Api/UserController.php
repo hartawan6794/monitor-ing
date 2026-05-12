@@ -64,7 +64,7 @@ class UserController extends Controller
             } elseif ($role === 'kasir') {
                 $trueRules[] = '053025';
             } elseif ($role === 'gudang') {
-                $trueRules[] = '020001';
+                $trueRules[] = '001002';
             } elseif ($role === 'owner') {
                 // Owner mungkin butuh lebih banyak akses, tapi minimal kita set sesuai contoh
                 $trueRules[] = '103001';
@@ -205,7 +205,7 @@ class UserController extends Controller
         try {
             // 2. Cari user berdasarkan ID
             $user = \App\Models\BranchUser::find($request->id);
-            
+
             if (!$user) {
                 return response()->json([
                     'status' => 'error',

@@ -138,6 +138,13 @@
                 </a>
             </li>
 
+            <li class="slide {{ request()->routeIs('subscriptions.*') ? 'active' : '' }}">
+                <a href="{{ route('subscriptions.index') }}" class="side-menu__item">
+                    <i class="bx bx-calendar-check side-menu__icon"></i>
+                    <span class="side-menu__label">Langganan</span>
+                </a>
+            </li>
+
         </ul>
         <div class="slide-right" id="slide-right"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24"
                 height="24" viewBox="0 0 24 24">

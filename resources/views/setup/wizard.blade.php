@@ -117,12 +117,17 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="mb-4">
-                                <label class="form-label font-semibold">Jenis Paket</label>
+                                <label class="form-label font-semibold">Jenis Paket / Langganan</label>
                                 <select class="form-control" name="package_type" required>
-                                    <option value="basic">Basic</option>
-                                    <option value="pro">Pro</option>
-                                    <option value="enterprise">Enterprise</option>
+                                    <option value="" disabled selected>-- Pilih Paket --</option>
+                                    @foreach($pricingPlans as $plan)
+                                        <option value="{{ $plan->id }}">{{ $plan->name }}</option>
+                                    @endforeach
                                 </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label font-semibold">Masa Aktif (Expired At)</label>
+                                <input type="date" class="form-control" name="expired_at" value="{{ date('Y-m-d', strtotime('+1 month')) }}" required>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label font-semibold">Deskripsi (Opsional)</label>

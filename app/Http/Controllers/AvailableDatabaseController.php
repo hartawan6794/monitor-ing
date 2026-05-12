@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AvailableDatabaseRequest; // Ganti AvailableDatabase dengan nama model
-use App\Models\AvailableDatabase; // Ganti AvailableDatabase dengan nama model
+use App\Models\AvailableDatabase;
+use App\Models\PricingPlan;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 use RealRashid\SweetAlert\Facades\Alert;
 use Yajra\DataTables\Facades\DataTables;
@@ -103,7 +105,41 @@ class AvailableDatabaseController extends Controller
             Alert::error('Error', 'Database Sudah Ada');
             return redirect()->route('available_database.manage', $validated['server_id']);
         }
-        AvailableDatabase::create($validated);
+
+        $packageType = 'basic';
+        if ($validated['package_type']) {
+            $plan = PricingPlan::find($validated['package_type']);
+            if ($plan) {
+                $packageType = strtolower($plan->name);
+            }
+        }
+        
+        $validatedDb = $validated;
+        $validatedDb['package_type'] = $packageType;
+
+        AvailableDatabase::create($validatedDb);
+
+        // Update or Create Subscription for the user
+        if (!empty($validated['expired_at'])) {
+            $subscription = Subscription::where('user_id', $validated['user_id'])->where('status', 'active')->first();
+            
+            if ($subscription) {
+                $subscription->update([
+                    'pricing_plan_id' => $validated['package_type'],
+                    'expires_at' => $validated['expired_at'],
+                ]);
+            } else {
+                Subscription::create([
+                    'user_id' => $validated['user_id'],
+                    'pricing_plan_id' => $validated['package_type'],
+                    'starts_at' => now()->toDateString(),
+                    'expires_at' => $validated['expired_at'],
+                    'status' => 'active',
+                    'notes' => 'Otomatis dibuat dari Manage Database',
+                ]);
+            }
+        }
+
         Alert::success('Data AvailableDatabase Berhasil Disimpan');
         return redirect()->route('available_database.manage', $validated['server_id']);
     }
@@ -112,7 +148,8 @@ class AvailableDatabaseController extends Controller
     {
         $server = AuthorizedServer::with('availableDatabases.user')->findOrFail($serverId);
         $users = \App\Models\User::all();
-        return view('available_database.manage', compact('server', 'users'));
+        $pricingPlans = PricingPlan::orderBy('order')->get();
+        return view('available_database.manage', compact('server', 'users', 'pricingPlans'));
     }
 
     public function update(AvailableDatabaseRequest $request, AvailableDatabase $available_database)
@@ -130,7 +167,40 @@ class AvailableDatabaseController extends Controller
             return redirect()->route('available_database.manage', $validated['server_id']);
         }
 
-        $available_database->update($validated);
+        $packageType = 'basic';
+        if ($validated['package_type']) {
+            $plan = PricingPlan::find($validated['package_type']);
+            if ($plan) {
+                $packageType = strtolower($plan->name);
+            }
+        }
+        
+        $validatedDb = $validated;
+        $validatedDb['package_type'] = $packageType;
+
+        $available_database->update($validatedDb);
+
+        // Update or Create Subscription for the user
+        if (!empty($validated['expired_at'])) {
+            $subscription = Subscription::where('user_id', $validated['user_id'])->where('status', 'active')->first();
+            
+            if ($subscription) {
+                $subscription->update([
+                    'pricing_plan_id' => $validated['package_type'],
+                    'expires_at' => $validated['expired_at'],
+                ]);
+            } else {
+                Subscription::create([
+                    'user_id' => $validated['user_id'],
+                    'pricing_plan_id' => $validated['package_type'],
+                    'starts_at' => now()->toDateString(),
+                    'expires_at' => $validated['expired_at'],
+                    'status' => 'active',
+                    'notes' => 'Otomatis dibuat dari Update Manage Database',
+                ]);
+            }
+        }
+
         Alert::success('Berhasil', 'Koneksi Database Berhasil Diperbarui');
         return redirect()->route('available_database.manage', $validated['server_id']);
     }

@@ -20,6 +20,10 @@ class ProductController extends Controller
         $departmentId = $request->query('departement');
         $limit = $request->query('limit');
 
+        if (!$divisionId) {
+            $divisionId = DB::table('division')->first()->id;
+        }
+
         $products = DB::table('product')
             ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
             ->leftJoin('departement', 'inventory.departement', '=', 'departement.id')

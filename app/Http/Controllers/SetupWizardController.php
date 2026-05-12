@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\AuthorizedServer;
 use App\Models\AvailableDatabase;
+use App\Models\PricingPlan;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,8 @@ class SetupWizardController extends Controller
 {
     public function index()
     {
-        return view('setup.wizard');
+        $pricingPlans = PricingPlan::orderBy('order')->get();
+        return view('setup.wizard', compact('pricingPlans'));
     }
 
     public function storeUser(Request $request)
@@ -123,7 +126,39 @@ class SetupWizardController extends Controller
             ], 422);
         }
 
-        AvailableDatabase::create($validated);
+        $packageType = 'basic';
+        if ($validated['package_type']) {
+            $plan = PricingPlan::find($validated['package_type']);
+            if ($plan) {
+                $packageType = strtolower($plan->name);
+            }
+        }
+        
+        $validatedDb = $validated;
+        $validatedDb['package_type'] = $packageType;
+        
+        AvailableDatabase::create($validatedDb);
+
+        // Update or Create Subscription for the user
+        if (!empty($validated['expired_at'])) {
+            $subscription = Subscription::where('user_id', $validated['user_id'])->where('status', 'active')->first();
+            
+            if ($subscription) {
+                $subscription->update([
+                    'pricing_plan_id' => $validated['package_type'],
+                    'expires_at' => $validated['expired_at'],
+                ]);
+            } else {
+                Subscription::create([
+                    'user_id' => $validated['user_id'],
+                    'pricing_plan_id' => $validated['package_type'],
+                    'starts_at' => now()->toDateString(),
+                    'expires_at' => $validated['expired_at'],
+                    'status' => 'active',
+                    'notes' => 'Otomatis dibuat dari Setup Wizard',
+                ]);
+            }
+        }
 
         return response()->json([
             'status' => 'success',

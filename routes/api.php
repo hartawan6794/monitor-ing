@@ -1,4 +1,5 @@
 <?php
+// Enhanced API Routes
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\InventoryMovingController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ConnectionController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\UnitController;
 
 
 Route::get('/user', function (Request $request) {
@@ -93,6 +95,16 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/product-brands', [MasterDataController::class, 'getProductBrand']);
         Route::get('/tax-types', [MasterDataController::class, 'getTaxType']);
         Route::get('/authors', [MasterDataController::class, 'getAuthor']);
+    });
+
+    Route::prefix('units')->group(function () {
+        Route::get('/', [UnitController::class, 'index']);
+        Route::post('/', [UnitController::class, 'store']);
+        Route::get('/getsatuan', [UnitController::class, 'getsatuan']);
+        Route::get('/getdefunit', [UnitController::class, 'getdefunit']);
+        Route::get('/{id}', [UnitController::class, 'show']);
+        Route::put('/{id}', [UnitController::class, 'update']);
+        Route::delete('/{id}', [UnitController::class, 'destroy']);
     });
 
 

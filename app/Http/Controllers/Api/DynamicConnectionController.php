@@ -84,9 +84,9 @@ class DynamicConnectionController extends Controller
         // 6. Buat Access Key baru per database (single-use, berlaku 5 menit)
         $dbList = $availableDatabases->map(function ($db) use ($user) {
             // Hapus key lama untuk kombinasi user+db ini jika ada
-            \App\Models\DatabaseAccessKey::where('user_id', $user->id)
-                ->where('available_database_id', $db->id)
-                ->delete();
+            // \App\Models\DatabaseAccessKey::where('user_id', $user->id)
+            //     ->where('available_database_id', $db->id)
+            //     ->delete();
 
             // Buat key baru
             $accessKey = bin2hex(random_bytes(32)); // 64 karakter hex

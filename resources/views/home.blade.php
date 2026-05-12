@@ -1,921 +1,455 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DashMo — Sistem Monitoring Penjualan</title>
-    <meta name="description"
-        content="Sistem monitoring penjualan real-time terintegrasi untuk tim salesman dan manajemen.">
+    <meta name="description" content="Sistem monitoring penjualan real-time terintegrasi untuk tim salesman dan manajemen.">
+    
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        'primary-light': '#818cf8', // Indigo 400
+                        accent: '#22d3ee', // Cyan 400
+                        darkbg: '#0B0F19', // Custom dark background
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --accent: #22d3ee;
-            --purple: #a855f7;
-            --green: #34d399;
-            --bg: #080b1a;
-            --surface: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
-        }
-
-        /* ── NAVBAR ── */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 2rem;
-            background: rgba(8, 11, 26, 0.7);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-            transition: background 0.3s;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-            text-decoration: none;
-        }
-
-        .nav-brand-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-brand-icon svg {
-            width: 20px;
-            height: 20px;
-            fill: #fff;
-        }
-
-        .nav-brand-name {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.01em;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.5rem 0.875rem;
-            border-radius: 8px;
-            transition: color 0.2s, background 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--text);
-            background: var(--surface);
-        }
-
-        .btn-nav-login {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: #fff !important;
-            padding: 0.5rem 1.25rem !important;
-            border-radius: 10px !important;
-            font-weight: 600 !important;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
-            transition: transform 0.15s, box-shadow 0.2s !important;
-        }
-
-        .btn-nav-login:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5) !important;
-            background: var(--primary) !important;
-        }
-
-        /* ── HERO ── */
-        .hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 7rem 2rem 4rem;
-            overflow: hidden;
-        }
-
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.18), transparent),
-                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(34, 211, 238, 0.12), transparent),
-                radial-gradient(ellipse 40% 50% at 10% 60%, rgba(168, 85, 247, 0.1), transparent);
-        }
-
-        /* grid dots */
-        .hero-bg::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 36px 36px;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-        }
-
-        @media (max-width: 768px) {
-            .hero-content {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .hero-visual {
-                display: none;
-            }
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: 100px;
-            padding: 0.3rem 0.875rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #a5b4fc;
-            letter-spacing: 0.03em;
-            margin-bottom: 1.5rem;
-        }
-
-        .hero-badge::before {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background: var(--accent);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.4;
-            }
-        }
-
-        .hero h1 {
-            font-size: clamp(2.25rem, 5vw, 3.5rem);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: 1.25rem;
-        }
-
-        .hero h1 .highlight {
-            background: linear-gradient(135deg, var(--primary-light, #818cf8), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            font-size: 1.0625rem;
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin-bottom: 2.25rem;
-            max-width: 480px;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 0.875rem;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: #fff;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9375rem;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-            transition: transform 0.15s, box-shadow 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(99, 102, 241, 0.55);
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
-            background: var(--surface);
-            color: var(--text);
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 500;
-            font-size: 0.9375rem;
-            border: 1px solid var(--border);
-            transition: background 0.2s, border-color 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Hero visual: dashboard mockup */
-        .hero-visual {
-            position: relative;
-        }
-
-        .dashboard-mock {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 1.5rem;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
-        }
-
-        .mock-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .mock-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .mock-dot:nth-child(1) {
-            background: #f87171;
-        }
-
-        .mock-dot:nth-child(2) {
-            background: #fbbf24;
-        }
-
-        .mock-dot:nth-child(3) {
-            background: #34d399;
-        }
-
-        .mock-title {
-            margin-left: auto;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .mock-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .mock-stat {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 0.875rem;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .mock-stat-label {
-            font-size: 0.6875rem;
-            color: var(--text-muted);
-            margin-bottom: 0.25rem;
-        }
-
-        .mock-stat-value {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .mock-stat-value.green {
-            color: #34d399;
-        }
-
-        .mock-stat-value.blue {
-            color: #60a5fa;
-        }
-
-        .mock-stat-value.purple {
-            color: #c084fc;
-        }
-
-        .mock-chart {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            height: 120px;
-            display: flex;
-            align-items: flex-end;
-            gap: 6px;
-        }
-
-        .bar {
-            flex: 1;
-            border-radius: 4px 4px 0 0;
-            background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(99, 102, 241, 0.3));
-            transition: height 0.3s;
-        }
-
-        .bar.accent {
-            background: linear-gradient(180deg, rgba(34, 211, 238, 0.7), rgba(34, 211, 238, 0.2));
-        }
-
-        /* ── STATS SECTION ── */
-        .stats-section {
-            padding: 5rem 2rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 0.75rem;
-        }
-
-        .section-title {
-            font-size: clamp(1.75rem, 3vw, 2.25rem);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.75rem;
-        }
-
-        .section-desc {
-            font-size: 1rem;
-            color: var(--text-muted);
-            max-width: 560px;
-            line-height: 1.7;
-        }
-
-        .section-header {
-            margin-bottom: 3rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.75rem;
-            text-align: center;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.375rem;
-        }
-
-        .stat-icon.indigo {
-            background: rgba(99, 102, 241, 0.15);
-        }
-
-        .stat-icon.cyan {
-            background: rgba(34, 211, 238, 0.15);
-        }
-
-        .stat-icon.purple {
-            background: rgba(168, 85, 247, 0.15);
-        }
-
-        .stat-icon.green {
-            background: rgba(52, 211, 153, 0.15);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-desc {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-        }
-
-        /* ── FEATURES SECTION ── */
-        .features-section {
-            padding: 5rem 2rem;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .feature-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
-        }
-
-        .feature-card:hover::before {
-            opacity: 1;
-        }
-
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.25rem;
-            font-size: 1.5rem;
-        }
-
-        .feature-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.625rem;
-        }
-
-        .feature-desc {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            line-height: 1.65;
-        }
-
-        /* ── FOOTER ── */
-        footer {
-            padding: 3rem 2rem;
-            border-top: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .footer-brand {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .footer-text {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-        }
-
-        /* ── PRICING SECTION ── */
-        .pricing-section {
-            padding: 5rem 2rem;
-            background: radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.08), transparent);
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            align-items: flex-start;
-        }
-
-        .pricing-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2.5rem;
-            position: relative;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: blur(8px);
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
-        }
-
-        .pricing-card.featured {
-            background: rgba(99, 102, 241, 0.05);
-            border-color: var(--primary);
-            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
-        }
-
-        .pricing-card.featured::before {
-            content: 'MOST POPULAR';
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            background: var(--primary);
-            color: #fff;
-            font-size: 0.625rem;
-            font-weight: 800;
-            padding: 0.25rem 0.75rem;
-            border-radius: 100px;
-            letter-spacing: 0.05em;
-        }
-
-        .pricing-header {
-            margin-bottom: 2rem;
-        }
-
-        .pricing-name {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .pricing-price {
-            font-size: 2.25rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        .pricing-price span {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-
-        .pricing-features {
-            list-style: none;
-            margin-bottom: 2.5rem;
-            flex-grow: 1;
-        }
-
-        .pricing-features li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            font-size: 0.9375rem;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            line-height: 1.4;
-        }
-
-        .pricing-features li svg {
-            width: 18px;
-            height: 18px;
-            color: var(--green);
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .btn-pricing {
-            width: 100%;
-            text-align: center;
-            justify-content: center;
-        }
+        /* Custom Utilities for things Tailwind CDN doesn't cover natively out-of-the-box easily */
+        body { background-color: #0B0F19; color: #f8fafc; }
+        .glass-nav { background: rgba(11, 15, 25, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .text-gradient { background: linear-gradient(135deg, #818cf8, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hover-glow:hover { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
     </style>
 </head>
 
-<body>
+<body class="antialiased overflow-x-hidden selection:bg-primary/30 selection:text-white">
 
     <!-- NAVBAR -->
-    <nav>
-        <a href="#" class="nav-brand">
-            <div class="nav-brand-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                </svg>
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="#" class="flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transform group-hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+                            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
+                            </svg>
+                        </div>
+                        <span class="font-bold text-xl tracking-tight text-white">DashMo</span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-8">
+                        <a href="#fitur" class="text-slate-300 hover:text-white transition-colors text-sm font-medium">Fitur</a>
+                        <a href="#statistik" class="text-slate-300 hover:text-white transition-colors text-sm font-medium">Statistik</a>
+                        <a href="#pricing" class="text-slate-300 hover:text-white transition-colors text-sm font-medium">Harga</a>
+                        <a href="{{ route('l5-swagger.default.api') }}" target="_blank" class="text-slate-300 hover:text-white transition-colors text-sm font-medium">API Docs</a>
+                        <a href="{{ route('login') }}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white font-medium text-sm hover-glow transform hover:-translate-y-0.5 transition-all shadow-lg shadow-primary/30">
+                            Masuk Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button (Optional implementation) -->
+                <div class="md:hidden flex items-center">
+                    <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg bg-primary text-white font-medium text-sm">Masuk</a>
+                </div>
             </div>
-            <span class="nav-brand-name">DashMo</span>
-        </a>
-        <ul class="nav-links">
-            <li><a href="#fitur">Fitur</a></li>
-            <li><a href="#statistik">Statistik</a></li>
-            <li><a href="#pricing">Harga</a></li>
-            <li><a href="{{ route('l5-swagger.default.api') }}" target="_blank">API Docs</a></li>
-            <li><a href="{{ route('login') }}" class="btn-nav-login">Masuk</a></li>
-        </ul>
+        </div>
     </nav>
 
-    <!-- HERO -->
-    <section class="hero" id="home">
-        <div class="hero-bg"></div>
-        <div class="hero-content">
-            <div class="hero-text">
-                <div class="hero-badge">✦ Sistem Monitoring Real-Time</div>
-                <h1>
-                    Pantau Penjualan<br>
-                    <span class="highlight">Kapan Saja,</span><br>
-                    Di Mana Saja
-                </h1>
-                <p>Platform monitoring penjualan terintegrasi untuk tim salesman dan manajemen. Lihat data real-time,
-                    riwayat transaksi, dan performa per salesman dalam satu dashboard.</p>
-                <div class="hero-cta">
-                    <a href="{{ route('login') }}" class="btn-primary">
-                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                            <polyline points="10 17 15 12 10 7" />
-                            <line x1="15" y1="12" x2="3" y2="12" />
-                        </svg>
-                        Masuk Sekarang
-                    </a>
-                    <a href="#fitur" class="btn-secondary">
-                        Lihat Fitur
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
+    <!-- HERO SECTION -->
+    <section id="home" class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Abstract Background -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-primary/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+            <div class="absolute top-40 right-10 w-72 h-72 bg-accent/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
+            <div class="absolute -bottom-8 left-1/2 w-72 h-72 bg-purple-500/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
+            <!-- Grid pattern -->
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;"></div>
+        </div>
 
-            <!-- Dashboard Mockup -->
-            <div class="hero-visual">
-                <div class="dashboard-mock">
-                    <div class="mock-header">
-                        <div class="mock-dot"></div>
-                        <div class="mock-dot"></div>
-                        <div class="mock-dot"></div>
-                        <span class="mock-title">Dashboard Penjualan — Hari Ini</span>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                <!-- Text Content -->
+                <div class="text-center lg:text-left animate-fade-in-up">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-semibold text-primary-light mb-6 border-primary/20">
+                        <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                        Sistem Monitoring Real-Time
                     </div>
-                    <div class="mock-stats">
-                        <div class="mock-stat">
-                            <div class="mock-stat-label">Total Penjualan</div>
-                            <div class="mock-stat-value green">Rp 1,2M</div>
-                        </div>
-                        <div class="mock-stat">
-                            <div class="mock-stat-label">Penjualan Tunai</div>
-                            <div class="mock-stat-value blue">Rp 850rb</div>
-                        </div>
-                        <div class="mock-stat">
-                            <div class="mock-stat-label">Kas di Tangan</div>
-                            <div class="mock-stat-value purple">Rp 2,4M</div>
-                        </div>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
+                        Pantau Penjualan <br class="hidden lg:block">
+                        <span class="text-gradient">Kapan Saja,</span> <br class="hidden lg:block">
+                        Di Mana Saja
+                    </h1>
+                    <p class="text-lg text-slate-400 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                        Platform monitoring penjualan terintegrasi untuk tim salesman dan manajemen. Lihat data real-time, riwayat transaksi, dan performa tim dalam satu dashboard premium.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="{{ route('login') }}" class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-white font-semibold hover-glow transform hover:-translate-y-1 transition-all shadow-xl shadow-primary/20">
+                            Masuk Sekarang
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                        <a href="#fitur" class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-xl glass-card text-white font-semibold hover:bg-white/5 transform hover:-translate-y-1 transition-all">
+                            Pelajari Fitur
+                        </a>
                     </div>
-                    <div class="mock-chart">
-                        <div class="bar" style="height:45%"></div>
-                        <div class="bar" style="height:70%"></div>
-                        <div class="bar accent" style="height:55%"></div>
-                        <div class="bar" style="height:85%"></div>
-                        <div class="bar" style="height:60%"></div>
-                        <div class="bar accent" style="height:90%"></div>
-                        <div class="bar" style="height:75%"></div>
+                </div>
+
+                <!-- Hero Mockup Visual -->
+                <div class="hidden lg:block relative z-10 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="glass-card p-6 rounded-3xl shadow-2xl shadow-black/50 border-white/10 relative transform rotate-y-12 perspective-1000 hover:rotate-0 transition-transform duration-700">
+                        <!-- Mockup Header -->
+                        <div class="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <div class="mx-auto text-xs font-medium text-slate-400">Dashboard Penjualan</div>
+                        </div>
+                        <!-- Mockup Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <p class="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Total Omzet</p>
+                                <p class="text-xl font-bold text-emerald-400">Rp 1.2M</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <p class="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Tunai</p>
+                                <p class="text-xl font-bold text-accent">Rp 850jt</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <p class="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Transaksi</p>
+                                <p class="text-xl font-bold text-purple-400">3,492</p>
+                            </div>
+                        </div>
+                        <!-- Mockup Chart -->
+                        <div class="bg-white/5 rounded-xl p-5 border border-white/5 h-40 flex items-end gap-3">
+                            <div class="w-full bg-gradient-to-t from-primary/80 to-primary/20 rounded-t-md hover:from-primary transition-colors" style="height: 40%"></div>
+                            <div class="w-full bg-gradient-to-t from-primary/80 to-primary/20 rounded-t-md hover:from-primary transition-colors" style="height: 60%"></div>
+                            <div class="w-full bg-gradient-to-t from-accent/80 to-accent/20 rounded-t-md hover:from-accent transition-colors" style="height: 45%"></div>
+                            <div class="w-full bg-gradient-to-t from-primary/80 to-primary/20 rounded-t-md hover:from-primary transition-colors" style="height: 85%"></div>
+                            <div class="w-full bg-gradient-to-t from-primary/80 to-primary/20 rounded-t-md hover:from-primary transition-colors" style="height: 55%"></div>
+                            <div class="w-full bg-gradient-to-t from-accent/80 to-accent/20 rounded-t-md hover:from-accent transition-colors" style="height: 95%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- STATS -->
-    <section class="stats-section" id="statistik">
-        <div class="container">
-            <div class="section-header" style="text-align:center;">
-                <div class="section-badge">Statistik</div>
-                <h2 class="section-title">Dipercaya Tim Penjualan</h2>
-                <p class="section-desc" style="margin:0 auto;">Data real-time yang membantu pengambilan keputusan lebih
-                    cepat dan akurat.</p>
+    <!-- STATS SECTION -->
+    <section id="statistik" class="py-20 border-y border-white/5 relative overflow-hidden bg-white/[0.02]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <p class="text-accent font-semibold tracking-wider text-sm uppercase mb-3">Statistik Performa</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Dipercaya Skala Enterprise</h2>
+                <p class="text-slate-400">Data real-time yang memproses ribuan transaksi tanpa hambatan, memastikan bisnis Anda tidak pernah kehilangan momen.</p>
             </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon indigo">📊</div>
-                    <div class="stat-number" style="color:#818cf8;">500+</div>
-                    <div class="stat-desc">Transaksi Dipantau per Hari</div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Stat 1 -->
+                <div class="glass-card p-8 rounded-2xl text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform duration-300">📊</div>
+                    <div class="text-4xl font-extrabold text-white mb-2 tracking-tight">10K+</div>
+                    <div class="text-sm text-slate-400">Transaksi Harian</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon cyan">⚡</div>
-                    <div class="stat-number" style="color:#22d3ee;">Real-Time</div>
-                    <div class="stat-desc">Data Update Langsung</div>
+                <!-- Stat 2 -->
+                <div class="glass-card p-8 rounded-2xl text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-16 h-16 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform duration-300">⚡</div>
+                    <div class="text-4xl font-extrabold text-white mb-2 tracking-tight">&lt;1s</div>
+                    <div class="text-sm text-slate-400">Waktu Sinkronisasi</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon purple">👥</div>
-                    <div class="stat-number" style="color:#c084fc;">20+</div>
-                    <div class="stat-desc">Salesman Termonitoring</div>
+                <!-- Stat 3 -->
+                <div class="glass-card p-8 rounded-2xl text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-16 h-16 mx-auto bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform duration-300">👥</div>
+                    <div class="text-4xl font-extrabold text-white mb-2 tracking-tight">99%</div>
+                    <div class="text-sm text-slate-400">Uptime Server</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon green">✅</div>
-                    <div class="stat-number" style="color:#34d399;">99%</div>
-                    <div class="stat-desc">Akurasi Data</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FEATURES -->
-    <section class="features-section" id="fitur">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">Fitur Unggulan</div>
-                <h2 class="section-title">Semua yang Anda Butuhkan</h2>
-                <p class="section-desc">Dari dashboard ringkasan hingga riwayat transaksi detail — DashMo
-                    menyediakan semua informasi dalam genggaman.</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(99,102,241,0.15);">📈</div>
-                    <h3 class="feature-title">Dashboard Penjualan Harian</h3>
-                    <p class="feature-desc">Pantau total penjualan, return, penjualan tunai, penerimaan piutang, dan
-                        biaya operasional hari ini dalam satu layar.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(34,211,238,0.15);">📋</div>
-                    <h3 class="feature-title">Riwayat Penjualan</h3>
-                    <p class="feature-desc">Telusuri transaksi berdasarkan tanggal, customer, salesman, atau tipe
-                        pembayaran dengan filter yang fleksibel.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(168,85,247,0.15);">👤</div>
-                    <h3 class="feature-title">Performa Salesman</h3>
-                    <p class="feature-desc">Bandingkan performa setiap salesman berdasarkan omzet harian, mingguan,
-                        hingga tahunan dengan ranking otomatis.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(52,211,153,0.15);">📦</div>
-                    <h3 class="feature-title">Monitoring Stok</h3>
-                    <p class="feature-desc">Lacak pergerakan stok, laporan penyesuaian, dan peringatan stok menipis
-                        secara real-time.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(251,191,36,0.15);">🏆</div>
-                    <h3 class="feature-title">Top Produk &amp; Salesman</h3>
-                    <p class="feature-desc">Lihat produk terlaris dan salesman terbaik secara real-time untuk
-                        pengambilan keputusan yang lebih cepat.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="background:rgba(248,113,113,0.15);">🔒</div>
-                    <h3 class="feature-title">Aman &amp; Multi-Database</h3>
-                    <p class="feature-desc">Autentikasi Sanctum, koneksi database dinamis per cabang, serta enkripsi
-                        data untuk keamanan penuh.</p>
+                <!-- Stat 4 -->
+                <div class="glass-card p-8 rounded-2xl text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-16 h-16 mx-auto bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform duration-300">🏢</div>
+                    <div class="text-4xl font-extrabold text-white mb-2 tracking-tight">50+</div>
+                    <div class="text-sm text-slate-400">Cabang Aktif</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- PRICING -->
-    <section class="pricing-section" id="pricing">
-        <div class="container">
-            <div class="section-header" style="text-align:center;">
-                <div class="section-badge">Paket Harga</div>
-                <h2 class="section-title">Pilih Solusi yang Tepat</h2>
-                <p class="section-desc" style="margin:0 auto;">Tersedia berbagai pilihan paket yang dapat disesuaikan dengan skala bisnis Anda.</p>
+    <!-- FEATURES SECTION -->
+    <section id="fitur" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-20">
+                <p class="text-accent font-semibold tracking-wider text-sm uppercase mb-3">Fitur Unggulan</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Kendali Penuh di Tangan Anda</h2>
+                <p class="text-slate-400 text-lg">DashMo merangkum data kompleks menjadi visual yang mudah dipahami, dirancang khusus untuk mobilitas tinggi.</p>
             </div>
-            <div class="pricing-grid">
-                @foreach($pricing_plans as $plan)
-                    <div class="pricing-card {{ $plan->is_featured ? 'featured' : '' }}">
-                        <div class="pricing-header">
-                            <div class="pricing-name" style="{{ $plan->is_featured ? 'color:var(--primary);' : '' }}">{{ $plan->name }}</div>
-                            <div class="pricing-price">{{ $plan->price }}<span>{{ $plan->price_subtext }}</span></div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-primary/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/30 transition-colors">
+                        <span class="text-2xl">📈</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Dashboard Harian</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Pantau total penjualan, retur, penerimaan piutang, dan kas di tangan secara real-time dari satu layar yang rapi.</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-accent/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-accent/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-accent/20 group-hover:bg-accent/30 transition-colors">
+                        <span class="text-2xl">📋</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Riwayat Presisi</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Telusuri transaksi berdasarkan filter tanggal, pelanggan, atau tipe pembayaran. Lacak setiap faktur tanpa terlewat.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-purple-500/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Performa Salesman</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Bandingkan pencapaian omzet antar anggota tim. Identifikasi salesman terbaik dan pacu produktivitas mereka.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-emerald-500/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                        <span class="text-2xl">📦</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Monitoring Inventori</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Lacak pergerakan stok, terima barang, pindah gudang, dan stok opname langsung dari perangkat mobile.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-yellow-500/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-yellow-500/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20 group-hover:bg-yellow-500/30 transition-colors">
+                        <span class="text-2xl">🏆</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Top Produk Analisis</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Ketahui item apa yang paling laris setiap bulannya. Optimalkan pengadaan barang berdasarkan data yang akurat.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-card p-8 rounded-3xl hover:-translate-y-2 hover:border-rose-500/50 transition-all duration-300 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-rose-500/20 to-transparent rounded-2xl flex items-center justify-center mb-6 border border-rose-500/20 group-hover:bg-rose-500/30 transition-colors">
+                        <span class="text-2xl">🔒</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Keamanan Multi-Tenant</h3>
+                    <p class="text-slate-400 leading-relaxed text-sm">Infrastruktur aman dengan integrasi Tailscale VPN dan pemisahan database dinamis untuk setiap cabang ritel.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section id="pricing" class="py-24 relative overflow-hidden">
+        <!-- Glow background for pricing -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-2xl mx-auto mb-20">
+                <p class="text-accent font-semibold tracking-wider text-sm uppercase mb-3">Paket Berlangganan</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Investasi Fleksibel untuk Bisnis</h2>
+                <p class="text-slate-400">Pilih kapabilitas yang paling cocok dengan tahap pertumbuhan usaha Anda saat ini.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch max-w-5xl mx-auto">
+                @if(isset($pricing_plans) && count($pricing_plans) > 0)
+                    @foreach($pricing_plans as $plan)
+                        <div class="glass-card rounded-[2rem] p-8 flex flex-col relative transition-all duration-300 hover:-translate-y-2 {{ $plan->is_featured ? 'border-primary shadow-2xl shadow-primary/20 lg:-mt-4 lg:mb-4 bg-slate-900/80' : 'hover:border-white/20' }}">
+                            
+                            @if($plan->is_featured)
+                                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-white text-xs font-bold uppercase tracking-widest py-1.5 px-4 rounded-full shadow-lg">
+                                    Paling Populer
+                                </div>
+                            @endif
+
+                            <div class="mb-8">
+                                <h3 class="text-xl font-semibold mb-2 {{ $plan->is_featured ? 'text-primary-light' : 'text-white' }}">{{ $plan->name }}</h3>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-4xl font-extrabold text-white">{{ $plan->price }}</span>
+                                    <span class="text-sm text-slate-400 font-medium">{{ $plan->price_subtext }}</span>
+                                </div>
+                            </div>
+
+                            <ul class="space-y-4 mb-8 flex-grow">
+                                @foreach($plan->features as $feature)
+                                    <li class="flex items-start gap-3 text-sm {{ $feature->is_highlighted ? 'text-white font-semibold' : 'text-slate-400' }}">
+                                        <svg class="w-5 h-5 flex-shrink-0 {{ $feature->is_highlighted ? 'text-accent' : 'text-primary' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        <span>{{ $feature->name }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                            <a href="{{ $plan->button_link ?? route('login') }}" 
+                               class="w-full py-4 px-6 rounded-xl text-center font-semibold text-sm transition-all duration-300 {{ $plan->is_featured ? 'bg-primary text-white hover:bg-primary-light shadow-lg shadow-primary/30' : 'bg-white/10 text-white hover:bg-white/20' }}">
+                                {{ $plan->button_text ?? 'Mulai Sekarang' }}
+                            </a>
                         </div>
-                        <ul class="pricing-features">
-                            @foreach($plan->features as $feature)
-                                <li style="{{ $feature->is_highlighted ? 'color:var(--text); font-weight:600;' : '' }}">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    {{ $feature->name }}
-                                </li>
-                            @endforeach
+                    @endforeach
+                @else
+                    <!-- Fallback if pricing_plans variable is not set (e.g. preview) -->
+                    <div class="glass-card rounded-[2rem] p-8 flex flex-col hover:-translate-y-2 transition-transform duration-300">
+                        <h3 class="text-xl font-semibold mb-2 text-white">Starter</h3>
+                        <div class="flex items-baseline gap-1 mb-8">
+                            <span class="text-4xl font-extrabold text-white">Rp 150k</span>
+                            <span class="text-sm text-slate-400">/ bulan</span>
+                        </div>
+                        <ul class="space-y-4 mb-8 flex-grow">
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> 1 Database Klien</li>
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> 5 User Salesman</li>
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Basic Reporting</li>
                         </ul>
-                        <a href="{{ $plan->button_link ?? route('login') }}" class="btn-{{ $plan->is_featured ? 'primary' : 'secondary' }} btn-pricing">{{ $plan->button_text ?? 'Mulai Sekarang' }}</a>
+                        <a href="{{ route('login') }}" class="w-full py-4 px-6 rounded-xl text-center font-semibold text-sm bg-white/10 text-white hover:bg-white/20 transition-colors">Pilih Starter</a>
                     </div>
-                @endforeach
+                    
+                    <div class="glass-card rounded-[2rem] p-8 flex flex-col relative border-primary shadow-2xl shadow-primary/20 lg:-mt-4 lg:mb-4 bg-slate-900/80 hover:-translate-y-2 transition-transform duration-300">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-white text-xs font-bold uppercase tracking-widest py-1.5 px-4 rounded-full shadow-lg">Paling Populer</div>
+                        <h3 class="text-xl font-semibold mb-2 text-primary-light">Pro</h3>
+                        <div class="flex items-baseline gap-1 mb-8">
+                            <span class="text-4xl font-extrabold text-white">Rp 350k</span>
+                            <span class="text-sm text-slate-400">/ bulan</span>
+                        </div>
+                        <ul class="space-y-4 mb-8 flex-grow">
+                            <li class="flex items-start gap-3 text-sm text-white font-semibold"><svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Multi Database (Up to 5)</li>
+                            <li class="flex items-start gap-3 text-sm text-white font-semibold"><svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Unlimited User</li>
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Advanced Analytics</li>
+                        </ul>
+                        <a href="{{ route('login') }}" class="w-full py-4 px-6 rounded-xl text-center font-semibold text-sm bg-primary text-white hover:bg-primary-light shadow-lg shadow-primary/30 transition-all">Pilih Pro</a>
+                    </div>
+                    
+                    <div class="glass-card rounded-[2rem] p-8 flex flex-col hover:-translate-y-2 transition-transform duration-300">
+                        <h3 class="text-xl font-semibold mb-2 text-white">Enterprise</h3>
+                        <div class="flex items-baseline gap-1 mb-8">
+                            <span class="text-4xl font-extrabold text-white">Custom</span>
+                        </div>
+                        <ul class="space-y-4 mb-8 flex-grow">
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Unlimited Cabang</li>
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Dedicated Tailscale Server</li>
+                            <li class="flex items-start gap-3 text-sm text-slate-400"><svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> 24/7 Priority Support</li>
+                        </ul>
+                        <a href="#" class="w-full py-4 px-6 rounded-xl text-center font-semibold text-sm bg-white/10 text-white hover:bg-white/20 transition-colors">Hubungi Sales</a>
+                    </div>
+                @endif
             </div>
         </div>
     </section>
 
     <!-- FOOTER -->
-    <footer>
-        <div class="footer-brand">
-            <div class="nav-brand-icon" style="width:32px;height:32px;border-radius:9px;">
-                <svg viewBox="0 0 24 24" style="width:18px;height:18px;" fill="#fff">
-                    <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                </svg>
+    <footer class="border-t border-white/5 bg-[#070a12] pt-16 pb-8 mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex justify-center items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
+                    </svg>
+                </div>
+                <span class="font-bold text-xl tracking-tight text-white">DashMo</span>
             </div>
-            <span style="font-weight:700;font-size:1rem;">DashMo</span>
+            <p class="text-sm text-slate-500 mb-8 max-w-md mx-auto">
+                Solusi manajemen dan monitoring penjualan multi-tenant terdepan untuk modernisasi operasi ritel Anda.
+            </p>
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs text-slate-500">
+                    &copy; {{ date('Y') }} DashMo System. Hak Cipta Dilindungi.
+                </p>
+                <div class="flex gap-6 text-xs font-medium text-slate-400">
+                    <a href="#" class="hover:text-white transition-colors">Kebijakan Privasi</a>
+                    <a href="#" class="hover:text-white transition-colors">Syarat & Ketentuan</a>
+                </div>
+            </div>
         </div>
-        <p class="footer-text">&copy; {{ date('Y') }} DashMo System. All rights reserved.</p>
     </footer>
 
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/6285380988988?text=Halo%20tim%20DashMo,%20saya%20tertarik%20untuk%20berlangganan." target="_blank" 
+       class="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-[100] group flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/40 hover:scale-110 hover:shadow-[#25D366]/60 transition-all duration-300 animate-bounce hover:animate-none">
+        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 0C5.385 0 0 5.388 0 12.034c0 2.124.553 4.195 1.605 6.012L.15 24l6.111-1.603a11.967 11.967 0 0 0 5.77 1.485h.004c6.645 0 12.03-5.388 12.03-12.034 0-6.646-5.385-12.034-12.034-12.034zm0 21.844c-1.802 0-3.567-.484-5.114-1.401l-.367-.217-3.8.997 1.015-3.705-.238-.379a9.986 9.986 0 0 1-1.528-5.342c0-5.526 4.498-10.024 10.027-10.024 5.529 0 10.028 4.498 10.028 10.024 0 5.526-4.499 10.024-10.028 10.024zm5.503-7.518c-.301-.151-1.785-.881-2.062-.981-.277-.1-.479-.151-.68.151-.202.302-.781.981-.958 1.182-.176.202-.353.227-.654.076-.301-.151-1.275-.471-2.428-1.502-.897-.803-1.503-1.794-1.68-2.096-.176-.302-.019-.465.132-.616.136-.136.302-.353.453-.529.151-.176.202-.302.302-.504.1-.202.05-.379-.025-.529-.076-.151-.68-1.642-.932-2.247-.245-.589-.494-.509-.68-.518-.176-.008-.378-.008-.579-.008s-.529.076-.806.379c-.277.302-1.058 1.034-1.058 2.52s1.083 2.923 1.234 3.125c.151.202 2.13 3.25 5.158 4.557.72.311 1.281.497 1.722.636.723.228 1.381.196 1.902.119.584-.087 1.785-.73 2.036-1.436.252-.706.252-1.31.176-1.436-.076-.126-.277-.202-.579-.353z"/>
+        </svg>
+        <span class="absolute right-16 bg-white text-slate-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap hidden md:block">
+            Chat dengan Sales
+        </span>
+    </a>
+
+    <!-- INTERACTIVE SCRIPTS -->
     <script>
-        // Animate bars in mockup on load
-        document.querySelectorAll('.bar').forEach((bar, i) => {
-            const h = bar.style.height;
-            bar.style.height = '5%';
-            setTimeout(() => { bar.style.height = h; bar.style.transition = 'height 0.6s cubic-bezier(0.16,1,0.3,1)'; }, 300 + i * 80);
+        // Smooth reveal animation on scroll
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach((el) => {
+            el.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-10');
+            observer.observe(el);
         });
 
-        // Navbar scroll effect
+        // Navbar blur intensity on scroll
         window.addEventListener('scroll', () => {
             const nav = document.querySelector('nav');
-            nav.style.background = window.scrollY > 50
-                ? 'rgba(8,11,26,0.95)' : 'rgba(8,11,26,0.7)';
+            if (window.scrollY > 20) {
+                nav.classList.add('shadow-lg', 'shadow-black/20');
+                nav.style.background = 'rgba(11, 15, 25, 0.9)';
+            } else {
+                nav.classList.remove('shadow-lg', 'shadow-black/20');
+                nav.style.background = 'rgba(11, 15, 25, 0.7)';
+            }
         });
     </script>
 </body>
-
 </html>

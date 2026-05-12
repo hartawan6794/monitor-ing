@@ -256,6 +256,7 @@ class InventoryAdjustmentController extends Controller
             $nextNumber = $div->inventoryidno + 1;
             $transId = $prefix . str_pad($nextNumber, 6, "0", STR_PAD_LEFT);
 
+
             // Update nomor urut di tabel divisi
             DB::table('division')
                 ->where('id', $request->division)

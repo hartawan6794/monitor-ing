@@ -962,17 +962,22 @@ class SalesController extends Controller
 
         try {
             $div = null;
-            if ($request->division != null || $request->division != "") {
+            // 1. Cek apakah division langsung diberikan
+            if (!empty($request->division)) {
                 $div = DB::table('division')->where('id', $request->division)->lockForUpdate()->first();
-            } else {
-                if ($request->salesorder_id_ref) {
-                    $divId = DB::table('salesorder')->where('salesid', $request->salesorder_id_ref)->value('division');
+            }
+            // 2. Jika tidak, cek apakah ada salesorder reference
+            elseif (!empty($request->salesorder_id_ref)) {
+                $divId = DB::table('salesorder')
+                    ->where('salesid', $request->salesorder_id_ref)
+                    ->value('division');
+
+                if ($divId) {
                     $div = DB::table('division')->where('id', $divId)->lockForUpdate()->first();
-                } else {
-                    $div = DB::table('division')->where('id', "0011")->lockForUpdate()->first();
                 }
             }
 
+            // 3. Jika masih null, coba fallback ke division dari request (opsional)
             if (!$div) {
                 throw new \Exception("Divisi tidak ditemukan!");
             }
@@ -1038,7 +1043,7 @@ class SalesController extends Controller
 
             $currentTime = date('H:i:s');
             $currentDateTime = $request->salesdate . ' ' . $currentTime;
-            $memoType = $isCash ? "Penjualan: TUNAI" : "Penjualan: TEMPO";
+            $memoType = "Penjualan: " . $customer->name;
 
             // 3. Header Sales
             DB::table('sales')->insert([
@@ -1163,12 +1168,12 @@ class SalesController extends Controller
 
             if ($cashAllocated > 0) {
                 // Debit Kas/Bank/Uang Muka
-                $memoDP = $isCash ? "Penjualan: TUNAI" : "Pembayaran DP Penjualan: " . $salesId;
-                $journals[] = ['accountid' => $paymentAcc, 'debit' => $cashAllocated, 'credit' => 0, 'memo' => $memoDP];
+                $memoDP = $isCash ? "Penjualan: " . $customer->name : "Pembayaran DP Penjualan: " . $salesId;
+                $journals[] = ['accountid' => $paymentAcc, 'debit' => $cashAllocated, 'credit' => 0, 'memo' => $memoType];
             }
             if ($creditAllocated > 0) {
                 // Debit Piutang
-                $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => "Penjualan: TEMPO"];
+                $journals[] = ['accountid' => $receivableAcc, 'debit' => $creditAllocated, 'credit' => 0, 'memo' => $memoType];
             }
 
             // GROSS METHOD: Kredit Pendapatan dengan harga PENUH sebelum diskon
@@ -1177,12 +1182,12 @@ class SalesController extends Controller
 
             // Jika ada diskon global, catat secara eksplisit ke akun 401.003 (Potongan Penjualan)
             if ($globalDiscount > 0) {
-                $journals[] = ['accountid' => '409.001', 'debit' => $globalDiscount, 'credit' => 0, 'memo' => "Diskon Penjualan: " . $salesId];
+                $journals[] = ['accountid' => '409.001', 'debit' => $globalDiscount, 'credit' => 0, 'memo' => $memoType];
             }
 
             // Jurnal HPP vs Persediaan
-            $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0, 'memo' => "Pengeluaran Persediaan (HPP)"];
-            $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs, 'memo' => "Pengeluaran Persediaan (HPP)"];
+            $journals[] = ['accountid' => '501.001', 'debit' => $totalCogs, 'credit' => 0, 'memo' => $memoType];
+            $journals[] = ['accountid' => '107.001', 'debit' => 0, 'credit' => $totalCogs, 'memo' => $memoType];
 
             foreach ($journals as $j) {
                 DB::table('journaltrans')->insert([

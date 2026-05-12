@@ -193,9 +193,10 @@
                             <label class="form-label font-semibold text-sm">Tipe Paket</label>
                             <select class="form-control @error('package_type') is-invalid @enderror" id="package_type"
                                 name="package_type" required>
-                                <option value="basic" selected>Basic</option>
-                                <option value="premium">Premium</option>
-                                <option value="enterprise">Enterprise</option>
+                                <option value="" disabled selected>-- Pilih Paket --</option>
+                                @foreach($pricingPlans as $plan)
+                                    <option value="{{ $plan->id }}">{{ $plan->name }}</option>
+                                @endforeach
                             </select>
                             @error('package_type')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -360,7 +361,7 @@
                 $('#btn-scan').show();
                 document.querySelector("#expired_at")._flatpickr.clear();
                 $('#user_id').val('');
-                $('#package_type').val('basic');
+                $('#package_type').val('');
                 $('#description').val('');
 
                 // Reset Tombol

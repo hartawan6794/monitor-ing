@@ -153,31 +153,36 @@ class DashboardController extends Controller
      */
     public function ownerSummary()
     {
-        $todayStart = Carbon::today();
-        $todayEnd = Carbon::now();
+        $now = Carbon::now();
+        $today = [$now->copy()->startOfDay(), $now];
+        $yesterday = [$now->copy()->subDay()->startOfDay(), $now->copy()->subDay()->endOfDay()];
 
-        $yesterdayStart = Carbon::yesterday();
-        $yesterdayEnd = Carbon::yesterday()->endOfDay();
+        $startOfWeek = $now->copy()->startOfWeek();
+        $startOfLastWeek = $now->copy()->subWeek()->startOfWeek();
+        $endOfLastWeek = $now->copy()->subWeek()->endOfWeek();
 
-        $startOfWeek = Carbon::now()->startOfWeek();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
+        $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
 
-        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
-        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
+        $resToday = $this->calculateMetrics($today[0], $today[1]);
+        $resYesterday = $this->calculateMetrics($yesterday[0], $yesterday[1]);
 
-        $startOfMonth = Carbon::now()->startOfMonth();
+        $resWeek = $this->calculateMetrics($startOfWeek, $now);
+        $resLastWeek = $this->calculateMetrics($startOfLastWeek, $endOfLastWeek);
 
-        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
-        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+        $resMonth = $this->calculateMetrics($startOfMonth, $now);
+        $resLastMonth = $this->calculateMetrics($startOfLastMonth, $endOfLastMonth);
 
         return response()->json([
             'status' => 'success',
             'data' => [
-                'hari_ini' => $this->calculateMetrics($todayStart, $todayEnd),
-                'kemarin' => $this->calculateMetrics($yesterdayStart, $yesterdayEnd),
-                'minggu_ini' => $this->calculateMetrics($startOfWeek, $todayEnd),
-                'minggu_lalu' => $this->calculateMetrics($startOfLastWeek, $endOfLastWeek),
-                'bulan_ini' => $this->calculateMetrics($startOfMonth, $todayEnd),
-                'bulan_lalu' => $this->calculateMetrics($startOfLastMonth, $endOfLastMonth),
+                'hari_ini' => array_merge($resToday, ['growth' => $this->calculateGrowth($resToday, $resYesterday)]),
+                'kemarin' => $resYesterday,
+                'minggu_ini' => array_merge($resWeek, ['growth' => $this->calculateGrowth($resWeek, $resLastWeek)]),
+                'minggu_lalu' => $resLastWeek,
+                'bulan_ini' => array_merge($resMonth, ['growth' => $this->calculateGrowth($resMonth, $resLastMonth)]),
+                'bulan_lalu' => $resLastMonth,
             ]
         ]);
     }
@@ -188,38 +193,37 @@ class DashboardController extends Controller
     private function calculateMetrics($startDate, $endDate)
     {
         // Omzet = Total Uang Masuk (Debit) dari Sales Payments
-        $omzet = DB::table('salespayments')
+        $omzet = (float) DB::table('salespayments')
             ->whereBetween('transdate', [$startDate, $endDate])
             ->sum('debit');
 
+        // Total Invoices
+        $totalInvoices = DB::table('sales')
+            ->whereBetween('salesdate', [$startDate, $endDate])
+            ->where('kind', 0)
+            ->count('salesid');
+
         // COGS (HPP) = Total Cost dari Sales Detail
-        $cogs = DB::table('salesdetail')
+        $cogs = (float) DB::table('salesdetail')
             ->whereBetween('transdate', [$startDate, $endDate])
             ->sum('cogs');
 
-        $globalDiscount = DB::table('sales')
-            ->whereBetween('salesdate', [$startDate, $endDate])
-            ->where('kind', 0) // Pastikan hanya data penjualan nor mal
-            ->sum('salesvaluedisc');
-
-        $cogs = $cogs - $globalDiscount;
-
-        // Laba Kotor = Omzet - HPP
         $laba = $omzet - $cogs;
-
-        // Margin = (Laba / Omzet) * 100%
         $margin = $omzet > 0 ? round(($laba / $omzet) * 100, 1) : 0;
+        $avgInvoice = $totalInvoices > 0 ? round($omzet / $totalInvoices, 0) : 0;
 
         return [
             'omzet' => $omzet,
             'laba' => $laba,
-            'margin' => $margin
+            'margin' => $margin,
+            'total_invoice' => $totalInvoices,
+            'avg_invoice' => $avgInvoice
         ];
     }
 
     public function topProducts(Request $request)
     {
-        $dates = $this->getDateRange($request->query('period', 'today'));
+        $dates = $this->getDateRangeFromRequest($request);
         $products = $this->getTopProductsData($dates);
 
         return response()->json(['status' => 'success', 'data' => $products]);
@@ -261,9 +265,7 @@ class DashboardController extends Controller
      * 3. GET TOP SALESMEN (Berdasarkan Total Omzet/Debit)
      * Menerima query param: ?period=today|month|year
      */
-    public function topSalesmen(Request $request)
-    {
-        $dates = $this->getDateRange($request->query('period', 'today'));
+    public function topSalesmen(Request $request) { $dates = $this->getDateRangeFromRequest($request);
 
         $salesmen = DB::table('salespayments')
             ->join('sales', 'salespayments.salesidref', '=', 'sales.salesid')
@@ -863,5 +865,68 @@ class DashboardController extends Controller
                 'top_products_bulan_ini' => $topProducts
             ]
         ]);
+    }
+
+    private function getSalesAndOrderChart($startDate, $endDate)
+    {
+        $sales = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->select('sales.salesdate as tanggal', DB::raw('SUM(salesdetail.netamount) as total'))
+            ->where('sales.kind', 0)
+            ->whereBetween('sales.salesdate', [$startDate, $endDate])
+            ->groupBy('sales.salesdate')
+            ->pluck('total', 'tanggal');
+
+        $orders = DB::table('salesorderdetail')
+            ->join('salesorder', 'salesorderdetail.salesid', '=', 'salesorder.salesid')
+            ->select('salesorder.salesdate as tanggal', DB::raw('SUM(salesorderdetail.netamount) as total'))
+            ->whereBetween('salesorder.salesdate', [$startDate, $endDate])
+            ->groupBy('salesorder.salesdate')
+            ->pluck('total', 'tanggal');
+
+        $labels = [];
+        $salesData = [];
+        $orderData = [];
+
+        $diffInDays = $startDate->diffInDays($endDate);
+        for ($i = $diffInDays; $i >= 0; $i--) {
+            $carbonDate = Carbon::parse($endDate)->subDays($i);
+            $date = $carbonDate->toDateString();
+            $labels[] = $carbonDate->locale('id')->translatedFormat('l');
+            $salesData[] = (float) ($sales[$date] ?? 0);
+            $orderData[] = (float) ($orders[$date] ?? 0);
+        }
+
+        return ['labels' => $labels, 'penjualan' => $salesData, 'order' => $orderData];
+    }
+
+    private function getDateRangeFromRequest(Request $request)
+    {
+        if ($request->has('start_date') && $request->has('end_date')) {
+            return [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ];
+        }
+        return $this->getDateRange($request->query('period', 'today'));
+    }
+
+    /**
+     * Helper untuk menghitung persentase pertumbuhan dibanding periode sebelumnya
+     */
+    private function calculateGrowth($current, $previous)
+    {
+        $growth = [];
+        foreach (['omzet', 'laba', 'total_invoice'] as $key) {
+            $prevVal = $previous[$key] ?? 0;
+            $currVal = $current[$key] ?? 0;
+
+            if ($prevVal == 0) {
+                $growth[$key] = $currVal > 0 ? 100 : 0;
+            } else {
+                $growth[$key] = round((($currVal - $prevVal) / $prevVal) * 100, 1);
+            }
+        }
+        return $growth;
     }
 }

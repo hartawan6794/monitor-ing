@@ -45,3 +45,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/setup-wizard/step-server', [\App\Http\Controllers\SetupWizardController::class, 'storeServer'])->name('setup.wizard.server');
     Route::post('/setup-wizard/step-database', [\App\Http\Controllers\SetupWizardController::class, 'storeDatabase'])->name('setup.wizard.database');
 });
+
+// ── Kelola Langganan ──
+Route::middleware('auth')->prefix('subscriptions')->name('subscriptions.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\SubscriptionController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\SubscriptionController::class, 'store'])->name('store');
+    Route::post('/{id}/renew', [\App\Http\Controllers\SubscriptionController::class, 'renew'])->name('renew');
+    Route::post('/{id}/send-reminder', [\App\Http\Controllers\SubscriptionController::class, 'sendReminder'])->name('sendReminder');
+});
