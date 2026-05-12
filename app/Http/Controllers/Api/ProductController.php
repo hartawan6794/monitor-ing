@@ -368,7 +368,7 @@ class ProductController extends Controller
             if ($cek) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Data sudah ada.'
+                    'message' => 'Data ' . $request->id . ' sudah ada.'
                 ], 400);
             }
 
