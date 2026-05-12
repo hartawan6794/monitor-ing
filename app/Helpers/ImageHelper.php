@@ -9,6 +9,11 @@ class ImageHelper
      */
     public static function compressImageToBlob($file)
     {
+        // Pengecekan apakah Ekstensi GD tersedia di server
+        if (!extension_loaded('gd')) {
+            throw new \Exception('Ekstensi PHP GD belum terinstall di server. Silakan install php-gd untuk fitur kompresi gambar.');
+        }
+
         $maxWidth = 300; // Resolusi kecil agar aman < 64KB
         $maxHeight = 300;
 
