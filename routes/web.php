@@ -54,3 +54,10 @@ Route::middleware('auth')->prefix('subscriptions')->name('subscriptions.')->grou
     Route::post('/{id}/renew', [\App\Http\Controllers\SubscriptionController::class, 'renew'])->name('renew');
     Route::post('/{id}/send-reminder', [\App\Http\Controllers\SubscriptionController::class, 'sendReminder'])->name('sendReminder');
 });
+
+// ── System Admin ──
+Route::middleware('auth')->prefix('system')->name('system.')->group(function () {
+    Route::get('/logs', [\App\Http\Controllers\SystemAdminController::class, 'systemLogs'])->name('logs');
+    Route::post('/logs/clear', [\App\Http\Controllers\SystemAdminController::class, 'clearLogs'])->name('logs.clear');
+    Route::get('/access-keys', [\App\Http\Controllers\SystemAdminController::class, 'accessKeys'])->name('access_keys');
+});
