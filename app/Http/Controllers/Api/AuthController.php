@@ -112,7 +112,7 @@ class AuthController extends Controller
         } elseif (in_array('053025', $userConfigs)) {
             // Jika punya akses "Menu Transaksi Penjualan"
             $role = 'kasir';
-        } elseif (in_array('001002', $userConfigs)) {
+        } elseif (in_array('020007', $userConfigs)) {
             // Contoh: Jika punya akses menu tertentu untuk gudang
             $role = 'gudang';
         } elseif (in_array('103001', $userConfigs)) {

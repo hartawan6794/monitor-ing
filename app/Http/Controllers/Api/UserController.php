@@ -64,7 +64,7 @@ class UserController extends Controller
             } elseif ($role === 'kasir') {
                 $trueRules[] = '053025';
             } elseif ($role === 'gudang') {
-                $trueRules[] = '001002';
+                $trueRules[] = '020007';
             } elseif ($role === 'owner') {
                 // Owner mungkin butuh lebih banyak akses, tapi minimal kita set sesuai contoh
                 $trueRules[] = '103001';
