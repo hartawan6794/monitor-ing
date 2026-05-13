@@ -115,9 +115,9 @@ class ProductController extends Controller
                 });
             })
             ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3', 'departement.id', 'departement.name', 'division.id', 'division.description', 'product.defunit', 'product.image', 'supplier.id', 'supplier.name')
-            // ->when($limit, function ($query, $limit) {
-            //     return $query->limit($limit);
-            // })
+            ->when($limit, function ($query, $limit) {
+                return $query->limit($limit);
+            })
             ->get();
 
         // Konversi BLOB image menjadi string Base64 agar bisa dikirim via JSON
