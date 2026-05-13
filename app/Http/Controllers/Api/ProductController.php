@@ -115,20 +115,26 @@ class ProductController extends Controller
                 });
             })
             ->groupBy('product.id', 'product.name', 'product.salesprice1', 'product.salesprice2', 'product.salesprice3', 'departement.id', 'departement.name', 'division.id', 'division.description', 'product.defunit', 'product.image', 'supplier.id', 'supplier.name')
-            ->when($limit, function ($query, $limit) {
-                return $query->limit($limit);
-            })
-            ->get();
+            // ->when($limit, function ($query, $limit) {
+            //     return $query->limit($limit);
+            // })
+            ->paginate($limit ?: 20);
 
         // Konversi BLOB image menjadi string Base64 agar bisa dikirim via JSON
-        $products->transform(function ($item) {
+        $products->getCollection()->transform(function ($item) {
             if (!empty($item->image_blob)) {
                 $item->image_blob = base64_encode($item->image_blob);
             }
             return $item;
         });
 
-        return response()->json(['status' => 'success', 'data' => $products]);
+        // Kirim response json dengan tambahan info halaman
+        return response()->json([
+            'status' => 'success',
+            'data' => $products->items(),
+            'current_page' => $products->currentPage(),
+            'last_page' => $products->lastPage()
+        ]);
     }
 
     /**

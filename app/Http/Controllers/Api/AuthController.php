@@ -133,7 +133,7 @@ class AuthController extends Controller
                 'userId' => $user->id,
                 'name' => $user->name,
                 'username' => $user->id,
-                'role' => $role,
+                'role' => $user->role,
                 //'features' => $features,
                 'userDefaultConfig' => $defaultUser, // Shortcut langsung
                 //'user_configs' => $allUserConfigs,              // Semua konfigurasi per section

@@ -37,7 +37,8 @@ class BranchUser extends Authenticatable
         'description',
         'usercreate',
         'isactive',
-        'useredit'
+        'useredit',
+        'role'
     ];
 
     /**

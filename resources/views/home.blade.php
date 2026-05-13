@@ -130,10 +130,14 @@
                             Masuk Sekarang
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
-                        <a href="#fitur" class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-xl glass-card text-white font-semibold hover:bg-white/5 transform hover:-translate-y-1 transition-all">
-                            Pelajari Fitur
+                        <a href="{{ asset('downloads/dashmo-latest.apk') }}" class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-xl glass-card text-white font-semibold hover:bg-white/10 transform hover:-translate-y-1 transition-all border border-accent/30 hover:border-accent shadow-lg shadow-accent/10">
+                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Download APK
                         </a>
                     </div>
+                    <p class="mt-5 text-xs text-slate-500 max-w-md mx-auto lg:mx-0 text-center lg:text-left leading-relaxed">
+                        <span class="text-accent/80 font-medium"><i class="ri-information-line"></i> Info Instalasi:</span> Karena aplikasi ini bersifat internal (Enterprise), file APK belum tersedia di PlayStore. Pastikan Anda mengaktifkan izin <strong>"Install dari Sumber Tidak Dikenal"</strong> di pengaturan Android Anda.
+                    </p>
                 </div>
 
                 <!-- Hero Mockup Visual -->

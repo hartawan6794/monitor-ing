@@ -18,7 +18,63 @@ class UserController extends Controller
     }
 
     /**
-     * API POST: Tambah User Baru
+     * @OA\Post(
+     *     path="/users",
+     *     summary="Tambah User Baru",
+     *     tags={"User"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="query",
+     *         description="ID User",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         description="Nama User",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="userpassword",
+     *         in="query",
+     *         description="Password User",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="description",
+     *         in="query",
+     *         description="Deskripsi User",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="role",
+     *         in="query",
+     *         description="Role User",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="usercreate",
+     *         in="query",
+     *         description="User Create",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User berhasil ditambahkan.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="User berhasil ditambahkan.")
+     *         )
+     *     )
+     * )
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -50,7 +106,8 @@ class UserController extends Controller
                 'description' => $request->description,
                 'usercreate' => $request->usercreate,
                 'isactive' => 1,
-                'useredit' => $request->usercreate
+                'useredit' => $request->usercreate,
+                'role' => $request->role
             ]);
 
             // Ambil semua ID dari tabel userconfigrules
