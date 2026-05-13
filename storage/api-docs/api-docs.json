@@ -1233,30 +1233,48 @@
                 ]
             }
         },
-        "/products/low-stock-alert": {
+        "/products": {
             "get": {
                 "tags": [
                     "Product"
                 ],
-                "summary": "Alert Stok Menipis (Stok <= 5)",
-                "operationId": "1fd97685a231ff33c08fa1a039acc9c7",
+                "summary": "Ambil Daftar Produk",
+                "operationId": "080f057905dc32d2f11065d606dc4cd6",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/X-Database-Name"
                     },
                     {
-                        "name": "limit",
+                        "name": "devisi",
                         "in": "query",
-                        "description": "Limit jumlah data",
+                        "description": "ID Divisi",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "departement",
+                        "in": "query",
+                        "description": "ID Departemen",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Pencarian berdasarkan nama atau ID produk",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Data produk dengan stok menipis berhasil diambil.",
+                        "description": "Data produk berhasil diambil.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1264,18 +1282,6 @@
                                         "status": {
                                             "type": "string",
                                             "example": "success"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Data produk dengan stok menipis berhasil diambil."
-                                        },
-                                        "count_returned": {
-                                            "type": "integer",
-                                            "example": 5
-                                        },
-                                        "total_data": {
-                                            "type": "integer",
-                                            "example": 10
                                         },
                                         "data": {
                                             "type": "array",
@@ -1287,15 +1293,51 @@
                                                     },
                                                     "name": {
                                                         "type": "string",
-                                                        "example": "Produk 1"
+                                                        "example": "Produk A"
                                                     },
-                                                    "price": {
+                                                    "price1": {
                                                         "type": "number",
-                                                        "example": 10000
+                                                        "example": 100000
+                                                    },
+                                                    "price2": {
+                                                        "type": "number",
+                                                        "example": 120000
+                                                    },
+                                                    "price3": {
+                                                        "type": "number",
+                                                        "example": 130000
                                                     },
                                                     "stock": {
-                                                        "type": "integer",
-                                                        "example": 3
+                                                        "type": "number",
+                                                        "example": 10
+                                                    },
+                                                    "departement_id": {
+                                                        "type": "string",
+                                                        "example": "DPT001"
+                                                    },
+                                                    "departement_name": {
+                                                        "type": "string",
+                                                        "example": "Departemen A"
+                                                    },
+                                                    "division_id": {
+                                                        "type": "string",
+                                                        "example": "DVS001"
+                                                    },
+                                                    "division_name": {
+                                                        "type": "string",
+                                                        "example": "Divisi A"
+                                                    },
+                                                    "unit": {
+                                                        "type": "string",
+                                                        "example": "PCS"
+                                                    },
+                                                    "supplier_id": {
+                                                        "type": "string",
+                                                        "example": "SPL001"
+                                                    },
+                                                    "supplier_name": {
+                                                        "type": "string",
+                                                        "example": "Supplier A"
                                                     }
                                                 },
                                                 "type": "object"
@@ -1313,9 +1355,7 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/products": {
+            },
             "post": {
                 "tags": [
                     "Product"
@@ -1395,6 +1435,88 @@
                                         "id": {
                                             "type": "string",
                                             "example": "SKU001"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products/low-stock-alert": {
+            "get": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Alert Stok Menipis (Stok <= 5)",
+                "operationId": "1fd97685a231ff33c08fa1a039acc9c7",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit jumlah data",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data produk dengan stok menipis berhasil diambil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data produk dengan stok menipis berhasil diambil."
+                                        },
+                                        "count_returned": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total_data": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "example": "PROD001"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Produk 1"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "stock": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -2160,6 +2282,226 @@
                     }
                 ]
             }
+        },
+        "/units": {
+            "get": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Daftar unit",
+                "operationId": "c124a01d286915ee4353fbc7492e4753",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Tambah unit baru",
+                "operationId": "8702580f0166858acf6298435f42070c",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "unit": {
+                                        "type": "string"
+                                    },
+                                    "quantity": {
+                                        "type": "number"
+                                    },
+                                    "qtyfrom": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/units/{id}": {
+            "get": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Detail unit",
+                "operationId": "318ab8fab08b62d1ced870625efb43cd",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Update unit",
+                "operationId": "c45d0dbfc82853e0c45821fe4ff90be4",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Hapus unit",
+                "operationId": "e92fba517cc96323bfbdbcde2bd55c7c",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/units/getsatuan": {
+            "get": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Daftar qtyfrom (satuan)",
+                "description": "Mengambil data unik dari kolom qtyfrom",
+                "operationId": "c6074e4794f0e15cd26c5341951b9eea",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/units/getdefunit": {
+            "get": {
+                "tags": [
+                    "Units"
+                ],
+                "summary": "Daftar unit berdasarkan qtyfrom",
+                "description": "Filter data unit berdasarkan qtyfrom yang dipilih",
+                "operationId": "63da2d0ca70ee31677ee149cf1c01d88",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "qtyfrom",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sukses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -2224,6 +2566,10 @@
         {
             "name": "Sales",
             "description": "Sales"
+        },
+        {
+            "name": "Units",
+            "description": "Units"
         }
     ]
 }

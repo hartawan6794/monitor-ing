@@ -13,6 +13,60 @@ use App\Helpers\ImageHelper;
 class ProductController extends Controller
 {
 
+    /**
+     * @OA\Get(
+     *     path="/products",
+     *     summary="Ambil Daftar Produk",
+     *     tags={"Product"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(
+     *         name="devisi",
+     *         in="query",
+     *         description="ID Divisi",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="departement",
+     *         in="query",
+     *         description="ID Departemen",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Pencarian berdasarkan nama atau ID produk",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Data produk berhasil diambil.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="sku", type="string", example="PROD001"),
+     *                     @OA\Property(property="name", type="string", example="Produk A"),
+     *                     @OA\Property(property="price1", type="number", example=100000),
+     *                     @OA\Property(property="price2", type="number", example=120000),
+     *                     @OA\Property(property="price3", type="number", example=130000),
+     *                     @OA\Property(property="stock", type="number", example=10),
+     *                     @OA\Property(property="departement_id", type="string", example="DPT001"),
+     *                     @OA\Property(property="departement_name", type="string", example="Departemen A"),
+     *                     @OA\Property(property="division_id", type="string", example="DVS001"),
+     *                     @OA\Property(property="division_name", type="string", example="Divisi A"),
+     *                     @OA\Property(property="unit", type="string", example="PCS"),
+     *                     @OA\Property(property="supplier_id", type="string", example="SPL001"),
+     *                     @OA\Property(property="supplier_name", type="string", example="Supplier A")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         $search = $request->query('search');
@@ -20,9 +74,9 @@ class ProductController extends Controller
         $departmentId = $request->query('departement');
         $limit = $request->query('limit');
 
-        if (!$divisionId) {
-            $divisionId = DB::table('division')->first()->id;
-        }
+        // if (!$divisionId) {
+        //     $divisionId = DB::table('division')->first()->id;
+        // }
 
         $products = DB::table('product')
             ->leftJoin('inventory', 'product.id', '=', 'inventory.productid')
