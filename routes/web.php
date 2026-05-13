@@ -57,6 +57,9 @@ Route::middleware('auth')->prefix('subscriptions')->name('subscriptions.')->grou
 
 // ── System Admin ──
 Route::middleware('auth')->prefix('system')->name('system.')->group(function () {
+    Route::get('/apk-manager', [\App\Http\Controllers\ApkManagerController::class, 'index'])->name('apk_manager');
+    Route::post('/apk-manager/upload', [\App\Http\Controllers\ApkManagerController::class, 'upload'])->name('apk_manager.upload');
+    
     Route::get('/logs', [\App\Http\Controllers\SystemAdminController::class, 'systemLogs'])->name('logs');
     Route::post('/logs/clear', [\App\Http\Controllers\SystemAdminController::class, 'clearLogs'])->name('logs.clear');
     Route::get('/access-keys', [\App\Http\Controllers\SystemAdminController::class, 'accessKeys'])->name('access_keys');

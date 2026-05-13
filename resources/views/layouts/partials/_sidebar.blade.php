@@ -56,6 +56,7 @@
                 </a>
             </li>
 
+            @if(auth()->check() && (auth()->user()->username === 'admin' || auth()->user()->email === 'admin@gmail.com'))
             <li class="slide {{ request()->routeIs('setup.wizard') ? 'active' : '' }}">
                 <a href="{{ route('setup.wizard') }}" class="side-menu__item">
                     <i class="bx bx-rocket side-menu__icon text-primary"></i>
@@ -148,6 +149,13 @@
             <!-- SYSTEM -->
             <li class="slide__category"><span class="category-name">Sistem</span></li>
 
+            <li class="slide {{ request()->routeIs('system.apk_manager') ? 'active' : '' }}">
+                <a href="{{ route('system.apk_manager') }}" class="side-menu__item">
+                    <i class="bx bx-mobile-alt side-menu__icon"></i>
+                    <span class="side-menu__label">Upload APK</span>
+                </a>
+            </li>
+
             <li class="slide {{ request()->routeIs('system.access_keys') ? 'active' : '' }}">
                 <a href="{{ route('system.access_keys') }}" class="side-menu__item">
                     <i class="bx bx-key side-menu__icon"></i>
@@ -161,6 +169,7 @@
                     <span class="side-menu__label">System Logs</span>
                 </a>
             </li>
+            @endif
 
         </ul>
         <div class="slide-right" id="slide-right"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24"
