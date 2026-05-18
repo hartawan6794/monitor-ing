@@ -69,9 +69,7 @@
                 <div class="flex-shrink-0">
                     <a href="#" class="flex items-center gap-3 group">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transform group-hover:scale-105 transition-transform shadow-lg shadow-primary/20">
-                            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                            </svg>
+                            <img src="{{ asset('dist/assets/images/logo_dashmo.png') }}" class="w-6 h-6 object-contain" alt="DashMo Logo">
                         </div>
                         <span class="font-bold text-xl tracking-tight text-white">DashMo</span>
                     </a>
@@ -388,9 +386,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div class="flex justify-center items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                    </svg>
+                    <img src="{{ asset('dist/assets/images/logo_dashmo.png') }}" class="w-4 h-4 object-contain" alt="DashMo Logo">
                 </div>
                 <span class="font-bold text-xl tracking-tight text-white">DashMo</span>
             </div>

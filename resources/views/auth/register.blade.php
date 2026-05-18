@@ -8,9 +8,8 @@
                 <div class="xxl:col-span-4 xl:col-span-4 lg:col-span-4 md:col-span-3 sm:col-span-2"></div>
                 <div class="xxl:col-span-4 xl:col-span-4 lg:col-span-4 md:col-span-6 sm:col-span-8 col-span-12">
                     <div class="my-[2.5rem] flex justify-center">
-                        <a href="index.html">
-                            <img src="../assets/images/brand-logos/desktop-logo.png" alt="logo" class="desktop-logo">
-                            <img src="../assets/images/brand-logos/desktop-dark.png" alt="logo" class="desktop-dark">
+                        <a href="{{ route('home') }}">
+                            <img src="{{ asset('dist/assets/images/logo_dashmo.png') }}" alt="DashMo Logo" class="desktop-logo" style="max-height: 40px; margin: 0 auto;">
                         </a>
                     </div>
                     <div class="box">

@@ -63,4 +63,28 @@ Route::middleware('auth')->prefix('system')->name('system.')->group(function () 
     Route::get('/logs', [\App\Http\Controllers\SystemAdminController::class, 'systemLogs'])->name('logs');
     Route::post('/logs/clear', [\App\Http\Controllers\SystemAdminController::class, 'clearLogs'])->name('logs.clear');
     Route::get('/access-keys', [\App\Http\Controllers\SystemAdminController::class, 'accessKeys'])->name('access_keys');
+    
+    Route::get('/email-template', [\App\Http\Controllers\EmailTemplateController::class, 'index'])->name('email_template.index');
+    Route::post('/email-template', [\App\Http\Controllers\EmailTemplateController::class, 'update'])->name('email_template.update');
+});
+
+// ── Testing / Preview Email ──
+Route::get('/preview-email-reminder', function (\Illuminate\Http\Request $request) {
+    // Ambil sembarang langganan untuk contoh data (atau buat dummy jika kosong)
+    $subscription = \App\Models\Subscription::with(['user', 'pricingPlan'])->first();
+
+    if (!$subscription) {
+        return "Tidak ada data langganan di database untuk dijadikan contoh preview. Silakan buat 1 langganan dulu.";
+    }
+
+    $mail = new \App\Mail\SubscriptionExpiringMail($subscription);
+
+    // Jika ingin dikirim ke email tertentu: ?send_to=email_anda@gmail.com
+    if ($request->has('send_to')) {
+        \Illuminate\Support\Facades\Mail::to($request->send_to)->send($mail);
+        return "Email percobaan berhasil dikirim ke: " . $request->send_to;
+    }
+
+    // Jika tidak ada parameter send_to, tampilkan preview langsung di browser
+    return $mail;
 });

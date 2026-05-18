@@ -2,7 +2,7 @@
     <a href="{{ route('dashboard') }}" class="header-logo">
         {{-- Desktop logo: teks brand --}}
         @php
-            $logoIcon = '<span style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" /></svg></span>';
+            $logoIcon = '<img src="'.asset('dist/assets/images/logo_dashmo.png').'" style="width:32px;height:32px;object-fit:contain;" alt="DashMo Logo">';
         @endphp
 
         {{-- Desktop logo (Light) --}}
@@ -167,6 +167,13 @@
                 <a href="{{ route('system.logs') }}" class="side-menu__item">
                     <i class="bx bx-bug side-menu__icon"></i>
                     <span class="side-menu__label">System Logs</span>
+                </a>
+            </li>
+            
+            <li class="slide {{ request()->routeIs('system.email_template.*') ? 'active' : '' }}">
+                <a href="{{ route('system.email_template.index') }}" class="side-menu__item">
+                    <i class="bx bx-envelope side-menu__icon"></i>
+                    <span class="side-menu__label">Template Email</span>
                 </a>
             </li>
             @endif

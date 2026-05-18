@@ -486,9 +486,7 @@
         <!-- Brand -->
         <div class="brand">
             <div class="brand-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 3h18v4H3V3zm0 6h8v4H3V9zm0 6h8v4H3v-4zm10-6h8v10h-8V9z" />
-                </svg>
+                <img src="{{ asset('dist/assets/images/logo_dashmo.png') }}" style="width:28px;height:28px;object-fit:contain;" alt="DashMo Logo">
             </div>
             <div class="version-badge">DashMo System</div>
             <h1>Selamat Datang</h1>

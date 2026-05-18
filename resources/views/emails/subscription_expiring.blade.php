@@ -15,9 +15,7 @@
                     <tr>
                         <td style="text-align: center; padding-bottom: 32px;">
                             <div style="display: inline-flex; align-items: center; gap: 10px;">
-                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #22d3ee); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
-                                    <span style="font-size: 20px; color: #fff;">📊</span>
-                                </div>
+                                <img src="{{ asset('dist/assets/images/logo_dashmo.png') }}" style="width: 40px; height: 40px; object-fit: contain;" alt="DashMo Logo">
                                 <span style="font-size: 22px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.5px;">DashMo</span>
                             </div>
                         </td>
@@ -44,14 +42,8 @@
                                 @endif
                             </div>
 
-                            {{-- Title --}}
-                            <h1 style="color: #f1f5f9; font-size: 24px; font-weight: 700; text-align: center; margin: 0 0 8px; letter-spacing: -0.5px;">
-                                Halo, {{ $subscription->user->name ?? 'Pelanggan' }}!
-                            </h1>
-                            <p style="color: #94a3b8; font-size: 15px; text-align: center; margin: 0 0 28px; line-height: 1.6;">
-                                Langganan DashMo Anda akan berakhir dalam <strong style="color: {{ $daysLeft <= 3 ? '#fbbf24' : '#818cf8' }};">{{ $daysLeft }} hari</strong>.
-                                Perpanjang sekarang agar tim Anda tetap bisa memantau penjualan tanpa gangguan.
-                            </p>
+                            {{-- Title & Body --}}
+                            {!! $parsedBody !!}
 
                             {{-- Subscription Details --}}
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; margin-bottom: 28px;">
