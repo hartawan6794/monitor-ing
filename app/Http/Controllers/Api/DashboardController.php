@@ -192,24 +192,39 @@ class DashboardController extends Controller
      */
     private function calculateMetrics($startDate, $endDate)
     {
-        // Omzet = Total Uang Masuk (Debit) dari Sales Payments
-        $omzet = (float) DB::table('salespayments')
-            ->whereBetween('transdate', [$startDate, $endDate])
-            ->sum('debit');
+        // 1. Gross Sales Net Amount dari Sales Detail (kind = 0)
+        $totalNetDetail = (float) DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startDate, $endDate])
+            ->where('sales.kind', 0)
+            ->sum('salesdetail.netamount');
 
-        // Total Invoices
+        // 2. Total Global Discount dari Sales Header (kind = 0)
+        // Dihitung terpisah dari sales langsung agar tidak terduplikasi oleh item detail
+        $totalDiscount = (float) DB::table('sales')
+            ->whereBetween('salesdate', [$startDate, $endDate])
+            ->where('kind', 0)
+            ->sum('salesvaluedisc');
+
+        // Omzet = Gross Sales - Global Discount
+        $omzet = $totalNetDetail - $totalDiscount;
+
+        // Total Invoices (kind = 0)
         $totalInvoices = DB::table('sales')
             ->whereBetween('salesdate', [$startDate, $endDate])
             ->where('kind', 0)
             ->count('salesid');
 
-        // COGS (HPP) = Total Cost dari Sales Detail
+        // COGS (HPP) = Total Cost dari Sales Detail (kind = 0)
         $cogs = (float) DB::table('salesdetail')
-            ->whereBetween('transdate', [$startDate, $endDate])
-            ->sum('cogs');
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startDate, $endDate])
+            ->where('sales.kind', 0)
+            ->sum('salesdetail.cogs');
 
         $laba = $omzet - $cogs;
-        $margin = $omzet > 0 ? round(($laba / $omzet) * 100, 1) : 0;
+        // Menggunakan presisi 2 desimal sesuai ROUND(..., 2) di query SQL Anda
+        $margin = $omzet > 0 ? round(($laba / $omzet) * 100, 2) : 0;
         $avgInvoice = $totalInvoices > 0 ? round($omzet / $totalInvoices, 0) : 0;
 
         return [
@@ -220,6 +235,7 @@ class DashboardController extends Controller
             'avg_invoice' => $avgInvoice
         ];
     }
+
 
     public function topProducts(Request $request)
     {
@@ -265,7 +281,9 @@ class DashboardController extends Controller
      * 3. GET TOP SALESMEN (Berdasarkan Total Omzet/Debit)
      * Menerima query param: ?period=today|month|year
      */
-    public function topSalesmen(Request $request) { $dates = $this->getDateRangeFromRequest($request);
+    public function topSalesmen(Request $request)
+    {
+        $dates = $this->getDateRangeFromRequest($request);
 
         $salesmen = DB::table('salespayments')
             ->join('sales', 'salespayments.salesidref', '=', 'sales.salesid')
@@ -299,11 +317,13 @@ class DashboardController extends Controller
         $startDate = Carbon::now()->subDays(6)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
-        $chartData = DB::table('salespayments')
-            ->select(DB::raw('DATE(transdate) as date'), DB::raw('SUM(debit) as total'))
-            ->whereBetween('transdate', [$startDate, $endDate])
-            ->groupBy(DB::raw('DATE(transdate)'))
-            ->orderBy('date', 'asc')
+        $chartData = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->whereBetween('sales.salesdate', [$startDate, $endDate])
+            ->where('sales.kind', 0)
+            ->groupBy(DB::raw('DATE(sales.salesdate)'))
+            ->orderBy(DB::raw('DATE(sales.salesdate)'), 'asc')
+            ->select(DB::raw('DATE(sales.salesdate) as date'), DB::raw('SUM(salesdetail.netamount) as total'))
             ->get();
 
         return response()->json(['status' => 'success', 'data' => $chartData]);
