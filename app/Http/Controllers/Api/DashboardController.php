@@ -309,9 +309,46 @@ class DashboardController extends Controller
         return response()->json(['status' => 'success', 'data' => $salesmen]);
     }
 
-    /**
-     * 4. GET CHART DATA (Tren Pendapatan 7 Hari Terakhir)
-     */
+    public function topServiceDoers(Request $request)
+    {
+        $dates = $this->getDateRangeFromRequest($request);
+        $limit = (int) $request->query('limit', 10);
+
+        $doers = DB::table('salesdetail')
+            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
+            ->join('servicedoer', 'salesdetail.servicedoerid', '=', 'servicedoer.id')
+            ->select(
+                'servicedoer.id as doer_id',
+                'servicedoer.name as doer_name',
+                DB::raw('SUM(salesdetail.netto) as total_omset'),
+                DB::raw('COUNT(DISTINCT salesdetail.salesid) as total_invoice'),
+                DB::raw('SUM(salesdetail.qty) as total_qty')
+            )
+            ->whereBetween('sales.transdate', $dates)
+            ->whereNotNull('salesdetail.servicedoerid')
+            ->where('salesdetail.servicedoerid', '!=', '')
+            ->groupBy('servicedoer.id', 'servicedoer.name')
+            ->orderByDesc('total_omset')
+            ->limit($limit)
+            ->get()
+            ->map(function ($item, $index) {
+                return [
+                    'rank' => $index + 1,
+                    'doer_id' => $item->doer_id,
+                    'doer_name' => $item->doer_name,
+                    'total_omset' => (float) $item->total_omset,
+                    'total_invoice' => (int) $item->total_invoice,
+                    'total_qty' => (float) $item->total_qty,
+                    // Format siap pakai untuk display di Android
+                    'title' => $item->doer_name,
+                    'subtitle' => 'Omset: Rp ' . number_format($item->total_omset, 0, ',', '.'),
+                ];
+            });
+
+        return response()->json(['status' => 'success', 'data' => $doers]);
+    }
+
+
     public function revenueChart()
     {
         $startDate = Carbon::now()->subDays(6)->startOfDay();

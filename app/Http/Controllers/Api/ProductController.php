@@ -138,6 +138,68 @@ class ProductController extends Controller
     }
 
     /**
+     * Daftar Produk TANPA Informasi Stok.
+     * Lebih ringan karena tidak perlu JOIN ke tabel inventory & tidak perlu SUM/GROUP BY.
+     * Cocok untuk dropdown pilih produk, katalog produk, dll.
+     *
+     * GET /products/no-stock?search=&devisi=&departement=&limit=
+     */
+    public function indexWithoutStock(Request $request)
+    {
+        $search = $request->query('search');
+        $brandId = $request->query('brand');
+        $supplierId = $request->query('supplier');
+        $limit = $request->query('limit');
+
+        $products = DB::table('product')
+            ->leftJoin('supplier', 'product.supplier', '=', 'supplier.id')
+            ->leftJoin('productbrand', 'product.brand', '=', 'productbrand.id')
+            ->select(
+                'product.id as sku',
+                'product.name',
+                'product.salesprice1 as price1',
+                'product.salesprice2 as price2',
+                'product.salesprice3 as price3',
+                'product.defunit as unit',
+                'supplier.id as supplier_id',
+                'supplier.name as supplier_name',
+                'productbrand.id as brand_id',
+                'productbrand.name as brand_name',
+                'product.image as image_blob'
+            )
+            ->where('product.isactive', 1)
+            ->when($supplierId, function ($query, $supplierId) {
+                return $query->where('product.supplier', $supplierId);
+            })
+            ->when($brandId, function ($query, $brandId) {
+                return $query->where('product.brand', $brandId);
+            })
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($query) use ($search) {
+                    $query->where('product.name', 'LIKE', "%{$search}%")
+                        ->orWhere('product.id', 'LIKE', "%{$search}%");
+                });
+            })
+            ->orderBy('product.name')
+            ->paginate($limit ?: 20);
+
+        // Konversi BLOB image menjadi string Base64
+        $products->getCollection()->transform(function ($item) {
+            if (!empty($item->image_blob)) {
+                $item->image_blob = base64_encode($item->image_blob);
+            }
+            return $item;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $products->items(),
+            'current_page' => $products->currentPage(),
+            'last_page' => $products->lastPage()
+        ]);
+    }
+
+    /**
      * Mengambil Detail 1 Produk berdasarkan ID (SKU)
      */
     public function show(Request $request)

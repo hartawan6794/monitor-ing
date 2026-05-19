@@ -50,6 +50,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
         Route::get('/owner-summary', [DashboardController::class, 'ownerSummary']);
         Route::get('/top-products', [DashboardController::class, 'topProducts']);
         Route::get('/top-salesmen', [DashboardController::class, 'topSalesmen']);
+        Route::get('/top-service-doers', [DashboardController::class, 'topServiceDoers']); // Ranking Pelaksana Jasa
         Route::get('/chart', [DashboardController::class, 'revenueChart']);
         Route::get('/chart-monthly', [DashboardController::class, 'monthlyChart']);
         Route::get('/gudang', [DashboardController::class, 'gudangDashboard']);
@@ -57,6 +58,7 @@ Route::middleware(['force.json', \App\Http\Middleware\DatabaseSwitcher::class, '
 
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
+        Route::get('/no-stock', [ProductController::class, 'indexWithoutStock']); // Tanpa data stok (lebih ringan)
         Route::get('/low-stock-alert', [ProductController::class, 'lowStockAlert']);
         Route::post('/', [ProductController::class, 'store']);
         Route::get('/{id}', [ProductController::class, 'show'])->where('id', '.*'); // Menambahkan endpoint detail produk dengan support karakter slash (/)
