@@ -20,6 +20,22 @@ class ConnectionWebController extends Controller
             'db_name'   => 'required|string',
         ]);
 
+        // [IDOR PATCH]: Pastikan user adalah admin, atau merupakan pemilik dari database tersebut
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            $isOwned = \App\Models\AvailableDatabase::where('user_id', $user->id)
+                ->where('server_id', $request->server_id)
+                ->where('db_name', $request->db_name)
+                ->exists();
+
+            if (!$isOwned) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Unauthorized Access (IDOR). Anda tidak memiliki hak akses ke database ini.',
+                ], 403);
+            }
+        }
+
         $server = AuthorizedServer::findOrFail($request->server_id);
 
         try {
@@ -41,10 +57,8 @@ class ConnectionWebController extends Controller
                 'details' => [
                     'server'    => $server->server_name,
                     'ip'        => $server->ip_address,
-                    'port'      => (int) ($server->port ?? 3306),
                     'database'  => $request->db_name,
-                    'username'  => $server->username,
-                    'password'  => $server->password,
+                    // [DATA LEAK PATCH]: Username dan Password dihapus dari respons JSON
                 ],
             ]);
         } catch (\Exception $e) {

@@ -11,7 +11,7 @@ class PricingPlan extends Model
       protected $table = 'pricing_plans';
 
     protected $fillable = [
-        'name', 'price', 'price_subtext', 'button_text', 'button_link', 'is_featured', 'badge_text', 'order'
+        'name', 'price', 'price_subtext', 'duration_days', 'button_text', 'button_link', 'is_featured', 'badge_text', 'order'
     ];
 
     public function features()
