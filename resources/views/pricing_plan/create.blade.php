@@ -71,6 +71,23 @@
 
             <div class="grid grid-cols-12 gap-x-4">
                 <div class="col-span-6 mb-4">
+                    <label for="form-duration_days" class="form-label !text-[.875rem] text-black">Masa Aktif (Hari)</label>
+                    <input type="number" class="form-control @error('duration_days') is-invalid @enderror" id="form-duration_days" name="duration_days" value="{{ old('duration_days', 30) }}" placeholder="Contoh: 30">
+                    @error('duration_days')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+                <div class="col-span-6 mb-4">
+                    <label for="form-max_databases" class="form-label !text-[.875rem] text-black">Maksimal Database</label>
+                    <input type="number" class="form-control @error('max_databases') is-invalid @enderror" id="form-max_databases" name="max_databases" value="{{ old('max_databases', 1) }}" placeholder="Contoh: 3, 999 untuk unlimited">
+                    @error('max_databases')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-x-4">
+                <div class="col-span-6 mb-4">
                     <label for="form-button_text" class="form-label !text-[.875rem] text-black">Teks Tombol</label>
                     <input type="text" class="form-control @error('button_text') is-invalid @enderror" id="form-button_text" name="button_text" value="{{ old('button_text') }}" placeholder="Contoh: Get Started">
                     @error('button_text')

@@ -23,7 +23,7 @@ class SetupWizardController extends Controller
         $prefillUser = null;
         if ($request->filled('user_id')) {
             $prefillUser = User::with([
-                'subscriptions' => fn ($q) => $q->where('status', 'active')->latest()->limit(1),
+                'subscriptions' => fn($q) => $q->where('status', 'active')->latest()->limit(1),
                 'subscriptions.pricingPlan',
             ])->find($request->user_id);
         }
@@ -38,10 +38,10 @@ class SetupWizardController extends Controller
     public function registeredUsersPage()
     {
         // Hanya ambil aggregate — tidak load semua kolom user
-        $totalUsers      = User::count();
-        $subscribedUsers = User::whereHas('subscriptions', fn ($q) => $q->where('status', 'active'))->count();
-        $pendingUsers    = User::where('provisioning_status', 'pending')->count();
-        $noSubUsers      = User::whereDoesntHave('subscriptions', fn ($q) => $q->where('status', 'active'))->count();
+        $totalUsers = User::count();
+        $subscribedUsers = User::whereHas('subscriptions', fn($q) => $q->where('status', 'active'))->count();
+        $pendingUsers = User::where('provisioning_status', 'pending')->count();
+        $noSubUsers = User::whereDoesntHave('subscriptions', fn($q) => $q->where('status', 'active'))->count();
 
         return view('setup.registered_users', compact('totalUsers', 'subscribedUsers', 'pendingUsers', 'noSubUsers'));
     }
@@ -53,10 +53,10 @@ class SetupWizardController extends Controller
     public function getRegisteredUsersData(Request $request)
     {
         $query = User::with([
-            'subscriptions' => fn ($q) => $q->where('status', 'active')->latest()->limit(1),
+            'subscriptions' => fn($q) => $q->where('status', 'active')->latest()->limit(1),
             'subscriptions.pricingPlan',
             'availableDatabases',
-        ]);
+        ])->where('username', '!=', 'admin');
 
         // Filter by provisioning_status jika ada
         if ($request->filled('prov_status') && $request->prov_status !== 'all') {
@@ -66,21 +66,21 @@ class SetupWizardController extends Controller
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('avatar', function ($user) {
-                $colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#22d3ee','#a855f7','#ec4899'];
-                $color  = $colors[$user->id % count($colors)];
-                $init   = strtoupper(substr($user->name, 0, 1));
+                $colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#22d3ee', '#a855f7', '#ec4899'];
+                $color = $colors[$user->id % count($colors)];
+                $init = strtoupper(substr($user->name, 0, 1));
                 return "<div style='width:36px;height:36px;border-radius:50%;background:{$color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;flex-shrink:0;'>{$init}</div>";
             })
             ->addColumn('user_info', function ($user) {
-                $name     = e($user->name);
+                $name = e($user->name);
                 $username = e($user->username ?? '—');
                 return "<div class='font-semibold text-defaulttextcolor dark:text-white'>{$name}</div>
                         <div class='text-xs text-muted'>{$username}</div>";
             })
             ->addColumn('status_badge', function ($user) {
-                $pStatus  = $user->provisioning_status;
-                $sub      = $user->subscriptions->first();
-                $hasSub   = (bool) $sub;
+                $pStatus = $user->provisioning_status;
+                $sub = $user->subscriptions->first();
+                $hasSub = (bool) $sub;
                 $isActive = $hasSub && $sub->expires_at && \Carbon\Carbon::parse($sub->expires_at)->gte(now());
 
                 if ($pStatus === 'provisioned' && $isActive)
@@ -99,11 +99,12 @@ class SetupWizardController extends Controller
             })
             ->addColumn('expiry', function ($user) {
                 $sub = $user->subscriptions->first();
-                if (!$sub?->expires_at) return '<span class="text-muted text-xs">—</span>';
-                $date     = \Carbon\Carbon::parse($sub->expires_at);
+                if (!$sub?->expires_at)
+                    return '<span class="text-muted text-xs">—</span>';
+                $date = \Carbon\Carbon::parse($sub->expires_at);
                 $isActive = $date->gte(now());
-                $days     = (int) now()->diffInDays($date, false);
-                $cls      = $isActive ? '' : 'color:#dc2626;';
+                $days = (int) now()->diffInDays($date, false);
+                $cls = $isActive ? '' : 'color:#dc2626;';
                 $remaining = $isActive ? "<div class='text-xs text-muted'>Sisa {$days} hari</div>" : '';
                 return "<div style='font-size:.85rem;font-weight:500;{$cls}'>{$date->format('d M Y')}</div>{$remaining}";
             })
@@ -114,15 +115,16 @@ class SetupWizardController extends Controller
                 foreach ($user->availableDatabases->take(2) as $db)
                     $html .= '<span class="badge-db">' . e($db->db_name) . '</span>';
                 $extra = $user->availableDatabases->count() - 2;
-                if ($extra > 0) $html .= "<span class='text-xs text-muted'>+{$extra}</span>";
+                if ($extra > 0)
+                    $html .= "<span class='text-xs text-muted'>+{$extra}</span>";
                 $html .= '</div>';
                 return $html;
             })
             ->addColumn('actions', function ($user) {
-                $pStatus    = $user->provisioning_status;
-                $setupUrl   = route('setup.wizard', ['user_id' => $user->id]);
-                $dbUrl      = route('available_database.index');
-                $statusUrl  = route('registered.users.provisioning', $user->id);
+                $pStatus = $user->provisioning_status;
+                $setupUrl = route('setup.wizard', ['user_id' => $user->id]);
+                $dbUrl = route('available_database.index');
+                $statusUrl = route('registered.users.provisioning', $user->id);
 
                 // Tombol aksi utama
                 if ($pStatus === 'pending') {
@@ -135,10 +137,10 @@ class SetupWizardController extends Controller
 
                 // Status options
                 $statuses = \App\Models\User::PROVISIONING_STATUSES;
-                $options  = '';
+                $options = '';
                 foreach ($statuses as $key => $meta) {
                     $checked = $key === $pStatus ? '<i class="ri-check-line ms-auto" style="color:#6366f1;"></i>' : '';
-                    $bg      = $key === $pStatus ? 'rgba(99,102,241,.08)' : 'transparent';
+                    $bg = $key === $pStatus ? 'rgba(99,102,241,.08)' : 'transparent';
                     $options .= "<button type='button' class='prov-status-option w-full text-left flex items-center gap-2'
                         data-user-id='{$user->id}' data-status='{$key}' data-url='{$statusUrl}'
                         style='padding:7px 10px;border-radius:8px;border:none;background:{$bg};cursor:pointer;width:100%;font-size:.82rem;font-weight:600;color:{$meta['color']};transition:background .15s;'>
@@ -164,7 +166,7 @@ class SetupWizardController extends Controller
                     </div>
                 </div>";
             })
-            ->rawColumns(['avatar','user_info','status_badge','plan_name','expiry','db_list','actions'])
+            ->rawColumns(['avatar', 'user_info', 'status_badge', 'plan_name', 'expiry', 'db_list', 'actions'])
             ->make(true);
     }
 
@@ -182,12 +184,12 @@ class SetupWizardController extends Controller
         $user->setProvisioningStatus($request->status);
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => "Status {$user->name} diubah dari <b>{$oldStatus}</b> → <b>{$request->status}</b>.",
             'new_status' => $request->status,
-            'label'      => \App\Models\User::PROVISIONING_STATUSES[$request->status]['label'],
-            'color'      => \App\Models\User::PROVISIONING_STATUSES[$request->status]['color'],
-            'icon'       => \App\Models\User::PROVISIONING_STATUSES[$request->status]['icon'],
+            'label' => \App\Models\User::PROVISIONING_STATUSES[$request->status]['label'],
+            'color' => \App\Models\User::PROVISIONING_STATUSES[$request->status]['color'],
+            'icon' => \App\Models\User::PROVISIONING_STATUSES[$request->status]['icon'],
         ]);
     }
 
@@ -198,20 +200,20 @@ class SetupWizardController extends Controller
     public function getRegisteredUsers()
     {
         $users = User::with([
-            'subscriptions' => fn ($q) => $q->where('status', 'active')->latest()->limit(1),
+            'subscriptions' => fn($q) => $q->where('status', 'active')->latest()->limit(1),
             'subscriptions.pricingPlan',
         ])->orderBy('name')->get()->map(function ($user) {
             $activeSub = $user->subscriptions->first();
             return [
-                'id'           => $user->id,
-                'name'         => $user->name,
-                'username'     => $user->username ?? $user->email,
-                'email'        => $user->email,
-                'has_sub'      => (bool) $activeSub,
-                'plan_id'      => $activeSub?->pricing_plan_id,
-                'plan_name'    => $activeSub?->pricingPlan?->name ?? null,
-                'expires_at'   => $activeSub?->expires_at,
-                'sub_status'   => $activeSub?->status,
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username ?? $user->email,
+                'email' => $user->email,
+                'has_sub' => (bool) $activeSub,
+                'plan_id' => $activeSub?->pricing_plan_id,
+                'plan_name' => $activeSub?->pricingPlan?->name ?? null,
+                'expires_at' => $activeSub?->expires_at,
+                'sub_status' => $activeSub?->status,
             ];
         });
 
@@ -225,19 +227,19 @@ class SetupWizardController extends Controller
     public function getUserSubscription($userId)
     {
         $user = User::with([
-            'subscriptions' => fn ($q) => $q->where('status', 'active')->latest()->limit(1),
+            'subscriptions' => fn($q) => $q->where('status', 'active')->latest()->limit(1),
             'subscriptions.pricingPlan',
         ])->findOrFail($userId);
 
         $sub = $user->subscriptions->first();
 
         return response()->json([
-            'status'       => 'success',
-            'has_sub'      => (bool) $sub,
-            'plan_id'      => $sub?->pricing_plan_id,
-            'plan_name'    => $sub?->pricingPlan?->name,
-            'expires_at'   => $sub?->expires_at,
-            'sub_status'   => $sub?->status,
+            'status' => 'success',
+            'has_sub' => (bool) $sub,
+            'plan_id' => $sub?->pricing_plan_id,
+            'plan_name' => $sub?->pricingPlan?->name,
+            'expires_at' => $sub?->expires_at,
+            'sub_status' => $sub?->status,
         ]);
     }
 
@@ -341,29 +343,40 @@ class SetupWizardController extends Controller
             ->first();
 
         if ($existingDb) {
-             return response()->json([
+            return response()->json([
                 'status' => 'error',
                 'message' => 'Database ini sudah terdaftar di sistem!'
             ], 422);
         }
 
-        $packageType = 'basic';
-        if ($validated['package_type']) {
-            $plan = PricingPlan::find($validated['package_type']);
-            if ($plan) {
-                $packageType = strtolower($plan->name);
-            }
+        $plan = PricingPlan::find($validated['package_type']);
+        if (!$plan) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Paket langganan tidak valid.'
+            ], 422);
         }
-        
-        $validatedDb = $validated;
-        $validatedDb['package_type'] = $packageType;
-        
-        AvailableDatabase::create($validatedDb);
+
+        // Check Max Databases Limit
+        $currentDbCount = AvailableDatabase::where('user_id', $validated['user_id'])->count();
+        if ($currentDbCount >= $plan->max_databases) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Batas maksimal koneksi database untuk paket ini telah tercapai (' . $plan->max_databases . ' DB). Silakan upgrade paket.'
+            ], 422);
+        }
+
+        AvailableDatabase::create([
+            'user_id' => $validated['user_id'],
+            'server_id' => $validated['server_id'],
+            'db_name' => $validated['db_name'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
         // Update or Create Subscription for the user
         if (!empty($validated['expired_at'])) {
             $subscription = Subscription::where('user_id', $validated['user_id'])->where('status', 'active')->first();
-            
+
             if ($subscription) {
                 $subscription->update([
                     'pricing_plan_id' => $validated['package_type'],
@@ -380,6 +393,11 @@ class SetupWizardController extends Controller
                 ]);
             }
         }
+
+        // Tandai user sebagai 'provisioned' — DB pertama sudah terhubung.
+        User::where('id', $validated['user_id'])
+            ->whereIn('provisioning_status', ['unregistered', 'pending'])
+            ->update(['provisioning_status' => 'provisioned']);
 
         return response()->json([
             'status' => 'success',

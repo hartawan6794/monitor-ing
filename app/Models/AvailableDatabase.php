@@ -19,9 +19,7 @@ class AvailableDatabase extends Model
     'user_id',
     'server_id',
     'db_name',
-    'description',
-    'package_type',
-    'expired_at'
+    'description'
   ];
 
   public function user()

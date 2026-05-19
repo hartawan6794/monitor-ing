@@ -421,6 +421,20 @@
                             </div>
 
                             <ul class="space-y-4 mb-8 flex-grow">
+                                <!-- Maksimal Database Indicator -->
+                                <li class="flex items-start gap-3 text-sm text-white font-semibold">
+                                    <svg class="w-5 h-5 flex-shrink-0 text-accent"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>
+                                        @if($plan->max_databases >= 999)
+                                            Unlimited Database
+                                        @else
+                                            Maksimal {{ $plan->max_databases }} Database
+                                        @endif
+                                    </span>
+                                </li>
                                 @foreach($plan->features as $feature)
                                     <li
                                         class="flex items-start gap-3 text-sm {{ $feature->is_highlighted ? 'text-white font-semibold' : 'text-slate-400' }}">

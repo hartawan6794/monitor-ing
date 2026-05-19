@@ -341,6 +341,7 @@ $(document).ready(function () {
         const planId   = selected.data('plan-id');
         const planName = selected.data('plan-name');
         const expires  = selected.data('expires');
+        console.log(selected);
 
         const infoBox     = $('#sub-info-box');
         const infoContent = $('#sub-info-content');

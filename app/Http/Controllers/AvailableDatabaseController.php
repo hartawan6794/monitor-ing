@@ -107,18 +107,25 @@ class AvailableDatabaseController extends Controller
             return redirect()->route('available_database.manage', $validated['server_id']);
         }
 
-        $packageType = 'basic';
-        if ($validated['package_type']) {
-            $plan = PricingPlan::find($validated['package_type']);
-            if ($plan) {
-                $packageType = strtolower($plan->name);
-            }
+        $plan = PricingPlan::find($validated['package_type']);
+        if (!$plan) {
+            Alert::error('Error', 'Paket langganan tidak valid.');
+            return redirect()->route('available_database.manage', $validated['server_id']);
         }
-        
-        $validatedDb = $validated;
-        $validatedDb['package_type'] = $packageType;
 
-        AvailableDatabase::create($validatedDb);
+        // Check Max Databases Limit
+        $currentDbCount = AvailableDatabase::where('user_id', $validated['user_id'])->count();
+        if ($currentDbCount >= $plan->max_databases) {
+            Alert::error('Error', 'Batas maksimal koneksi database untuk paket ini telah tercapai (' . $plan->max_databases . ' DB).');
+            return redirect()->route('available_database.manage', $validated['server_id']);
+        }
+
+        AvailableDatabase::create([
+            'user_id' => $validated['user_id'],
+            'server_id' => $validated['server_id'],
+            'db_name' => $validated['db_name'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
         // Update or Create Subscription for the user
         if (!empty($validated['expired_at'])) {
