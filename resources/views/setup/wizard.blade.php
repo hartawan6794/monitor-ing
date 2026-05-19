@@ -200,7 +200,19 @@
 @push('scripts')
 <script>
 // Prefill data dari controller
-const PREFILL_USER = @json($prefillUser ? ['id' => $prefillUser->id, 'name' => $prefillUser->name] : null);
+@php
+    $prefillData = null;
+    if ($prefillUser) {
+        $sub = $prefillUser->subscriptions->first();
+        $prefillData = [
+            'id'         => $prefillUser->id, 
+            'name'       => $prefillUser->name,
+            'plan_id'    => $sub?->pricing_plan_id ?? '',
+            'expires_at' => $sub?->expires_at ? \Carbon\Carbon::parse($sub->expires_at)->format('Y-m-d') : date('Y-m-d', strtotime('+1 month'))
+        ];
+    }
+@endphp
+const PREFILL_USER = @json($prefillData);
 
 $(document).ready(function() {
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
@@ -208,6 +220,14 @@ $(document).ready(function() {
     // ── Jika ada prefill user (user sudah terdaftar), skip Step 1 otomatis ──
     if (PREFILL_USER) {
         $('#created_user_id').val(PREFILL_USER.id);
+
+        // Pre-fill Step 3 subscription data
+        if (PREFILL_USER.plan_id) {
+            $('select[name="package_type"]').val(PREFILL_USER.plan_id);
+        }
+        if (PREFILL_USER.expires_at) {
+            $('input[name="expired_at"]').val(PREFILL_USER.expires_at);
+        }
 
         // Auto-klik submit setelah 3 detik
         let countdown = 3;

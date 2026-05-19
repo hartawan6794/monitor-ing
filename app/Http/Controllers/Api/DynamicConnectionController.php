@@ -59,20 +59,29 @@ class DynamicConnectionController extends Controller
             ], 401);
         }
 
-        // 3. Cari database yang dimiliki user dan belum expired
+        // 3. Cari langganan aktif milik user dari tabel central subscriptions
+        $activeSubscription = \App\Models\Subscription::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$activeSubscription) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ada paket langganan yang aktif untuk user ini.',
+            ], 404);
+        }
+
+        // 4. Cari database yang dimiliki user
         $availableDatabases = \App\Models\AvailableDatabase::with('server')
             ->where('user_id', $user->id)
-            ->where(function ($query) {
-                $query->whereNull('expired_at')
-                    ->orWhere('expired_at', '>', now());
-            })
             ->get();
 
-        // 4. Jika User tidak memiliki database yang aktif
+        // 5. Jika User tidak memiliki database yang terdaftar
         if ($availableDatabases->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Tidak ada paket database yang aktif untuk user ini.'
+                'message' => 'Tidak ada database yang dikaitkan untuk user ini.'
             ], 404);
         }
 
@@ -89,7 +98,7 @@ class DynamicConnectionController extends Controller
             ->delete();
 
         // 6. Buat Access Key baru per database
-        $dbList = $availableDatabases->map(function ($db) use ($user, $request) {
+        $dbList = $availableDatabases->map(function ($db) use ($user, $request, $activeSubscription) {
             // Buat key baru
             $accessKey = bin2hex(random_bytes(32)); // 64 karakter hex
             \App\Models\DatabaseAccessKey::create([
@@ -100,10 +109,14 @@ class DynamicConnectionController extends Controller
                 'expires_at' => now()->addMonths(1),
             ]);
 
+            // Ambil data paket dari tabel subscription (Single Source of Truth)
+            $planName = $activeSubscription->pricingPlan ? strtolower($activeSubscription->pricingPlan->name) : 'basic';
+
             return [
                 'db_name' => $db->db_name,
                 'description' => $db->description,
-                'package_type' => $db->package_type,
+                'package_type' => $planName,
+                'expired_at' => $activeSubscription->expires_at ? $activeSubscription->expires_at->toDateString() : null, // 📅 Sama dengan global
                 'access_key' => $accessKey, // 🔑 Kirim ke Android untuk dipakai saat /login
             ];
         });
@@ -113,6 +126,7 @@ class DynamicConnectionController extends Controller
             'message' => 'Sukses mengambil data.',
             'data' => [
                 'user' => $user->name,
+                'expired_at' => $activeSubscription->expires_at ? $activeSubscription->expires_at->toDateString() : null, // 📅 Masa aktif global langganan
                 'total_db' => $dbList->count(),
                 'databases' => $dbList
             ]

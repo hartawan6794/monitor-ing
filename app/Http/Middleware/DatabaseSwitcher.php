@@ -24,7 +24,7 @@ class DatabaseSwitcher
             // ────────────────────────────────────────────
             if ($accessKey) {
                 // Cache hasil lookup access_key selama 5 menit (umur tiket)
-                $keyRecord = Cache::remember("db_access_key_{$accessKey}", 300, function() use ($accessKey) {
+                $keyRecord = Cache::remember("db_access_key_{$accessKey}", 300, function () use ($accessKey) {
                     return \App\Models\DatabaseAccessKey::with('availableDatabase.server')
                         ->where('access_key', $accessKey)
                         ->first();
@@ -46,7 +46,7 @@ class DatabaseSwitcher
                 // OPTIMASI: Cache konfigurasi server selama 1 jam (3600 detik)
                 // Ini mengurangi beban Master DB secara signifikan!
                 $cacheKey = "server_config_{$dbName}";
-                $availableDb = Cache::remember($cacheKey, 3600, function() use ($dbName) {
+                $availableDb = Cache::remember($cacheKey, 3600, function () use ($dbName) {
                     return \App\Models\AvailableDatabase::with('server')
                         ->where('db_name', $dbName)
                         ->first();
