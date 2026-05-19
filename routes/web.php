@@ -55,6 +55,14 @@ Route::middleware('auth')->prefix('subscriptions')->name('subscriptions.')->grou
     Route::post('/{id}/send-reminder', [\App\Http\Controllers\SubscriptionController::class, 'sendReminder'])->name('sendReminder');
 });
 
+// ── Langganan Saya (User View) ──
+Route::middleware('auth')->prefix('my-subscription')->name('my-subscription.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\UserSubscriptionController::class, 'index'])->name('index');
+    Route::get('/plans', [\App\Http\Controllers\UserSubscriptionController::class, 'plans'])->name('plans');
+    Route::get('/checkout/{id}', [\App\Http\Controllers\UserSubscriptionController::class, 'checkout'])->name('checkout');
+    Route::post('/process-payment/{id}', [\App\Http\Controllers\UserSubscriptionController::class, 'processPayment'])->name('processPayment');
+});
+
 // ── System Admin ──
 Route::middleware('auth')->prefix('system')->name('system.')->group(function () {
     Route::get('/apk-manager', [\App\Http\Controllers\ApkManagerController::class, 'index'])->name('apk_manager');

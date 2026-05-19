@@ -56,6 +56,13 @@
                 </a>
             </li>
 
+            <li class="slide {{ request()->routeIs('my-subscription.*') ? 'active' : '' }}">
+                <a href="{{ route('my-subscription.index') }}" class="side-menu__item">
+                    <i class="bx bx-credit-card side-menu__icon"></i>
+                    <span class="side-menu__label">Langganan Saya</span>
+                </a>
+            </li>
+
             @if(auth()->check() && (auth()->user()->username === 'admin' || auth()->user()->email === 'admin@gmail.com'))
             <li class="slide {{ request()->routeIs('setup.wizard') ? 'active' : '' }}">
                 <a href="{{ route('setup.wizard') }}" class="side-menu__item">

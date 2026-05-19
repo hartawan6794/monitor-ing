@@ -432,9 +432,9 @@
                                 @endforeach
                             </ul>
 
-                            <a href="{{ $plan->button_link ?? route('login') }}"
-                                class="w-full py-4 px-6 rounded-xl text-center font-semibold text-sm transition-all duration-300 {{ $plan->is_featured ? 'bg-primary text-white hover:bg-primary-light shadow-lg shadow-primary/30' : 'bg-white/10 text-white hover:bg-white/20' }}">
-                                {{ $plan->button_text ?? 'Mulai Sekarang' }}
+                            <a href="{{ route('my-subscription.checkout', $plan->id) }}"
+                                class="w-full inline-block py-4 px-6 rounded-xl text-center font-semibold text-sm transition-all duration-300 {{ $plan->is_featured ? 'bg-primary text-white hover:bg-primary-light shadow-lg shadow-primary/30' : 'bg-white/10 text-white hover:bg-white/20' }}">
+                                {{ Auth::check() ? ($plan->button_text ?? 'Berlangganan Sekarang') : 'Login untuk Mulai' }}
                             </a>
                         </div>
                     @endforeach

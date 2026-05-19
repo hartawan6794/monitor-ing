@@ -1,12 +1,22 @@
 @php
     use App\Models\AuthorizedServer;
     try {
-        $dbServers = AuthorizedServer::with(['availableDatabases' => function ($q) {
-            $q->whereNull('deleted_at')->orderBy('db_name');
-        }])
-        ->where('is_active', 1)
-        ->orderBy('server_name')
-        ->get();
+        $user = auth()->user();
+        $isAdmin = $user && ($user->username === 'admin' || $user->email === 'admin@gmail.com');
+
+        $query = AuthorizedServer::where('is_active', 1)->orderBy('server_name');
+
+        if ($isAdmin) {
+            $dbServers = $query->with(['availableDatabases' => function ($q) {
+                $q->whereNull('deleted_at')->orderBy('db_name');
+            }])->get();
+        } else {
+            $dbServers = $query->whereHas('availableDatabases', function ($q) use ($user) {
+                $q->whereNull('deleted_at')->where('user_id', $user->id);
+            })->with(['availableDatabases' => function ($q) use ($user) {
+                $q->whereNull('deleted_at')->where('user_id', $user->id)->orderBy('db_name');
+            }])->get();
+        }
     } catch (\Exception $e) {
         $dbServers = collect();
     }
@@ -28,16 +38,22 @@
             {{-- ════ DATABASE CONNECTION SWITCHER TRIGGER ════ --}}
             <div class="header-element !items-center px-2 md:px-3">
                 <button id="dbSwitcherBtn" type="button" onclick="openDbSwitcher()"
-                    style="display:flex;align-items:center;gap:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:6px 12px;cursor:pointer;transition:all 0.2s;max-width:280px;"
-                    onmouseenter="this.style.background='rgba(99,102,241,0.14)'"
-                    onmouseleave="this.style.background='rgba(99,102,241,0.08)'"
+                    class="group"
+                    style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg, rgba(99,102,241,0.1), rgba(34,211,238,0.05));border:1px solid rgba(99,102,241,0.3);border-radius:9999px;padding:6px 16px 6px 6px;cursor:pointer;transition:all 0.3s ease;max-width:280px;box-shadow:0 2px 8px -2px rgba(99,102,241,0.15);"
+                    onmouseenter="this.style.boxShadow='0 4px 12px -2px rgba(99,102,241,0.25)';this.style.borderColor='rgba(99,102,241,0.5)'"
+                    onmouseleave="this.style.boxShadow='0 2px 8px -2px rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.3)'"
                 >
-                    <span id="dbStatusDot" style="width:8px;height:8px;border-radius:50%;background:#cbd5e1;flex-shrink:0;transition:background 0.3s;"></span>
-                    <div style="display:flex;flex-direction:column;min-width:0;text-align:left;">
-                        <span id="dbStatusServer" style="font-size:0.65rem;color:#94a3b8;line-height:1;display:none;"></span>
-                        <span id="dbStatusLabel" style="font-size:0.8rem;font-weight:600;color:#6366f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;line-height:1.3;">Pilih Koneksi</span>
+                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#fff;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.05);flex-shrink:0;">
+                        <i class="bx bx-data" style="color:#6366f1;font-size:1.1rem;"></i>
+                        <span id="dbStatusDot" style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#cbd5e1;border:2px solid #fff;transition:background 0.3s;"></span>
                     </div>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:2px;"><polyline points="6 9 12 15 18 9"/></svg>
+                    <div style="display:flex;flex-direction:column;min-width:0;text-align:left;">
+                        <span id="dbStatusServer" style="font-size:0.65rem;font-weight:700;color:#94a3b8;letter-spacing:0.02em;text-transform:uppercase;line-height:1;display:none;margin-bottom:2px;"></span>
+                        <span id="dbStatusLabel" style="font-size:0.85rem;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;line-height:1.2;">Pilih Koneksi DB</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(99,102,241,0.1);margin-left:4px;transition:transform 0.3s;" class="group-hover:translate-x-1">
+                        <i class="bx bx-chevron-right" style="color:#6366f1;font-size:1.2rem;"></i>
+                    </div>
                 </button>
             </div>
 
