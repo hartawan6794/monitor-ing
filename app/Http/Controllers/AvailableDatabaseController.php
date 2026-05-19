@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AvailableDatabaseRequest; // Ganti AvailableDatabase dengan nama model
+use App\Http\Requests\AvailableDatabaseRequest;
 use App\Models\AvailableDatabase;
 use App\Models\PricingPlan;
 use App\Models\Subscription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use RealRashid\SweetAlert\Facades\Alert;
 use Yajra\DataTables\Facades\DataTables;
@@ -126,19 +127,24 @@ class AvailableDatabaseController extends Controller
             if ($subscription) {
                 $subscription->update([
                     'pricing_plan_id' => $validated['package_type'],
-                    'expires_at' => $validated['expired_at'],
+                    'expires_at'      => $validated['expired_at'],
                 ]);
             } else {
                 Subscription::create([
-                    'user_id' => $validated['user_id'],
+                    'user_id'         => $validated['user_id'],
                     'pricing_plan_id' => $validated['package_type'],
-                    'starts_at' => now()->toDateString(),
-                    'expires_at' => $validated['expired_at'],
-                    'status' => 'active',
-                    'notes' => 'Otomatis dibuat dari Manage Database',
+                    'starts_at'       => now()->toDateString(),
+                    'expires_at'      => $validated['expired_at'],
+                    'status'          => 'active',
+                    'notes'           => 'Otomatis dibuat dari Manage Database',
                 ]);
             }
         }
+
+        // Tandai user sebagai 'provisioned' — DB pertama sudah terhubung.
+        User::where('id', $validated['user_id'])
+            ->whereIn('provisioning_status', ['unregistered', 'pending'])
+            ->update(['provisioning_status' => 'provisioned']);
 
         Alert::success('Data AvailableDatabase Berhasil Disimpan');
         return redirect()->route('available_database.manage', $validated['server_id']);
@@ -147,7 +153,14 @@ class AvailableDatabaseController extends Controller
     public function manage($serverId)
     {
         $server = AuthorizedServer::with('availableDatabases.user')->findOrFail($serverId);
-        $users = \App\Models\User::all();
+
+        // Load users with their active subscription & plan — used by manage.blade.php
+        // to auto-fill the plan/expiry fields when admin selects a user.
+        $users = \App\Models\User::with([
+            'subscriptions' => fn ($q) => $q->where('status', 'active')->latest()->limit(1),
+            'subscriptions.pricingPlan',
+        ])->orderBy('name')->get();
+
         $pricingPlans = PricingPlan::orderBy('order')->get();
         return view('available_database.manage', compact('server', 'users', 'pricingPlans'));
     }

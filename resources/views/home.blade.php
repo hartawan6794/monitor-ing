@@ -409,7 +409,8 @@
                             <div class="mb-8">
                                 <h3
                                     class="text-xl font-semibold mb-2 {{ $plan->is_featured ? 'text-primary-light' : 'text-white' }}">
-                                    {{ $plan->name }}</h3>
+                                    {{ $plan->name }}
+                                </h3>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-extrabold text-white">
                                         <sup
@@ -434,7 +435,7 @@
 
                             <a href="{{ route('my-subscription.checkout', $plan->id) }}"
                                 class="w-full inline-block py-4 px-6 rounded-xl text-center font-semibold text-sm transition-all duration-300 {{ $plan->is_featured ? 'bg-primary text-white hover:bg-primary-light shadow-lg shadow-primary/30' : 'bg-white/10 text-white hover:bg-white/20' }}">
-                                {{ Auth::check() ? ($plan->button_text ?? 'Berlangganan Sekarang') : 'Login untuk Mulai' }}
+                                {{ Auth::check() ? ($plan->button_text ?? 'Berlangganan Sekarang') : 'Berlangganan Sekarang' }}
                             </a>
                         </div>
                     @endforeach

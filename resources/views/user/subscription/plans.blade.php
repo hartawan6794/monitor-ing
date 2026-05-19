@@ -2,52 +2,276 @@
 
 @section('title', 'Pilih Paket Langganan — DashMo')
 
+@push('styles')
+<style>
+    .plans-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .plans-header {
+        text-align: center;
+        margin-bottom: 3.5rem;
+    }
+    .plans-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+    .plans-subtitle {
+        color: #64748b;
+        max-width: 600px;
+        margin: 0 auto;
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+    
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2.5rem;
+        align-items: stretch;
+    }
+    
+    .plan-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+    .plan-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .plan-card.featured {
+        border-color: #6366f1;
+        border-width: 2px;
+        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.15), 0 10px 10px -5px rgba(99, 102, 241, 0.05);
+    }
+    .plan-card.featured:hover {
+        border-color: #4f46e5;
+        box-shadow: 0 25px 30px -5px rgba(99, 102, 241, 0.25);
+    }
+    
+    .plan-badge {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #6366f1, #0ea5e9);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 1.25rem;
+        border-radius: 9999px;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+    
+    .plan-name {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1.25rem;
+    }
+    
+    .plan-price-wrapper {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .plan-price {
+        font-size: 2.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1;
+        letter-spacing: -0.03em;
+    }
+    .plan-price sup {
+        font-size: 1.25rem;
+        font-weight: 700;
+        top: -1em;
+        margin-right: 0.2rem;
+    }
+    .plan-subtext {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .plan-duration {
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 0.75rem;
+        padding: 0.875rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: #475569;
+        margin-bottom: 2rem;
+    }
+    .plan-duration strong {
+        color: #6366f1;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
+        flex-grow: 1;
+    }
+    .plan-features li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.15rem;
+        font-size: 0.95rem;
+        color: #475569;
+        line-height: 1.4;
+    }
+    .plan-features li i {
+        font-size: 1.25rem;
+        color: #10b981;
+        margin-top: -0.05rem;
+    }
+    .plan-features li.highlighted {
+        font-weight: 600;
+        color: #0f172a;
+    }
+    .plan-features li.highlighted i {
+        color: #6366f1;
+    }
+    
+    .plan-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .plan-btn-outline {
+        background: #f8fafc;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+    }
+    .plan-btn-outline:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .plan-btn-primary {
+        background: #6366f1;
+        color: #fff;
+        border: 1px solid #6366f1;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+    .plan-btn-primary:hover {
+        background: #4f46e5;
+        color: #fff;
+        box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* ── DARK MODE ── */
+    html.dark .plan-card {
+        background: #1e293b;
+        border-color: #334155;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    html.dark .plan-card:hover {
+        border-color: #475569;
+    }
+    html.dark .plan-card.featured {
+        border-color: #6366f1;
+    }
+    html.dark .plans-title,
+    html.dark .plan-name,
+    html.dark .plan-price {
+        color: #f8fafc;
+    }
+    html.dark .plans-subtitle,
+    html.dark .plan-subtext,
+    html.dark .plan-features li {
+        color: #94a3b8;
+    }
+    html.dark .plan-features li.highlighted {
+        color: #f8fafc;
+    }
+    html.dark .plan-duration {
+        background: rgba(15, 23, 42, 0.4);
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+    html.dark .plan-duration strong {
+        color: #818cf8;
+    }
+    html.dark .plan-btn-outline {
+        background: #0f172a;
+        border-color: #334155;
+        color: #f8fafc;
+    }
+    html.dark .plan-btn-outline:hover {
+        background: #334155;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid px-4 py-6" style="max-width: 1200px; margin: 0 auto;">
-    <div class="text-center mb-10">
-        <a href="{{ route('my-subscription.index') }}" class="inline-flex items-center text-sm font-medium text-slate-500 dark:text-white/60 hover:text-indigo-600 dark:hover:text-indigo-400 mb-4 transition-colors">
-            <i class="bx bx-arrow-back mr-1"></i> Kembali ke Langganan Saya
-        </a>
-        <h1 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">Pilih Paket Terbaik</h1>
-        <p class="text-slate-500 dark:text-white/60 max-w-xl mx-auto">Sesuaikan kapasitas sistem dengan ukuran bisnis Anda. Semua paket memiliki akses ke fitur monitoring dasar.</p>
+<div class="plans-container">
+    <div class="plans-header">
+        <h1 class="plans-title">Pilih Paket Terbaik</h1>
+        <p class="plans-subtitle">Sesuaikan kapasitas sistem dengan ukuran bisnis Anda. Semua paket memiliki akses ke fitur monitoring dasar.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+    <div class="plans-grid">
         @forelse($pricing_plans as $plan)
-            <div class="relative flex flex-col p-8 bg-white dark:bg-bgdark border rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl {{ $plan->is_featured ? 'border-indigo-500 shadow-lg shadow-indigo-500/10 dark:shadow-indigo-900/20' : 'border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/50' }}">
+            <div class="plan-card {{ $plan->is_featured ? 'featured' : '' }}">
                 @if($plan->is_featured)
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 bg-gradient-to-r from-indigo-500 to-cyan-400 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md shadow-indigo-500/30">
-                        {{ $plan->badge_text ?? 'Paling Populer' }}
-                    </div>
+                    <div class="plan-badge">{{ $plan->badge_text ?? 'Paling Populer' }}</div>
                 @endif
                 
-                <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">{{ $plan->name }}</h3>
-                <div class="flex items-baseline gap-1 mb-6">
-                    <span class="text-3xl font-extrabold text-slate-900 dark:text-white">
-                        <sup class="text-base font-bold mr-1 align-top">Rp</sup>{{ is_numeric($plan->price) ? number_format($plan->price, 0, ',', '.') : $plan->price }}
+                <h3 class="plan-name">{{ $plan->name }}</h3>
+                
+                <div class="plan-price-wrapper">
+                    <span class="plan-price">
+                        <sup>Rp</sup>{{ is_numeric($plan->price) ? number_format($plan->price, 0, ',', '.') : $plan->price }}
                     </span>
-                    <span class="text-sm font-medium text-slate-500 dark:text-white/60">{{ $plan->price_subtext }}</span>
+                    <span class="plan-subtext">{{ $plan->price_subtext }}</span>
                 </div>
 
-                <div class="text-sm text-slate-600 dark:text-white/70 mb-6 font-medium bg-slate-50 dark:bg-black/20 px-3 py-2 rounded-lg text-center border border-slate-100 dark:border-white/5">
-                    Masa Aktif: <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $plan->duration_days ?? 30 }} Hari</span>
+                <div class="plan-duration">
+                    Masa Aktif: <strong>{{ $plan->duration_days ?? 30 }} Hari</strong>
                 </div>
 
-                <ul class="space-y-4 mb-8 flex-grow">
+                <ul class="plan-features">
                     @foreach($plan->features as $feature)
-                        <li class="flex items-start gap-3 text-sm {{ $feature->is_highlighted ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-600 dark:text-white/70' }}">
-                            <i class="bx bx-check text-xl {{ $feature->is_highlighted ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-500 dark:text-emerald-400' }}"></i>
-                            <span class="mt-0.5">{{ $feature->name }}</span>
+                        <li class="{{ $feature->is_highlighted ? 'highlighted' : '' }}">
+                            <i class="bx bx-check"></i>
+                            <span>{{ $feature->name }}</span>
                         </li>
                     @endforeach
                 </ul>
 
-                <a href="{{ route('my-subscription.checkout', $plan->id) }}" class="w-full py-3 px-4 rounded-xl text-center font-semibold transition-all {{ $plan->is_featured ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none' : 'bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10' }}">
+                <a href="{{ route('my-subscription.checkout', $plan->id) }}" class="plan-btn {{ $plan->is_featured ? 'plan-btn-primary' : 'plan-btn-outline' }}">
                     Pilih Paket Ini
                 </a>
             </div>
         @empty
-            <div class="col-span-full text-center py-10 text-slate-500 dark:text-white/50">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #64748b;">
                 Belum ada paket yang tersedia saat ini.
             </div>
         @endforelse

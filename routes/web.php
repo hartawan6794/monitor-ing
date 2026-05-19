@@ -11,26 +11,35 @@ use App\Http\Controllers\PricingPlanController;
 
 Route::get('/', [App\Http\Controllers\LandingPageController::class, 'index'])->name('landing');
 
-Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
-Route::resource('user', UserController::class);
+Route::get('users/data', [UserController::class, 'getData'])->name('users.data')->middleware(['auth', 'role:admin']);
+Route::resource('user', UserController::class)->middleware(['auth', 'role:admin']);
 
-Route::get('authorized_server/data', [AuthorizedServerController::class, 'getData'])->name('authorized_server.data');
-Route::resource('authorized_server', AuthorizedServerController::class);
+Route::get('authorized_server/data', [AuthorizedServerController::class, 'getData'])->name('authorized_server.data')->middleware(['auth', 'role:admin']);
+Route::resource('authorized_server', AuthorizedServerController::class)->middleware(['auth', 'role:admin']);
 
-Route::get('available_database/data', [AvailableDatabaseController::class, 'getData'])->name('available_database.data');
-Route::resource('available_database', AvailableDatabaseController::class);
-Route::get('/available-database/manage/{serverId}', [AvailableDatabaseController::class, 'manage'])->name('available_database.manage');
-Route::post('/available-database/sync/{serverId}', [AvailableDatabaseController::class, 'sync'])->name('available_database.sync');
-Route::post('/available-database/restore/{id}', [AvailableDatabaseController::class, 'restore'])->name('available_database.restore');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('available_database/data', [AvailableDatabaseController::class, 'getData'])->name('available_database.data');
+    Route::resource('available_database', AvailableDatabaseController::class);
+    Route::get('/available-database/manage/{serverId}', [AvailableDatabaseController::class, 'manage'])->name('available_database.manage');
+    Route::post('/available-database/sync/{serverId}', [AvailableDatabaseController::class, 'sync'])->name('available_database.sync');
+    Route::post('/available-database/restore/{id}', [AvailableDatabaseController::class, 'restore'])->name('available_database.restore');
 
-Route::get('pricing_plan/data', [PricingPlanController::class, 'getData'])->name('pricing_plan.data');
-Route::resource('pricing_plan', PricingPlanController::class);
+    Route::get('pricing_plan/data', [PricingPlanController::class, 'getData'])->name('pricing_plan.data');
+    Route::resource('pricing_plan', PricingPlanController::class);
+});
 
 Auth::routes();
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-// Route::get('/', [App\Http\Controllers\LandingPageController::class,'index'])->name('landing');
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware(['auth', 'ensure.provisioned']);
+
+// Halaman "Akun Anda Sedang Dipersiapkan" — untuk user pending provisioning
+Route::middleware('auth')->get('/provisioning-pending', function () {
+    if (auth()->user()->provisioning_status !== 'pending') {
+        return redirect()->route('dashboard');
+    }
+    return view('user.provisioning_pending');
+})->name('provisioning.pending');
 
 // Tambahkan di dalam grup route yang menggunakan auth middleware
 Route::get('/get-databases-by-server/{serverId}', [App\Http\Controllers\AvailableDatabaseController::class, 'fetchDatabasesFromServer'])->name('server.databases');
@@ -39,15 +48,25 @@ Route::get('/get-databases-by-server/{serverId}', [App\Http\Controllers\Availabl
 Route::post('/connections/test', [ConnectionWebController::class, 'test'])->name('connections.test')->middleware('auth');
 
 // ── Setup Wizard ──
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/setup-wizard', [\App\Http\Controllers\SetupWizardController::class, 'index'])->name('setup.wizard');
     Route::post('/setup-wizard/step-user', [\App\Http\Controllers\SetupWizardController::class, 'storeUser'])->name('setup.wizard.user');
     Route::post('/setup-wizard/step-server', [\App\Http\Controllers\SetupWizardController::class, 'storeServer'])->name('setup.wizard.server');
     Route::post('/setup-wizard/step-database', [\App\Http\Controllers\SetupWizardController::class, 'storeDatabase'])->name('setup.wizard.database');
+    // API: ambil semua user yang sudah daftar + info langganan mereka
+    Route::get('/api/registered-users', [\App\Http\Controllers\SetupWizardController::class, 'getRegisteredUsers'])->name('api.registered_users');
+    // API: ambil detail langganan aktif satu user (dipanggil saat admin pilih user di manage.blade.php)
+    Route::get('/api/user-subscription/{userId}', [\App\Http\Controllers\SetupWizardController::class, 'getUserSubscription'])->name('api.user_subscription');
+    // Halaman manajemen user terdaftar (untuk admin)
+    Route::get('/registered-users', [\App\Http\Controllers\SetupWizardController::class, 'registeredUsersPage'])->name('registered.users');
+    // AJAX: server-side DataTables data
+    Route::get('/registered-users/data', [\App\Http\Controllers\SetupWizardController::class, 'getRegisteredUsersData'])->name('registered.users.data');
+    // AJAX: ubah provisioning_status user
+    Route::patch('/registered-users/{userId}/provisioning-status', [\App\Http\Controllers\SetupWizardController::class, 'updateProvisioningStatus'])->name('registered.users.provisioning');
 });
 
 // ── Kelola Langganan ──
-Route::middleware('auth')->prefix('subscriptions')->name('subscriptions.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('subscriptions')->name('subscriptions.')->group(function () {
     Route::get('/', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('index');
     Route::get('/create', [\App\Http\Controllers\SubscriptionController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\SubscriptionController::class, 'store'])->name('store');
@@ -64,7 +83,7 @@ Route::middleware('auth')->prefix('my-subscription')->name('my-subscription.')->
 });
 
 // ── System Admin ──
-Route::middleware('auth')->prefix('system')->name('system.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('system')->name('system.')->group(function () {
     Route::get('/apk-manager', [\App\Http\Controllers\ApkManagerController::class, 'index'])->name('apk_manager');
     Route::post('/apk-manager/upload', [\App\Http\Controllers\ApkManagerController::class, 'upload'])->name('apk_manager.upload');
     

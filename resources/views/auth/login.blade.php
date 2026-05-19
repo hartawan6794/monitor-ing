@@ -581,7 +581,14 @@
             </button>
         </form>
 
-        <div class="card-footer">
+        @if (Route::has('register'))
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem;">
+            <span style="color: var(--text-muted);">Belum punya akun?</span>
+            <a href="{{ route('register') }}" style="color: var(--primary-light); text-decoration: none; font-weight: 600; margin-left: 0.25rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--primary-light)'">Daftar Sekarang</a>
+        </div>
+        @endif
+
+        <div class="card-footer" style="margin-top: {{ Route::has('register') ? '1rem' : '1.5rem' }};">
             &copy; {{ date('Y') }} DashMo. Sistem Monitoring Internal.
         </div>
     </div>

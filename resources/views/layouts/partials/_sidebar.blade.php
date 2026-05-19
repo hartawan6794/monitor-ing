@@ -63,11 +63,18 @@
                 </a>
             </li>
 
-            @if(auth()->check() && (auth()->user()->username === 'admin' || auth()->user()->email === 'admin@gmail.com'))
+            @if(auth()->check() && auth()->user()->isAdmin())
             <li class="slide {{ request()->routeIs('setup.wizard') ? 'active' : '' }}">
                 <a href="{{ route('setup.wizard') }}" class="side-menu__item">
                     <i class="bx bx-rocket side-menu__icon text-primary"></i>
                     <span class="side-menu__label font-bold text-primary">Setup Wizard Baru</span>
+                </a>
+            </li>
+
+            <li class="slide {{ request()->routeIs('registered.users') ? 'active' : '' }}">
+                <a href="{{ route('registered.users') }}" class="side-menu__item">
+                    <i class="bx bx-user-check side-menu__icon text-emerald-500"></i>
+                    <span class="side-menu__label font-bold text-emerald-600 dark:text-emerald-400">User Terdaftar</span>
                 </a>
             </li>
 

@@ -61,14 +61,22 @@ class UserSubscriptionController extends Controller
 
         // Buat langganan baru
         Subscription::create([
-            'user_id' => $user->id,
+            'user_id'         => $user->id,
             'pricing_plan_id' => $plan->id,
-            'starts_at' => now()->toDateString(),
-            'expires_at' => now()->addDays($duration)->toDateString(),
-            'status' => 'active',
-            'notes' => 'Pembayaran simulasi via User Dashboard',
+            'starts_at'       => now()->toDateString(),
+            'expires_at'      => now()->addDays($duration)->toDateString(),
+            'status'          => 'active',
+            'notes'           => 'Pembayaran simulasi via User Dashboard',
         ]);
 
-        return redirect()->route('my-subscription.index')->with('success', 'Pembayaran berhasil! Langganan Anda sekarang aktif.');
+        // Tandai user sebagai "pending provisioning" —
+        // admin perlu menghubungkan database sebelum user bisa pakai dashboard.
+        // Jika user sudah punya DB sebelumnya, pertahankan status 'provisioned'.
+        if ($user->provisioning_status === 'unregistered') {
+            $user->update(['provisioning_status' => 'pending']);
+        }
+
+        return redirect()->route('my-subscription.index')
+            ->with('success', 'Pembayaran berhasil! Langganan Anda sekarang aktif. Tim kami sedang menyiapkan akses database Anda.');
     }
 }

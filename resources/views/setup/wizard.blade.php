@@ -4,9 +4,18 @@
 <div class="container mx-auto px-4 py-8">
     <div class="mb-6 flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Setup Wizard Onboarding</h1>
-            <p class="text-gray-500 text-sm">Registrasi User, Server, dan Database dalam satu langkah.</p>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Setup Wizard Onboarding</h1>
+            <p class="text-gray-500 text-sm">
+                @if($prefillUser)
+                    Melanjutkan setup untuk <strong>{{ $prefillUser->name }}</strong>.
+                @else
+                    Registrasi User, Server, dan Database dalam satu langkah.
+                @endif
+            </p>
         </div>
+        <a href="{{ route('registered.users') }}" class="ti-btn ti-btn-light flex items-center gap-1 !text-sm !py-1.5 !px-3 !rounded-xl">
+            <i class="ri-arrow-left-line"></i> Kembali
+        </a>
     </div>
 
     <!-- Stepper Indicator -->
@@ -40,28 +49,69 @@
                 <!-- STEP 1: Form User -->
                 <div id="step-1-form">
                     <h3 class="text-lg font-bold mb-4 border-b pb-2"><i class="ri-user-add-line mr-2"></i>Langkah 1: Informasi User Klien</h3>
+
+                    @if($prefillUser)
+                    {{-- ── Banner: user sudah terdaftar ── --}}
+                    <div class="mb-4 rounded-xl p-4 flex items-start gap-3"
+                        style="background:rgba(99,102,241,.08);border:1.5px solid rgba(99,102,241,.2);">
+                        <div style="width:42px;height:42px;border-radius:50%;background:#6366f1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;">
+                            {{ strtoupper(substr($prefillUser->name, 0, 1)) }}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;color:#0f172a;" class="dark:text-white">{{ $prefillUser->name }}</div>
+                            <div style="font-size:.82rem;color:#64748b;">{{ $prefillUser->email }} · @{{ $prefillUser->username }}</div>
+                            <div class="mt-1" style="font-size:.78rem;color:#6366f1;font-weight:600;">
+                                <i class="ri-information-line"></i>
+                                User ini sudah terdaftar. Data diisi otomatis — Step 1 akan dilewati.
+                            </div>
+                        </div>
+                        <div>
+                            <span style="background:rgba(16,185,129,.12);color:#059669;padding:3px 12px;border-radius:999px;font-size:.72rem;font-weight:700;">Terdaftar</span>
+                        </div>
+                    </div>
+                    @endif
+
                     <form id="form-user">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="mb-4">
                                 <label class="form-label font-semibold">Nama Klien / Perusahaan</label>
-                                <input type="text" class="form-control" name="name" required placeholder="Contoh: PT. Maju Bersama">
+                                <input type="text" class="form-control" name="name" required placeholder="Contoh: PT. Maju Bersama"
+                                    value="{{ $prefillUser?->name }}" {{ $prefillUser ? 'readonly' : '' }}>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label font-semibold">Username Login</label>
-                                <input type="text" class="form-control" name="username" required placeholder="Contoh: majubersama">
+                                <input type="text" class="form-control" name="username" required placeholder="Contoh: majubersama"
+                                    value="{{ $prefillUser?->username }}" {{ $prefillUser ? 'readonly' : '' }}>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label font-semibold">Email Klien</label>
-                                <input type="email" class="form-control" name="email" required placeholder="klien@example.com">
+                                <input type="email" class="form-control" name="email" required placeholder="klien@example.com"
+                                    value="{{ $prefillUser?->email }}" {{ $prefillUser ? 'readonly' : '' }}>
                             </div>
                             <div class="mb-4">
-                                <label class="form-label font-semibold">Password</label>
-                                <input type="password" class="form-control" name="password" required placeholder="Minimal 6 karakter">
+                                <label class="form-label font-semibold">
+                                    Password
+                                    @if($prefillUser)
+                                        <span class="text-xs font-normal text-muted ml-1">(tidak perlu diisi ulang)</span>
+                                    @endif
+                                </label>
+                                <input type="password" class="form-control" name="password"
+                                    {{ $prefillUser ? '' : 'required' }}
+                                    placeholder="{{ $prefillUser ? 'Biarkan kosong untuk skip Step ini' : 'Minimal 6 karakter' }}">
                             </div>
                         </div>
-                        <div class="mt-4 flex justify-end">
+                        <div class="mt-4 flex justify-between items-center">
+                            @if($prefillUser)
+                                <span class="text-xs text-indigo-500"><i class="ri-skip-forward-line"></i> Step ini akan dilewati otomatis dalam 3 detik…</span>
+                            @else
+                                <span></span>
+                            @endif
                             <button type="submit" class="ti-btn ti-btn-primary-full" id="btn-next-1">
-                                Lanjut ke Koneksi Server <i class="ri-arrow-right-line ml-1"></i>
+                                @if($prefillUser)
+                                    <i class="ri-arrow-right-line mr-1"></i> Lanjut ke Koneksi Server
+                                @else
+                                    Lanjut ke Koneksi Server <i class="ri-arrow-right-line ml-1"></i>
+                                @endif
                             </button>
                         </div>
                     </form>
@@ -149,13 +199,47 @@
 
 @push('scripts')
 <script>
+// Prefill data dari controller
+const PREFILL_USER = @json($prefillUser ? ['id' => $prefillUser->id, 'name' => $prefillUser->name] : null);
+
 $(document).ready(function() {
-    // Setup AJAX CSRF
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
+    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
+    // ── Jika ada prefill user (user sudah terdaftar), skip Step 1 otomatis ──
+    if (PREFILL_USER) {
+        $('#created_user_id').val(PREFILL_USER.id);
+
+        // Auto-klik submit setelah 3 detik
+        let countdown = 3;
+        const timer = setInterval(function () {
+            countdown--;
+            if (countdown <= 0) {
+                clearInterval(timer);
+                skipToStep2();
+            } else {
+                $('#btn-next-1').find('.countdown-num').text(countdown);
+            }
+        }, 1000);
+
+        // Label countdown di tombol
+        $('#btn-next-1').html('<i class="ri-arrow-right-line mr-1"></i> Lanjut (<span class="countdown-num">3</span>s...)');
+
+        // Juga bisa manual klik
+        $('#btn-next-1').off('click').on('click', function (e) {
+            e.preventDefault();
+            clearInterval(timer);
+            skipToStep2();
+        });
+    }
+
+    function skipToStep2() {
+        $('#step-1-form').slideUp();
+        $('#step-2-form').slideDown();
+        $('#progress-bar').css('width', '50%');
+        $('#step1-icon').removeClass('bg-primary border-white').addClass('bg-success border-success text-white').html('<i class="ri-check-line"></i>');
+        $('#step2-icon').removeClass('bg-gray-200 text-gray-500').addClass('bg-primary text-white');
+        $('#step2-text').removeClass('text-gray-500').addClass('text-primary');
+    }
 
     // Handle Form User (Step 1)
     $('#form-user').on('submit', function(e) {

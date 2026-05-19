@@ -2,103 +2,279 @@
 
 @section('title', 'Langganan Saya — DashMo')
 
+@push('styles')
+<style>
+    .sub-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .sub-header {
+        margin-bottom: 2rem;
+    }
+    .sub-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+    .sub-desc {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+    
+    .sub-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2.5rem;
+    }
+    .sub-card-top {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .sub-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 0.35rem;
+    }
+    .sub-val {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
+    .status-expired {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+    
+    .sub-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    .sub-grid-val {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .sub-sisa {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #f59e0b;
+        margin-top: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .btn-upgrade {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #6366f1;
+        color: #fff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-upgrade:hover {
+        background: #4f46e5;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        color: #fff;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .history-table th {
+        text-align: left;
+        padding: 1rem;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .history-table td {
+        padding: 1rem;
+        color: #334155;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .alert-success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    .empty-icon {
+        width: 4rem;
+        height: 4rem;
+        background: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2rem;
+        color: #94a3b8;
+    }
+    
+    /* ── DARK MODE ── */
+    html.dark .sub-title, html.dark .sub-val, html.dark .sub-grid-val { color: #f8fafc; }
+    html.dark .sub-desc, html.dark .sub-label { color: #94a3b8; }
+    html.dark .sub-card { background: #1e293b; border-color: #334155; }
+    html.dark .sub-card-top { border-color: #334155; }
+    
+    html.dark .status-active { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    html.dark .status-expired { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    
+    html.dark .history-table th { background: rgba(15, 23, 42, 0.4); border-color: #334155; color: #94a3b8; }
+    html.dark .history-table td { border-color: rgba(255,255,255,0.05); color: #cbd5e1; }
+    
+    html.dark .alert-success { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+    
+    html.dark .empty-icon { background: rgba(255,255,255,0.05); color: #475569; }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid px-4 py-6" style="max-width: 1000px; margin: 0 auto;">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Langganan Saya</h1>
-        <p class="text-slate-500 dark:text-white/60 text-sm mt-1">Kelola paket langganan Anda untuk terus menikmati layanan DashMo.</p>
+<div class="sub-container">
+    <div class="sub-header">
+        <h1 class="sub-title">Langganan Saya</h1>
+        <p class="sub-desc">Kelola paket langganan Anda untuk terus menikmati layanan DashMo.</p>
     </div>
 
     @if(session('success'))
-    <div class="p-4 mb-6 text-sm text-emerald-800 dark:text-emerald-400 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-        <div class="flex items-center gap-2">
-            <i class="bx bx-check-circle text-xl"></i>
-            {{ session('success') }}
-        </div>
+    <div class="alert-success">
+        <i class="bx bx-check-circle text-xl"></i>
+        {{ session('success') }}
     </div>
     @endif
 
-    <div class="bg-white dark:bg-bgdark border border-slate-200 dark:border-white/10 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+    <div class="sub-card">
         @if($subscription)
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-8 border-b border-slate-100 dark:border-white/10">
+            <div class="sub-card-top">
                 <div>
-                    <h2 class="text-lg text-slate-500 dark:text-white/60 mb-1">Paket Saat Ini</h2>
-                    <div class="text-3xl font-extrabold text-slate-800 dark:text-white">{{ $subscription->pricingPlan->name ?? 'Paket Kustom' }}</div>
+                    <div class="sub-label">Paket Saat Ini</div>
+                    <div class="sub-val">{{ $subscription->pricingPlan->name ?? 'Paket Kustom' }}</div>
                 </div>
                 <div>
                     @if($subscription->isActive())
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100/50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"><i class="bx bx-check mr-1"></i> Aktif</span>
+                        <span class="status-badge status-active"><i class="bx bx-check"></i> Aktif</span>
                     @else
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-400"><i class="bx bx-x mr-1"></i> Kedaluwarsa</span>
+                        <span class="status-badge status-expired"><i class="bx bx-x"></i> Kedaluwarsa</span>
                     @endif
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="sub-grid">
                 <div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-white/60 mb-1">Mulai Berlangganan</p>
-                    <p class="text-base font-semibold text-slate-800 dark:text-white">{{ \Carbon\Carbon::parse($subscription->starts_at)->translatedFormat('d F Y') }}</p>
+                    <div class="sub-label">Mulai Berlangganan</div>
+                    <div class="sub-grid-val">{{ \Carbon\Carbon::parse($subscription->starts_at)->translatedFormat('d F Y') }}</div>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-white/60 mb-1">Berakhir Pada</p>
-                    <p class="text-base font-semibold text-slate-800 dark:text-white">{{ \Carbon\Carbon::parse($subscription->expires_at)->translatedFormat('d F Y') }}</p>
+                    <div class="sub-label">Berakhir Pada</div>
+                    <div class="sub-grid-val">{{ \Carbon\Carbon::parse($subscription->expires_at)->translatedFormat('d F Y') }}</div>
                     @if($subscription->isActive())
-                        <p class="text-xs text-orange-500 dark:text-orange-400 mt-1 font-medium"><i class="bx bx-time"></i> Sisa {{ $subscription->daysUntilExpiry() }} hari</p>
+                        <div class="sub-sisa"><i class="bx bx-time"></i> Sisa {{ $subscription->daysUntilExpiry() }} hari</div>
                     @endif
                 </div>
             </div>
 
-            <div class="flex gap-4">
-                <a href="{{ route('my-subscription.plans') }}" class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none">
+            <div>
+                <a href="{{ route('my-subscription.plans') }}" class="btn-upgrade">
                     Perpanjang / Upgrade Paket
                 </a>
             </div>
         @else
-            <div class="text-center py-8">
-                <div class="w-20 h-20 bg-slate-100 dark:bg-black/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-white/5">
-                    <i class="bx bx-package text-4xl text-slate-400 dark:text-white/40"></i>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bx bx-package"></i>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Belum Ada Langganan Aktif</h2>
-                <p class="text-slate-500 dark:text-white/60 mb-6 max-w-md mx-auto">Anda belum memiliki paket langganan yang aktif. Silakan pilih paket yang sesuai dengan kebutuhan bisnis Anda.</p>
-                <a href="{{ route('my-subscription.plans') }}" class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none">
-                    <i class="bx bx-cart mr-2"></i> Lihat Pilihan Paket
+                <h2 class="sub-title" style="font-size:1.25rem;">Belum Ada Langganan Aktif</h2>
+                <p class="sub-desc" style="max-width:400px; margin: 0.5rem auto 1.5rem;">Anda belum memiliki paket langganan yang aktif. Silakan pilih paket yang sesuai dengan kebutuhan bisnis Anda.</p>
+                <a href="{{ route('my-subscription.plans') }}" class="btn-upgrade">
+                    <i class="bx bx-cart"></i> Lihat Pilihan Paket
                 </a>
             </div>
         @endif
     </div>
 
     @if($history && $history->count() > 0)
-    <div class="mt-8">
-        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">Riwayat Langganan</h3>
-        <div class="bg-white dark:bg-bgdark border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 dark:bg-black/20 text-slate-500 dark:text-white/60 text-sm border-b border-slate-200 dark:border-white/10">
-                            <th class="py-4 px-6 font-semibold">Paket</th>
-                            <th class="py-4 px-6 font-semibold">Mulai</th>
-                            <th class="py-4 px-6 font-semibold">Berakhir</th>
-                            <th class="py-4 px-6 font-semibold">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-white/5">
-                        @foreach($history as $hist)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-black/10 transition-colors">
-                            <td class="py-4 px-6 font-medium text-slate-800 dark:text-white">{{ $hist->pricingPlan->name ?? 'Custom' }}</td>
-                            <td class="py-4 px-6 text-slate-600 dark:text-white/70">{{ \Carbon\Carbon::parse($hist->starts_at)->format('d M Y') }}</td>
-                            <td class="py-4 px-6 text-slate-600 dark:text-white/70">{{ \Carbon\Carbon::parse($hist->expires_at)->format('d M Y') }}</td>
-                            <td class="py-4 px-6">
-                                @if($hist->status == 'active' && $hist->expires_at >= now()->toDateString())
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">Aktif</span>
-                                @else
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-white/50 border border-slate-200 dark:border-white/10">Selesai</span>
-                                @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    <div class="sub-card" style="padding: 0; overflow: hidden;">
+        <h3 class="sub-title" style="font-size:1.15rem; padding: 1.5rem 1.5rem 0.5rem;">Riwayat Langganan</h3>
+        <div class="table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Paket</th>
+                        <th>Mulai</th>
+                        <th>Berakhir</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($history as $hist)
+                    <tr>
+                        <td style="font-weight:600;">{{ $hist->pricingPlan->name ?? 'Custom' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($hist->starts_at)->format('d M Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($hist->expires_at)->format('d M Y') }}</td>
+                        <td>
+                            @if($hist->status == 'active' && $hist->expires_at >= now()->toDateString())
+                                <span class="status-badge status-active" style="padding:0.2rem 0.75rem; font-size:0.75rem;">Aktif</span>
+                            @else
+                                <span class="status-badge" style="background:#f1f5f9; color:#64748b; padding:0.2rem 0.75rem; font-size:0.75rem;">Selesai</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
     @endif
