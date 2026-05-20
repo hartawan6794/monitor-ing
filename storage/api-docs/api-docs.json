@@ -304,6 +304,106 @@
                 ]
             }
         },
+        "/dashboard/top-service-doers": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Service Doers Terbanyak",
+                "description": "Menampilkan service doers dengan omzet tertinggi.",
+                "operationId": "48437c60f6e70635febfe8dfd731e5bf",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/X-Database-Name"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Periode: today, week, month, year",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "yesterday",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        },
+                        "example": "today"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "rank": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "doer_id": {
+                                                        "type": "string",
+                                                        "example": "sd_001"
+                                                    },
+                                                    "doer_name": {
+                                                        "type": "string",
+                                                        "example": "Budi Santoso"
+                                                    },
+                                                    "total_omset": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 15000000
+                                                    },
+                                                    "total_invoice": {
+                                                        "type": "integer",
+                                                        "example": 20
+                                                    },
+                                                    "total_qty": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Budi Santoso"
+                                                    },
+                                                    "subtitle": {
+                                                        "type": "string",
+                                                        "example": "Omzet: Rp 15.000.000"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/dashboard/salesman-view": {
             "get": {
                 "tags": [
@@ -2502,6 +2602,93 @@
                     }
                 ]
             }
+        },
+        "/users": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Tambah User Baru",
+                "operationId": "262eb5ca1fdea354023c0a8870442c1e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "ID User",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "description": "Nama User",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "userpassword",
+                        "in": "query",
+                        "description": "Password User",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "description",
+                        "in": "query",
+                        "description": "Deskripsi User",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Role User",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "usercreate",
+                        "in": "query",
+                        "description": "User Create",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User berhasil ditambahkan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User berhasil ditambahkan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2570,6 +2757,10 @@
         {
             "name": "Units",
             "description": "Units"
+        },
+        {
+            "name": "User",
+            "description": "User"
         }
     ]
 }

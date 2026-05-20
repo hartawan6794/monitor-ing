@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -309,39 +310,92 @@ class DashboardController extends Controller
         return response()->json(['status' => 'success', 'data' => $salesmen]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/dashboard/top-service-doers",
+     *     tags={"Dashboard"},
+     *     summary="Service Doers Terbanyak",
+     *     description="Menampilkan service doers dengan omzet tertinggi.",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(ref="#/components/parameters/X-Database-Name"),
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         required=false,
+     *         description="Periode: today, week, month, year",
+     *         @OA\Schema(type="string", enum={"today","yesterday", "week", "month", "year"}),
+     *         example="today"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="rank", type="integer", example=1),
+     *                     @OA\Property(property="doer_id", type="string", example="sd_001"),
+     *                     @OA\Property(property="doer_name", type="string", example="Budi Santoso"),
+     *                     @OA\Property(property="total_omset", type="number", format="float", example=15000000),
+     *                     @OA\Property(property="total_invoice", type="integer", example=20),
+     *                     @OA\Property(property="total_qty", type="number", format="float", example=50),
+     *                     @OA\Property(property="title", type="string", example="Budi Santoso"),
+     *                     @OA\Property(property="subtitle", type="string", example="Omzet: Rp 15.000.000")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function topServiceDoers(Request $request)
     {
         $dates = $this->getDateRangeFromRequest($request);
         $limit = (int) $request->query('limit', 10);
 
-        $doers = DB::table('salesdetail')
-            ->join('sales', 'salesdetail.salesid', '=', 'sales.salesid')
-            ->join('servicedoer', 'salesdetail.servicedoerid', '=', 'servicedoer.id')
+        $doers = DB::table('sales as s')
+            ->join('salesdetail as sd', 's.salesid', '=', 'sd.salesid')
+            ->leftJoin('servicedoer as sv', 'sd.servicedoerid', '=', 'sv.id')
             ->select(
-                'servicedoer.id as doer_id',
-                'servicedoer.name as doer_name',
-                DB::raw('SUM(salesdetail.netto) as total_omset'),
-                DB::raw('COUNT(DISTINCT salesdetail.salesid) as total_invoice'),
-                DB::raw('SUM(salesdetail.qty) as total_qty')
+                'sd.servicedoerid as doer_id',
+                'sv.name as doer_name',
+                DB::raw('COUNT(DISTINCT s.salesid) as total_invoice'),
+                DB::raw('SUM(sd.salesqty) as total_qty'),
+                DB::raw('SUM(sd.netamount) as total_netamount'),
+                DB::raw('SUM(s.salesvaluedisc) as total_diskon'),
+                DB::raw('SUM(sd.netamount) - SUM(s.salesvaluedisc) as omset_bersih'),
+                DB::raw('SUM(sd.cogs) as total_hpp'),
+                DB::raw('(SUM(sd.netamount) - SUM(s.salesvaluedisc)) - SUM(sd.cogs) as laba_kotor'),
+                DB::raw('ROUND(((SUM(sd.netamount) - SUM(s.salesvaluedisc)) - SUM(sd.cogs)) / NULLIF((SUM(sd.netamount) - SUM(s.salesvaluedisc)), 0) * 100, 2) as margin_persen')
             )
-            ->whereBetween('sales.transdate', $dates)
-            ->whereNotNull('salesdetail.servicedoerid')
-            ->where('salesdetail.servicedoerid', '!=', '')
-            ->groupBy('servicedoer.id', 'servicedoer.name')
-            ->orderByDesc('total_omset')
+            ->whereBetween('sd.transdate', $dates)
+            ->where('s.kind', 0)
+            ->whereNotNull('sd.servicedoerid')
+            ->where('sd.servicedoerid', '!=', '')
+            ->groupBy('sd.servicedoerid', 'sv.name')
+            ->orderByDesc('omset_bersih')
             ->limit($limit)
             ->get()
             ->map(function ($item, $index) {
+                $omsetBersih = (float) ($item->omset_bersih ?? 0);
                 return [
                     'rank' => $index + 1,
                     'doer_id' => $item->doer_id,
                     'doer_name' => $item->doer_name,
-                    'total_omset' => (float) $item->total_omset,
-                    'total_invoice' => (int) $item->total_invoice,
-                    'total_qty' => (float) $item->total_qty,
+                    'total_omset' => $omsetBersih,
+                    'total_invoice' => (int) ($item->total_invoice ?? 0),
+                    'total_qty' => (float) ($item->total_qty ?? 0),
+                    'total_netamount' => (float) ($item->total_netamount ?? 0),
+                    'total_diskon' => (float) ($item->total_diskon ?? 0),
+                    'omset_bersih' => $omsetBersih,
+                    'total_hpp' => (float) ($item->total_hpp ?? 0),
+                    'laba_kotor' => (float) ($item->laba_kotor ?? 0),
+                    'margin_persen' => (float) ($item->margin_persen ?? 0),
                     // Format siap pakai untuk display di Android
                     'title' => $item->doer_name,
-                    'subtitle' => 'Omset: Rp ' . number_format($item->total_omset, 0, ',', '.'),
+                    'subtitle' => 'Omset: Rp ' . number_format($omsetBersih, 0, ',', '.'),
                 ];
             });
 
@@ -373,6 +427,8 @@ class DashboardController extends Controller
     {
         $now = Carbon::now();
         switch ($period) {
+            case 'yesterday':
+                return [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()];
             case 'week':
                 return [Carbon::now()->startOfWeek(), $now];
             case 'month':

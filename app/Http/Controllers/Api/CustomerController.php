@@ -140,7 +140,6 @@ class CustomerController extends Controller
                     'name' => $request->name
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
